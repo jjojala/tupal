@@ -14,7 +14,7 @@ Trying to get rid of pre-installed packages (striving toward self-standing build
 # Run tests
 
 ```
-> ctest --test-dir build
+> ctest --test-dir build -L tupal
 ```
 
 # Run
