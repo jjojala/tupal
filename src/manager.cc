@@ -711,15 +711,11 @@ namespace {
     #include <iostream>
     std::unique_ptr<soci::session> new_session(const std::string & connection_spec) {
 
-        const auto uri_result = boost::urls::parse_uri(connection_spec);
-        if (!uri_result)
-            throw std::invalid_argument(std::string(connection_spec));
-    
-        // allocate the session before calling methods on it
         auto session = std::make_unique<soci::session>();
         session->open(connection_spec);
 
-        if (boost::iequals("sqlite3", uri_result->scheme())) {
+        if (boost::istarts_with(connection_spec, "sqlite3://")) {
+            TUPAL_MESSAGE(std::cout) << "Opened SQLite3 database." << std::endl;
             *session << "PRAGMA foreign_keys=ON;";
         }
 

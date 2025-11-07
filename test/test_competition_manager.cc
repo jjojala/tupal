@@ -6,7 +6,7 @@
 // defer creation until first use to avoid static init order / early dlopen problems
 static std::shared_ptr<tupal::CompetitionManager> get_competition_manager()
 {
-    static auto mgr = tupal::CompetitionManager::new_competition_manager("sqlite3://tupal.db");
+    static auto mgr = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
     return mgr;
 }
 
