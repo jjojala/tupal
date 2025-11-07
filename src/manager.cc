@@ -708,37 +708,19 @@ namespace {
         std::shared_ptr<tupal::CompetitorManager> competitor_manager;
     };
 
-    std::unique_ptr<soci::session> new_sqlite3_session(const boost::urls::url_view & connection_url) {
-        std::unique_ptr<soci::session> session(new soci::session());
-
-        const auto query_result = boost::urls::parse_query(connection_url.query());
-        if (!query_result)
-            throw std::invalid_argument("Query -part is not specified in connection string!");
-
-        const auto dbname_it = query_result->find("dbname", boost::urls::ignore_case);
-        if (dbname_it == query_result->end())
-            throw std::invalid_argument("'dbname' not specified in connection string!");
-
-        session->open(soci::sqlite3, dbname_it->value.decode());
-
-        *session << "PRAGMA foreign_keys=ON;";
-
-        return session;
-    }
-
     #include <iostream>
     std::unique_ptr<soci::session> new_session(const std::string & connection_spec) {
 
         const auto uri_result = boost::urls::parse_uri(connection_spec);
         if (!uri_result)
-            throw std::invalid_argument(connection_spec);
-        
-        std::unique_ptr<soci::session> session;
+            throw std::invalid_argument(std::string(connection_spec));
+    
+        // allocate the session before calling methods on it
+        auto session = std::make_unique<soci::session>();
+        session->open(connection_spec);
 
         if (boost::iequals("sqlite3", uri_result->scheme())) {
-            session = new_sqlite3_session(*uri_result);
-        } else {
-            throw std::invalid_argument("Unknon scheme! Must be 'sqlite3' (for now)");
+            *session << "PRAGMA foreign_keys=ON;";
         }
 
         return session;
