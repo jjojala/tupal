@@ -657,14 +657,17 @@ namespace {
                 const auto date = boost::gregorian::to_iso_extended_string(helper.at("date").as_date().value());
 
                 soci::transaction trx(*soci_session);
-                *soci_session << "update competition set date=:date, title=:title where id=:id",
-                    soci::use(date), soci::use(title), soci::use(id);
+                soci::statement stmt = (soci_session->prepare << "update competition set date=:date, title=:title where id=:id",
+                    soci::use(date), soci::use(title), soci::use(id));
+                stmt.execute(true);
+                switch (stmt.get_affected_rows()) {
+                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                    case 1: break;
+                    default: return { tupal::make_error_code(tupal::error_code::duplicate_key), nullptr };
+                }
                 trx.commit();
 
-                if (soci_session->got_data())
-                    return { ok, make_competition(id, date, title) };
-                else
-                    return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                return { ok, make_competition(id, date, title) };
             }
 
             catch (const soci::soci_error & e) {
