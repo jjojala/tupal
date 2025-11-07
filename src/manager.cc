@@ -100,6 +100,15 @@ namespace {
         };
     }
 
+    boost::json::value make_competition_class(const std::string & start_group_id, const std::string & id,
+            const std::string & name) {
+        return boost::json::object {
+            { "start_group_id", start_group_id },
+            { "id", id },
+            { "name", name }
+        };
+    }
+
     class StartGroupManagerImpl : public tupal::StartGroupManager
     {
     public:
@@ -653,7 +662,7 @@ namespace {
                 trx.commit();
 
                 if (soci_session->got_data())
-                    return { ok, {{"id", id}, {"date", date}, {"title", title}} };
+                    return { ok, make_competition(id, date, title) };
                 else
                     return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
             }
