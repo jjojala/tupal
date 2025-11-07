@@ -5,10 +5,10 @@ Trying to get rid of pre-installed packages (striving toward self-standing build
 
 ```
 > sudo apt-get install libicu-dev
-> sudo apt-get install libboost-all-dev libsqlite3-dev
+> sudo apt-get install libboost-all-dev libsqlite3-dev libsqlite3-0
 > mkdir build
 > cmake -S . -B build
-> cmake --build build
+> cmake --build build --parallel
 ```
 
 # Run tests
@@ -22,7 +22,7 @@ Trying to get rid of pre-installed packages (striving toward self-standing build
 By default the database `tupald.db` is created/pre-exists to/on current directory.
 
 ```
-> build/src/tupald
+> LD_LIBRARY_PATH=build/lib build/src/tupald
 > curl -X GET http://localhost:8085/rest/competition/
 > curl -X GET http://localhost:8085/rest/competition/my-comp-id
 > curl -X POST http://localhost:8085/rest/competition/ -d @my-new-comp.json
