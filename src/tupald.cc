@@ -136,7 +136,7 @@ int main() {
 	beauty::server server;
 	enable_swagger(server);
 
-	std::shared_ptr<tupal::CompetitionManager> manager = tupal::CompetitionManager::new_competition_manager("sqlite3:?dbname=tupal.db");
+	std::shared_ptr<tupal::CompetitionManager> manager = tupal::CompetitionManager::new_competition_manager("sqlite3://tupal.db");
 	sessions_type sessions;
 	
 	server.add_route("/").get([](const auto & req, auto & res) { res.body() = "The app...\n"; });
