@@ -20,68 +20,33 @@ endif()
 
 #find_package(ICU REQUIRED COMPONENTS uc i18n)
 
-#FetchContent_Declare(
-#	openssl
-#	GIT_REPOSITORY https://github.com/openssl/openssl
-#	GIT_TAG openssl-3.4.0
-#	GIT_SHALLOW TRUE
-#	OVERRIDE_FIND_PACKAGE
-#)
-#FetchContent_MakeAvailable(openssl)
-
-#set(Boost_ENABLE_CMAKE ON)
-#set(Boost_USE_STATIC_LIBS ON)
-#set(Boost_USE_MULTITHREADED ON)
-#set(Boost_INCLUDE_LIBS boost asio regex algorit json thread filesystem system program_options)
-
-#FetchContent_Declare(
-#	Boost
-#	GIT_REPOSITORY https://github.com/boostorg/boost
-#	GIT_TAG boost-1.86.0
-#	GIT_SHALLOW TRUE
-#	CONFIGURE_COMMAND ""
-#	OVERRIDE_FIND_PACKAGE
-#)
-#FetchContent_MakeAvailable(Boost boost)
-find_package(Boost)
+find_package(Boost REQUIRED)
+find_package(SQLite3 REQUIRED)
+find_package(PostgreSQL)
 
 set(CONAN OFF)
 set(BEAUTY_BUILD_EXAMPLES OFF)
-#set(BUILD_TESTING OFF)
-#include(CTest)                        # defines the BUILD_TESTING option
-#option(BUILD_TESTING "Enable building tests" ON)
 
-#if(BUILD_TESTING)
-#	enable_testing()
-#	add_subdirectory(test)
-#endif()
-
-# FetchContent calls for dependencies (beauty, SQLite, soci, ...)
 FetchContent_Declare(
     beauty
     GIT_REPOSITORY https://github.com/dfleury2/beauty
     GIT_TAG 1.0.6
     GIT_SHALLOW TRUE
-#	OVERRIDE_FIND_PACKAGE
 )
 FetchContent_MakeAvailable(beauty)
 
-FetchContent_Declare(
-    SQLite
-    GIT_REPOSITORY https://github.com/azadkuh/sqlite-amalgamation
-    GIT_TAG 3.38.2
-    GIT_SHALLOW TRUE
-    OVERRIDE_FIND_PACKAGE
-)
-FetchContent_MakeAvailable(SQLite)
-
-set(SOCI_SHARED OFF)
+set(SOCI_SHARED ON)
 set(SOCI_STATIC ON)
 set(SOCI_TESTS OFF)
 set(SOCI_VISIBILITY ON)
 set(SOCI_LTO ON)
 
-set(SOCI_POSTGRESQL OFF)
+if (PQSQL_FOUND)
+    set(SOCI_POSTGRESQL ON)
+else()
+    set(SOCI_POSTGRESQL OFF)
+endif()
+
 set(SOCI_SQLITE3 ON)
 set(SOCI_ORACLE OFF)
 set(SOCI_EMPTY OFF)
@@ -107,12 +72,8 @@ FetchContent_MakeAvailable(soci)
 
 add_subdirectory(src)
 
-# Now add our project's tests if requested.
-# We deliberately do this after FetchContent so dependency configuration
-# saw BUILD_TESTING=OFF and didn't add their test targets.
 if(BUILD_PROJECT_TESTS)
-  include(CTest)       # provides CTest support
+  include(CTest)
   enable_testing()
   add_subdirectory(test)
 endif()
-
