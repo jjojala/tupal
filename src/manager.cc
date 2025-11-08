@@ -712,14 +712,15 @@ namespace {
         std::shared_ptr<tupal::CompetitorManager> competitor_manager;
     };
 
-    #include <iostream>
     std::unique_ptr<soci::session> new_session(const std::string & connection_spec) {
 
         auto session = std::make_unique<soci::session>();
         session->open(connection_spec);
 
-        if (boost::istarts_with(connection_spec, "sqlite3://")) {
-            TUPAL_MESSAGE(std::cout) << "Opened SQLite3 database." << std::endl;
+        const auto backend_name = session->get_backend_name();
+        TUPAL_MESSAGE(std::cout) << "Opening " << backend_name << " database '" 
+                << connection_spec << "'" << std::endl;
+        if (backend_name == "sqlite3") {
             *session << "PRAGMA foreign_keys=ON;";
         }
 
