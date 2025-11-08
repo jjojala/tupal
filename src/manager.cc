@@ -237,21 +237,20 @@ namespace {
                 const auto first_bib = helper.at("first_bib").as_int().value();
 
                 soci::transaction trx(*soci_session);
-                *soci_session << "update start_groupset title=:title, start_time=:start_time, first_bib=:first_bib "
+                soci::statement stmt = (soci_session->prepare 
+                    << "update start_group set title=:title, start_time=:start_time, first_bib=:first_bib "
                         "where id=:id and comp_id=:comp_id",
-                    soci::use(title), soci::use(start_time), soci::use(first_bib), soci::use(id), soci::use(competition_id);
+                    soci::use(title), soci::use(start_time), soci::use(first_bib),
+                    soci::use(id), soci::use(competition_id));
+                stmt.execute(true);
+                switch (stmt.get_affected_rows()) {
+                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                    case 1: break;
+                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation), nullptr };
+                }
                 trx.commit();
 
-                if (soci_session->got_data())
-                    return { ok, {
-                        { "id", id },
-                        { "comp_id", competition_id },
-                        { "title", title },
-                        { "start_time", start_time },
-                        { "first_bib", first_bib }
-                    }};
-                else
-                    return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                return { ok, make_start_group(id, competition_id, title, start_time, first_bib) };
             }
 
             catch (const soci::soci_error & e) {
