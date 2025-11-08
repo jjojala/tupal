@@ -207,11 +207,12 @@ namespace {
             }
 
             catch (const soci::soci_error & e) {
-                if (e.get_error_category() == soci::soci_error::constraint_violation)
-                    return { tupal::make_error_code(tupal::error_code::duplicate_key), nullptr };
-                
-                TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
+                const auto ec = handle_soci_error(soci_session->get_backend_name(), e);
+                if (ec == tupal::make_error_condition(tupal::error_code::system_error)) {
+                    TUPAL_MESSAGE(std::cerr) << "SOCI system error: " << e.what() << std::endl;
+                }
+
+                return { ec, nullptr };
             }
         }
 
@@ -360,11 +361,12 @@ namespace {
             }
 
             catch (const soci::soci_error & e) {
-                if (e.get_error_category() == soci::soci_error::constraint_violation)
-                    return { tupal::make_error_code(tupal::error_code::duplicate_key), nullptr };
-                
-                TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
+                const auto ec = handle_soci_error(soci_session->get_backend_name(), e);
+                if (ec == tupal::make_error_condition(tupal::error_code::system_error)) {
+                    TUPAL_MESSAGE(std::cerr) << "SOCI system error: " << e.what() << std::endl;
+                }
+
+                return { ec, nullptr };
             }
 #endif
             return { ok, new_data };
@@ -502,11 +504,12 @@ namespace {
             }
 
             catch (const soci::soci_error & e) {
-                if (e.get_error_category() == soci::soci_error::constraint_violation)
-                    return { tupal::make_error_code(tupal::error_code::duplicate_key), nullptr };
-                
-                TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
+                const auto ec = handle_soci_error(soci_session->get_backend_name(), e);
+                if (ec == tupal::make_error_condition(tupal::error_code::system_error)) {
+                    TUPAL_MESSAGE(std::cerr) << "SOCI system error: " << e.what() << std::endl;
+                }
+
+                return { ec, nullptr };
             }
         }
 
@@ -665,12 +668,12 @@ namespace {
             }
 
             catch (const soci::soci_error & e) {
-                if (e.get_error_category() == soci::soci_error::constraint_violation
-                        || boost::icontains(e.what(), "unique constraint"))
-                    return { tupal::make_error_code(tupal::error_code::duplicate_key), nullptr };
-                
-                TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
+                const auto ec = handle_soci_error(soci_session->get_backend_name(), e);
+                if (ec == tupal::make_error_condition(tupal::error_code::system_error)) {
+                    TUPAL_MESSAGE(std::cerr) << "SOCI system error: " << e.what() << std::endl;
+                }
+
+                return { ec, nullptr };
             }
         }
 
