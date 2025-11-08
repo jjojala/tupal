@@ -10,7 +10,8 @@ FetchContent_MakeAvailable(doctest)
 add_executable(tests 
     test_main.cc
     test_competition_manager.cc
-    test_start_group_manager.cc)
+    test_start_group_manager.cc
+    test_competition_class_manager.cc)
 
 target_include_directories(tests 
     PRIVATE
