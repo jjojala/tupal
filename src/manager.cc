@@ -130,6 +130,10 @@ namespace {
             return tupal::make_error_code(tupal::error_code::duplicate_key);
         }
 
+        if (backend_name == "sqlite3" && boost::icontains(e.what(), "foreign key constraint")) {
+            return tupal::make_error_code(tupal::error_code::constraint_violation);
+        }
+
         return tupal::make_error_code(tupal::error_code::system_error);
     }
 
