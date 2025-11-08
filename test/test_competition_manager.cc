@@ -1,17 +1,8 @@
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest/doctest.h"
-
 #include "manager.hh"
 
-// defer creation until first use to avoid static init order / early dlopen problems
-static std::shared_ptr<tupal::CompetitionManager> get_competition_manager()
-{
-    static auto mgr = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
-    return mgr;
-}
 
 TEST_CASE("competition manager list (empty)") {
-    //auto competition_manager = get_competition_manager();
     auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
     auto [ec, competitions]  = competition_manager->list();
     CHECK(!ec);
@@ -20,7 +11,6 @@ TEST_CASE("competition manager list (empty)") {
 }
 
 TEST_CASE("competition manager create and get") {
-    //auto competition_manager = get_competition_manager();
     auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
 
     boost::json::value new_competition = boost::json::object {
@@ -41,7 +31,6 @@ TEST_CASE("competition manager create and get") {
 }
 
 TEST_CASE("competition manager update and remove") {
-    //auto competition_manager = get_competition_manager();
     auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
 
     boost::json::value new_competition = boost::json::object {
