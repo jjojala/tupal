@@ -641,7 +641,8 @@ namespace {
             }
 
             catch (const soci::soci_error & e) {
-                if (e.get_error_category() == soci::soci_error::constraint_violation)
+                if (e.get_error_category() == soci::soci_error::constraint_violation
+                        || boost::icontains(e.what(), "unique constraint"))
                     return { tupal::make_error_code(tupal::error_code::duplicate_key), nullptr };
                 
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
