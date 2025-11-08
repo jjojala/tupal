@@ -261,11 +261,19 @@ namespace {
 
         std::error_code remove(const std::string & competition_id, const std::string & id) {
             try {
-                *soci_session << "delete from start_group where id=:id and comp_id=:comp_id", soci::use(id), soci::use(competition_id);
-                if (soci_session->got_data())
-                    return std::error_code {};
+                soci::transaction trx(*soci_session);
+                soci::statement stmt = (soci_session->prepare <<
+                     "delete from start_group where id=:id and comp_id=:comp_id",
+                     soci::use(id), soci::use(competition_id));
+                stmt.execute(true);
+                switch (stmt.get_affected_rows()) {
+                    case 0: return tupal::make_error_code(tupal::error_code::unknown_key);
+                    case 1: break;
+                    default: return tupal::make_error_code(tupal::error_code::constraint_violation);
+                }
+                trx.commit();
 
-                return tupal::make_error_code(tupal::error_code::unknown_key);
+                return std::error_code {};
             }
 
             catch (const soci::soci_error & e) {
