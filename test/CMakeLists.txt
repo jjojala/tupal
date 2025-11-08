@@ -7,25 +7,26 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(doctest)
 
-add_executable(tests test_competition_manager.cc)
+add_executable(tests 
+    test_main.cc
+    test_competition_manager.cc
+    test_start_group_manager.cc)
 
-target_include_directories(
-        tests 
+target_include_directories(tests 
     PRIVATE
         ${CMAKE_SOURCE_DIR}/src
         ${doctest_SOURCE_DIR})
 
-target_link_libraries(
-        tests
+target_link_libraries(tests
     PRIVATE
         tupal_core
         boost_json
         soci_core_static)
 
-add_test(NAME tupal_manager_test COMMAND $<TARGET_FILE:tests>)
+add_test(NAME tests COMMAND $<TARGET_FILE:tests>)
 
 set_tests_properties(
-        tupal_manager_test
+        tests
     PROPERTIES 
         LABELS "tupal" 
         TIMEOUT 10
