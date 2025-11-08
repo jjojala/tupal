@@ -152,15 +152,22 @@ namespace {
         virtual tupal::result_type list(const std::string & competition_id) const {
             try {
                 soci::rowset<> rows = (soci_session->prepare 
-                    << "select id, comp_id, title, start_time, first_bib from start_group where comp_id=:comp_id",
+                    << "select s.id, c.id, s.title, s.start_time, first_bib from competition c "
+                            "left join start_group s on c.id = s.comp_id where c.id=:comp_id",
                         soci::use(competition_id));
+    
+                auto begin = rows.begin();
+                if (begin == rows.end()) { // competition not found
+                    return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                }
 
                 boost::json::array objects;
-
-                std::transform(rows.begin(), rows.end(), std::back_insert_iterator(objects), [](const soci::row & row) -> boost::json::value { 
-                    return make_start_group(row.get<std::string>(0),
-                        row.get<std::string>(1), row.get<std::string>(2), row.get<std::string>(3), row.get<int>(4));
-                });
+                if (begin->get_indicator(0) != soci::i_null) {
+                    std::transform(begin, rows.end(), std::back_insert_iterator(objects), [](const soci::row & row) -> boost::json::value { 
+                        return make_start_group(row.get<std::string>(0),
+                            row.get<std::string>(1), row.get<std::string>(2), row.get<std::string>(3), row.get<int>(4));
+                    });
+                }
 
                 return { ok, std::move(objects) };
             }
