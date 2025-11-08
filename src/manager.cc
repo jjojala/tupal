@@ -109,6 +109,30 @@ namespace {
         };
     }
 
+    std::error_code handle_soci_error(const std::string & backend_name, const soci::soci_error & e) {
+        switch (e.get_error_category()) {
+            case soci::soci_error::unknown:
+                break;
+            case soci::soci_error::no_data:
+                return tupal::make_error_code(tupal::error_code::unknown_key);
+            case soci::soci_error::constraint_violation:
+                return tupal::make_error_code(tupal::error_code::constraint_violation);
+            case soci::soci_error::connection_error:
+            case soci::soci_error::invalid_statement:
+            case soci::soci_error::no_privilege:
+            case soci::soci_error::unknown_transaction_state:
+            case soci::soci_error::system_error:
+            default:
+                return tupal::make_error_code(tupal::error_code::system_error);
+        }
+
+        if (backend_name == "sqlite3" && boost::icontains(e.what(), "unique constraint")) {
+            return tupal::make_error_code(tupal::error_code::duplicate_key);
+        }
+
+        return tupal::make_error_code(tupal::error_code::system_error);
+    }
+
     class StartGroupManagerImpl : public tupal::StartGroupManager
     {
     public:
