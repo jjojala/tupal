@@ -180,17 +180,16 @@ namespace {
 
         virtual tupal::result_type get(const std::string & competition_id, const std::string & id) const {
             try {
-                std::string id, comp_id, title, start_time;
+                std::string sg_id, comp_id, title, start_time;
                 int first_bib;
                 *soci_session << "select id, comp_id, title, start_time, first_bib from start_group where id = :id and comp_id=:comp_id",
-                    soci::into(id), soci::into(comp_id), soci::into(title), soci::into(start_time), soci::into(first_bib);
+                    soci::into(sg_id), soci::into(comp_id), soci::into(title), soci::into(start_time), soci::into(first_bib),
+                    soci::use(id), soci::use(competition_id);
                     
                 if (soci_session->got_data()) {
-                    TUPAL_MESSAGE(std::cout) << "select id=" << id << ", competition_id" << comp_id << " --> got data!";
                     return { ok, make_start_group(id, comp_id, title, start_time, first_bib) };
                 }
 
-                TUPAL_MESSAGE(std::cout) << "select id=" << id << ", competition_id" << comp_id << " --> got data!";
                 return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
             }
 
