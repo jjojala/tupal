@@ -54,15 +54,16 @@ namespace {
         ")";
     static const char * const SCHEMA_COMPETITOR =
         "create table competitor ("
-        "   id text not null,"
-        "   comp_id text not null,"
+        "   id text not null, "
+        "   comp_id text not null, "
+        "   comp_class_id text not null, "
         "   bib integer not null,"
         "   start_time_offset text not null," // in ISO-8601 duration, e.g. 'P5M30S'
         "   finish_time text," // ISO-8601 datetime, e.g. '2025-07-26T18:59:21.000+03:00'
         "   status integer," // 1-dns, 2-dnf, 3-dsq, any other-open
         "   name text not null,"
         "   primary key (id, comp_id),"
-        "   foreign key (comp_id) references competition(id)"
+        "   foreign key (comp_class_id, comp_id) references competition_class"
         ")";
 
     static boost::uuids::random_generator uuid_generator;
@@ -79,11 +80,13 @@ namespace {
         };
     }
 
-    boost::json::value make_competitor(const std::string & id, const std::string & comp_id, int bib,
-            const std::string & start_time_offset, const std::string & finish_time, int status, const std::string & name) {
+    boost::json::value make_competitor(const std::string & id, const std::string & comp_id,
+            const std::string & comp_class_id, int bib, const std::string & start_time_offset,
+            const std::string & finish_time, int status, const std::string & name) {
         return boost::json::object {
             { "id", id },
             { "comp_id", comp_id },
+            { "comp_class_id", comp_class_id },
             { "bib", bib },
             { "start_time_offset", start_time_offset },
             { "finish_time", finish_time },
@@ -482,14 +485,15 @@ namespace {
 
         virtual tupal::result_type get(const std::string & competition_id, const std::string & id) const {
             try {
-                std::string competitor_id, comp_id, start_time_offset, finish_time, name;
+                std::string competitor_id, comp_id, comp_class_id, start_time_offset, finish_time, name;
                 int bib, status;
 
-                *soci_session << "select id, comp_id, bib, start_time_offset, finish_time, status, name from competitor where comp_id=:comp_id and id=:id",
-                    soci::into(competitor_id), soci::into(comp_id), soci::into(bib), soci::into(start_time_offset), soci::into(finish_time), soci::into(status), soci::into(name),
+                *soci_session << "select id, comp_id, comp_class_id, bib, start_time_offset, finish_time, status, name from competitor where comp_id=:comp_id and id=:id",
+                    soci::into(competitor_id), soci::into(comp_id), soci::into(comp_class_id), soci::into(bib), soci::into(start_time_offset), soci::into(finish_time), 
+                        soci::into(status), soci::into(name),
                     soci::use(competition_id), soci::use(id);
                 if (soci_session->got_data())
-                    return { ok, make_competitor(competitor_id, comp_id, bib, start_time_offset, finish_time, status, name) };
+                    return { ok, make_competitor(competitor_id, comp_id, comp_class_id, bib, start_time_offset, finish_time, status, name) };
 
                 return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
             }
@@ -505,18 +509,21 @@ namespace {
                 auto helper = tupal::json_helper(new_data).as_object();
                 const auto id = helper.at("id").as_string().or_else(boost::lexical_cast<std::string>(uuid_generator()));
                 const auto bib = helper.at("bib").as_int().value();
+                const auto comp_class_id = helper.at("comp_class_id").as_string().value();
                 const auto start_time_offset = helper.at("start_time_offset").as_string().value();
                 const auto finish_time = helper.at("finish_time").as_string().value();
                 const auto status = helper.at("status").as_int().value();
                 const auto name = helper.at("name").as_string().value();
  
                 soci::transaction trx(*soci_session);
-                *soci_session << "insert into competitor(id, comp_id, bib, start_time_offset, finish_time, status, name) "
-                        "values (:id, :comp_id, :bib, :start_time, :finish_time, :status, :name)",
-                    soci::use(id), soci::use(competition_id), soci::use(bib), soci::use(start_time_offset), soci::use(finish_time), soci::use(status), soci::use(name);
+                *soci_session <<
+                    "insert into competitor(id, comp_id, comp_class_id, bib, start_time_offset, finish_time, status, name) "
+                        "values (:id, :comp_id, :comp_class_id, :bib, :start_time, :finish_time, :status, :name)",
+                    soci::use(id), soci::use(competition_id), soci::use(comp_class_id), soci::use(bib),
+                    soci::use(start_time_offset), soci::use(finish_time), soci::use(status), soci::use(name);
                 trx.commit();
 
-                return { ok, make_competitor(id, competition_id, bib, start_time_offset, finish_time, status, name) };
+                return { ok, make_competitor(id, competition_id, comp_class_id, bib, start_time_offset, finish_time, status, name) };
             }
 
             catch (const soci::soci_error & e) {
@@ -534,19 +541,20 @@ namespace {
                 auto helper = tupal::json_helper(new_data).as_object();
                 const auto id = helper.at("id").as_string().value();
                 const auto bib = helper.at("bib").as_int().value();
+                const auto comp_class_id = helper.at("comp_class_id").as_string().value();
                 const auto start_time_offset = helper.at("start_time_offset").as_string().value();
                 const auto finish_time = helper.at("finish_time").as_string().value();
                 const auto status = helper.at("status").as_int().value();
                 const auto name = helper.at("name").as_string().value();
 
                 soci::transaction trx(*soci_session);
-                *soci_session << "update competitor set bib=:bib, start_time_offset=:start_time_offset, finish_time=:finish_time, status=:status, name=:name "
+                *soci_session << "update competitor set bib=:bib, comp_class_id=:comp_class_id, start_time_offset=:start_time_offset, finish_time=:finish_time, status=:status, name=:name "
                         "where id=:id and comp_id=:comp_id",
-                    soci::use(bib), soci::use(start_time_offset), soci::use(finish_time), soci::use(status), soci::use(name), soci::use(id), soci::use(competition_id);
+                    soci::use(bib), soci::use(comp_class_id), soci::use(start_time_offset), soci::use(finish_time), soci::use(status), soci::use(name), soci::use(id), soci::use(competition_id);
                 trx.commit();
 
                 if (soci_session->got_data())
-                    return { ok, make_competitor(id, competition_id, bib, start_time_offset, finish_time, status, name) };
+                    return { ok, make_competitor(id, competition_id, comp_class_id, bib, start_time_offset, finish_time, status, name) };
                 else
                     return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
             }
