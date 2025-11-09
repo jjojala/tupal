@@ -460,19 +460,32 @@ namespace {
 
         virtual tupal::result_type list(const std::string & competition_id) const {
             try {
-                soci::rowset<> rows = (soci_session->prepare << "select id, comp_id, bib, start_time_offset, finish_time, status, name "
-                        "from competitor where comp_id=:comp_id", soci::use(competition_id));
+                soci::rowset<> rows = (soci_session->prepare << 
+                        "select "
+                        "   ct.id, cc.comp_id, cc.id, ct.bib, ct.start_time_offset, ct.finish_time, ct.status, ct.name "
+                        "from competition_class cc "
+                        "left join competitor ct on ct.comp_class_id = cc.id "
+                        "where cc.comp_id = :comp_id",
+                    soci::use(competition_id));
+
+                auto begin = rows.begin();
+                if (begin == rows.end()) { // no competition found
+                    return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                }
 
                 boost::json::array objects;
-                std::transform(rows.begin(), rows.end(), std::back_insert_iterator(objects), [&](const soci::row & row) {
-                    return make_competitor(row.get<std::string>(0),
-                            row.get<std::string>(1),
-                            row.get<int>(2),
-                            row.get<std::string>(3),
-                            row.get<std::string>(4),
-                            row.get<int>(5),
-                            row.get<std::string>(6));
-                });
+                if (begin->get_indicator(0) != soci::i_null) {
+                    std::transform(begin, rows.end(), std::back_insert_iterator(objects), [&](const soci::row & row) {
+                        return make_competitor(row.get<std::string>(0),
+                                row.get<std::string>(1),
+                                row.get<std::string>(2),
+                                row.get<int>(3),
+                                row.get<std::string>(4),
+                                row.get<std::string>(5),
+                                row.get<int>(6),
+                                row.get<std::string>(7));
+                    });
+                }
 
                 return { ok, std::move(objects) };
             }
