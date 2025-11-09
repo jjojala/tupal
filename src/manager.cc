@@ -307,11 +307,10 @@ namespace {
         virtual tupal::result_type list(const std::string & competition_id) const {
             try {
                 soci::rowset<> rows = (soci_session->prepare << 
-                        "select     cc.id, c.id, sg.id, cc.title "
-                        "from       competition_class cc "
-                        "left join  competition c on cc.comp_id = c.id "
-                        "left join  start_group sg on cc.start_group_id = sg.id and cc.comp_id "
-                        "where      c.id = :comp_id ",
+                        "select     sg.comp_id, cc.id, cc.start_group_id, cc.title "
+                        "from       start_group sg "
+                        "left join  competition_class cc on cc.start_group_id = sg.id and cc.comp_id = sg.comp_id "
+                        "where      sg.comp_id = :comp_id ",
                     soci::use(competition_id));
 
                 auto begin = rows.begin();
@@ -320,10 +319,10 @@ namespace {
                 }
 
                 boost::json::array objects;
-                if (begin->get_indicator(0) != soci::i_null || begin->get_indicator(2) != soci::i_null) {
+                if (begin->get_indicator(1) != soci::i_null) {
                     std::transform(begin, rows.end(), std::back_insert_iterator(objects), [](const soci::row & row) -> boost::json::value { 
                         return make_competition_class(row.get<std::string>(2),
-                            row.get<std::string>(0), row.get<std::string>(3));
+                            row.get<std::string>(1), row.get<std::string>(3));
                     });
                 }
                 return { ok, std::move(objects) };                
