@@ -355,3 +355,60 @@ TEST_CASE("competitor manager update (existing)") {
     CHECK(fetched_competitor.as_object().at("status").as_int64() == 1);
     CHECK(fetched_competitor.as_object().at("name").as_string() == "Alice Smith");
 }
+
+TEST_CASE("competitor manager remove (unknown)") {
+    auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
+    auto competitor_manager = competition_manager->getCompetitorManager();
+
+    auto remove_ec = competitor_manager->remove("comp-001", "competitor-001");
+    CHECK(remove_ec == tupal::make_error_code(tupal::error_code::unknown_key));
+}
+
+TEST_CASE("competitor manager create and remove") {
+    auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
+    auto start_group_manager = competition_manager->getStartGroupManager();
+    auto competition_class_manager = competition_manager->getCompetitionClassManager();
+    auto competitor_manager = competition_manager->getCompetitorManager();
+
+    auto [comp_create_ec, created_competition] = competition_manager->create(
+        boost::json::object {
+            { "id", "comp-001" },
+            { "date", "2024-01-01" },
+            { "title", "New Year Competition" }
+        });
+    CHECK(!comp_create_ec);
+
+    auto [sg_create_ec, created_start_group] = start_group_manager->create("comp-001",
+        boost::json::object {
+            { "id", "sg-001" },
+            { "title", "Start Group 1" },
+            { "start_time", "2024-01-01T10:00:00Z" },
+            { "first_bib", 100 }
+        });
+    CHECK(!sg_create_ec);
+
+    auto [cc_create_ec, created_competition_class] = competition_class_manager->create("comp-001",
+        boost::json::object {
+            { "id", "class-001" },
+            { "title", "P10" },
+            { "start_group_id", "sg-001" }
+        });
+    CHECK(!cc_create_ec);
+
+    boost::json::value new_competitor = boost::json::object {
+        { "id", "competitor-001" },
+        { "comp_class_id", "class-001" },
+        { "bib", 101 },
+        { "start_time_offset", "00:10:00" },
+        { "finish_time", "" },
+        { "status", 0 },
+        { "name", "Alice" }
+    };
+    auto [create_ec, created_competitor] = competitor_manager->create("comp-001", new_competitor);
+    CHECK(!create_ec);
+
+    auto remove_ec = competitor_manager->remove("comp-001", "competitor-001");
+    CHECK(!remove_ec);
+    auto [get_ec, fetched_competitor] = competitor_manager->get("comp-001", "competitor-001");
+    CHECK(get_ec == tupal::make_error_code(tupal::error_code::unknown_key));
+}
