@@ -563,15 +563,24 @@ namespace {
                 const auto name = helper.at("name").as_string().value();
 
                 soci::transaction trx(*soci_session);
-                *soci_session << "update competitor set bib=:bib, comp_class_id=:comp_class_id, start_time_offset=:start_time_offset, finish_time=:finish_time, status=:status, name=:name "
+                soci::statement stmt = (soci_session->prepare <<
+                        "update competitor set "
+                        "   bib=:bib, comp_class_id=:comp_class_id, start_time_offset=:start_time_offset, "
+                        "   finish_time=:finish_time, status=:status, name=:name "
                         "where id=:id and comp_id=:comp_id",
-                    soci::use(bib), soci::use(comp_class_id), soci::use(start_time_offset), soci::use(finish_time), soci::use(status), soci::use(name), soci::use(id), soci::use(competition_id);
+                    soci::use(bib), soci::use(comp_class_id), soci::use(start_time_offset), 
+                    soci::use(finish_time), soci::use(status), soci::use(name), 
+                    soci::use(id), soci::use(competition_id));
+                stmt.execute(true);
+                switch (stmt.get_affected_rows()) {
+                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                    case 1: break;
+                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation), nullptr };
+                }
                 trx.commit();
 
-                if (soci_session->got_data())
-                    return { ok, make_competitor(id, competition_id, comp_class_id, bib, start_time_offset, finish_time, status, name) };
-                else
-                    return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                return { ok, make_competitor(id, competition_id, comp_class_id, bib, start_time_offset,
+                    finish_time, status, name) };
             }
 
             catch (const soci::soci_error & e) {
