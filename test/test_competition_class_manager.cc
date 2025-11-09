@@ -245,3 +245,50 @@ TEST_CASE("competition class manager update (existing)") {
     CHECK(fetched_competition_class.is_object());
     CHECK(fetched_competition_class.as_object().at("title").as_string() == "P12");
 }
+
+TEST_CASE("competition class manager remove (unknown)") {
+    auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
+    auto competition_class_manager = competition_manager->getCompetitionClassManager();
+
+    auto remove_ec = competition_class_manager->remove("comp-001", "class-001");
+    CHECK(remove_ec == tupal::make_error_condition(tupal::error_code::unknown_key));
+}
+
+TEST_CASE("competition class manager remove (existing)") {
+    auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
+    auto start_group_manager = competition_manager->getStartGroupManager();
+    auto competition_class_manager = competition_manager->getCompetitionClassManager();
+
+    auto [comp_create_ec, created_competition] = competition_manager->create(
+        boost::json::object {
+            { "id", "comp-001" },
+            { "date", "2024-01-01" },
+            { "title", "New Year Competition" }
+        });
+    CHECK(!comp_create_ec);
+
+    auto [sg_create_ec, created_start_group] = start_group_manager->create("comp-001",
+        boost::json::object {
+            { "id", "sg-001" },
+            { "title", "Start Group 1" },
+            { "start_time", "2024-01-01T10:00:00Z" },
+            { "first_bib", 100 }
+        });
+    CHECK(!sg_create_ec);
+
+    boost::json::value new_competition_class = boost::json::object {
+        { "id", "class-001" },
+        { "title", "P10" },
+        { "start_group_id", "sg-001" }
+    };
+
+    auto [create_ec, created_competition_class] = competition_class_manager->create("comp-001", new_competition_class);
+    CHECK(!create_ec);
+    CHECK(created_competition_class.is_object());
+    CHECK(created_competition_class.as_object().at("id").as_string() == "class-001");
+
+    auto remove_ec = competition_class_manager->remove("comp-001", "class-001");
+    CHECK(!remove_ec);
+    auto [get_ec, fetched_competition_class] = competition_class_manager->get("comp-001", "class-001");
+    CHECK(get_ec == tupal::make_error_condition(tupal::error_code::unknown_key));
+}
