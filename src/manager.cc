@@ -45,11 +45,12 @@ namespace {
         ")";
     static const char * const SCHEMA_COMPETITION_CLASS =
         "create table competition_class ("
-        "   id text not null,"
-        "   comp_id text not null,"
-        "   title text not null,"
+        "   id text not null, "
+        "   comp_id text not null, "
+        "   start_group_id text not null, "
+        "   title text not null, "
         "   primary key (id, comp_id),"
-        "   foreign key (comp_id) references competition(id)"
+        "   foreign key (start_group_id, comp_id) references start_group"
         ")";
     static const char * const SCHEMA_COMPETITOR =
         "create table competitor ("
@@ -105,7 +106,7 @@ namespace {
         return boost::json::object {
             { "start_group_id", start_group_id },
             { "id", id },
-            { "name", name }
+            { "title", name }
         };
     }
 
@@ -304,41 +305,34 @@ namespace {
         }
 
         virtual tupal::result_type list(const std::string & competition_id) const {
-#if 0
-    id text primary key,
-    comp_id text,
-    title text not null,
-    start_time text not null,
-    first_bib integer not null,
-    foreign key (comp_id) references competition(id)
-#endif
-
-#if 0
             try {
-                soci::rowset<> rows = (soci_session->prepare << "select id, date, title from competition");
+                soci::rowset<> rows = (soci_session->prepare << 
+                        "select     cc.id, c.id, sg.id, cc.title "
+                        "from       competition_class cc "
+                        "left join  competition c on cc.comp_id = c.id "
+                        "left join  start_group sg on cc.start_group_id = sg.id and cc.comp_id "
+                        "where      c.id = :comp_id ",
+                    soci::use(competition_id));
 
-                boost::json::array objects;
-                for (auto it = rows.begin(); it != rows.end(); it++) {
-                    objects.emplace_back(
-                        boost::json::object{{"id", it->get<std::string>(0)},
-                                        {"date", it->get<std::string>(1)},
-                                        {"title", it->get<std::string>(2)}});
+                auto begin = rows.begin();
+                if (begin == rows.end()) { // no competition found
+                    return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
                 }
 
-                return { ok, std::move(objects) };
+                boost::json::array objects;
+                if (begin->get_indicator(0) != soci::i_null || begin->get_indicator(2) != soci::i_null) {
+                    std::transform(begin, rows.end(), std::back_insert_iterator(objects), [](const soci::row & row) -> boost::json::value { 
+                        return make_competition_class(row.get<std::string>(2),
+                            row.get<std::string>(0), row.get<std::string>(3));
+                    });
+                }
+                return { ok, std::move(objects) };                
             }
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
                 return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
             }
-#endif
-            boost::json::array a = {
-                { { "start_group_id", "sg-id-1" }, { "id", "class-id-1" }, { "name", "P10" } },
-                { { "start_group_id", "sg-id-1" }, { "id", "class-id-2" }, { "name", "T10" } }
-            };
-
-            return { ok, std::move(a) };
         }
 
         virtual tupal::result_type get(const std::string & competition_id, const std::string & id) const {
@@ -367,16 +361,16 @@ namespace {
                 auto helper = tupal::json_helper(new_data).as_object();
                 const auto id = helper.at("id").as_string().or_else(boost::lexical_cast<std::string>(uuid_generator()));
                 const auto title = helper.at("title").as_string().value();
-                const auto date = boost::gregorian::to_iso_extended_string(helper.at("date").as_date().value());
+                const auto start_group_id = helper.at("start_group_id").as_string().value();
 
                 soci::transaction trx(*soci_session);
-
-                *soci_session << "insert into competition(id, date, title) values (:id, :date, :title)",
-                    soci::use(id), soci::use(date), soci::use(title);
-
+                *soci_session <<
+                        "insert into competition_class(id, comp_id, start_group_id, title) "
+                        "values (:id, :comp_id, :start_group_id, :title)",
+                    soci::use(id), soci::use(competition_id), soci::use(start_group_id), soci::use(title);
                 trx.commit();
 
-                return { ok, {{"id", id}, {"date", date}, {"title", title}} };
+                return { ok, make_competition_class(start_group_id, id, title) };
             }
 
             catch (const soci::soci_error & e) {
@@ -387,8 +381,6 @@ namespace {
 
                 return { ec, nullptr };
             }
-#endif
-            return { ok, new_data };
         }
 
         virtual tupal::result_type update(const std::string & competition_id, const boost::json::value & new_data) {
