@@ -5,6 +5,7 @@
 
 #include <beauty/beauty.hpp>
 #include <boost/json.hpp>
+#include <cxxopts.hpp>   // added include
 
 #include "manager.hh"
 #include "json_helper.hh"
@@ -131,13 +132,26 @@ namespace {
     }
 }
 
-int main() {
+int main(int argc, char** argv) {
 
 	beauty::server server;
 	enable_swagger(server);
 
-	std::shared_ptr<tupal::CompetitionManager> manager = tupal::CompetitionManager::new_competition_manager("sqlite3://tupal.db");
-	sessions_type sessions;
+    cxxopts::Options opts("tupald", "Backend daemon for tupal results management system");
+    opts.add_options()
+      ("d,db", "Database URL", cxxopts::value<std::string>()->default_value("sqlite3://:memory:"))
+      ("h,help", "This usage");
+
+    auto parsed = opts.parse(argc, argv);
+    if (parsed.count("help")) {
+        std::cout << opts.help() << '\n';
+        return 0;
+    }
+
+    std::shared_ptr<tupal::CompetitionManager> manager =
+        tupal::CompetitionManager::new_competition_manager(parsed["db"].as<std::string>());
+
+    sessions_type sessions;
 	
 	server.add_route("/").get([](const auto & req, auto & res) { res.body() = "The app...\n"; });
 

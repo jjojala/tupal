@@ -7,18 +7,12 @@ project(tupal LANGUAGES CXX VERSION ${VERSION})
 
 include(FetchContent)
 
-# control whether this project builds its tests
 option(BUILD_PROJECT_TESTS "Build tupal's tests" ON)
-# control whether external/fetchcontent deps build their tests (default OFF)
 option(BUILD_DEPENDENCY_TESTS "Allow dependencies to build their tests" OFF)
 
-# Prevent dependencies from building their tests by forcing BUILD_TESTING=OFF
-# before FetchContent/FetchContent_MakeAvailable runs.
 if(NOT BUILD_DEPENDENCY_TESTS)
   set(BUILD_TESTING OFF CACHE BOOL "Disable building tests for dependencies" FORCE)
 endif()
-
-#find_package(ICU REQUIRED COMPONENTS uc i18n)
 
 find_package(Boost REQUIRED)
 find_package(SQLite3 REQUIRED)
@@ -69,6 +63,14 @@ if (NOT soci_POPULATED)
 endif()
 set(SOCI_TESTS OFF CACHE BOOL "Disable building tests for soci" FORCE)
 FetchContent_MakeAvailable(soci)
+
+FetchContent_Declare(
+  cxxopts
+  GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
+  GIT_TAG v3.0.0
+  GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(cxxopts)
 
 add_subdirectory(src)
 
