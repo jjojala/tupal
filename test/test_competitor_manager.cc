@@ -256,3 +256,12 @@ TEST_CASE("competitor manager create and get") {
     CHECK(fetched_competitor.is_object());
     CHECK(fetched_competitor.as_object().at("name").as_string() == "Alice");
 }
+
+TEST_CASE("competitor manager get (unknown)") {
+    auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
+    auto competitor_manager = competition_manager->getCompetitorManager();
+
+    auto [get_ec, fetched_competitor] = competitor_manager->get("comp-001", "competitor-001");
+    CHECK(get_ec == tupal::make_error_code(tupal::error_code::unknown_key));
+}
+}
