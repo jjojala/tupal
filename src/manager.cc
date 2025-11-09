@@ -374,9 +374,11 @@ namespace {
 
             catch (const soci::soci_error & e) {
                 const auto ec = handle_soci_error(soci_session->get_backend_name(), e);
-                if (ec == tupal::make_error_condition(tupal::error_code::system_error)) {
+                if (ec == tupal::make_error_condition(tupal::error_code::constraint_violation))
+                    return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+
+                if (ec == tupal::make_error_condition(tupal::error_code::system_error))
                     TUPAL_MESSAGE(std::cerr) << "SOCI system error: " << e.what() << std::endl;
-                }
 
                 return { ec, nullptr };
             }
