@@ -355,7 +355,6 @@ namespace {
         }
 
         virtual tupal::result_type create(const std::string & competition_id, const boost::json::value & new_data) {
-#if 0
             try {
                 auto helper = tupal::json_helper(new_data).as_object();
                 const auto id = helper.at("id").as_string().or_else(boost::lexical_cast<std::string>(uuid_generator()));
@@ -755,8 +754,6 @@ namespace {
         session->open(connection_spec);
 
         const auto backend_name = session->get_backend_name();
-        TUPAL_MESSAGE(std::cout) << "Opening " << backend_name << " database '" 
-                << connection_spec << "'" << std::endl;
         if (backend_name == "sqlite3") {
             *session << "PRAGMA foreign_keys=ON;";
         }
