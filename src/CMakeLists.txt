@@ -10,7 +10,8 @@ set_target_properties(tupal_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_include_directories(tupal_core 
     PUBLIC
         ${soci_SOURCE_DIR}/include
-        ${soci_BINARY_DIR}/include)
+        ${soci_BINARY_DIR}/include
+        ${cxxopts_SOURCE_DIR}/include)
 
 target_link_libraries(tupal_core
     PRIVATE
