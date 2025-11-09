@@ -415,22 +415,23 @@ namespace {
         }
 
         std::error_code remove(const std::string & competition_id, const std::string & id) {
-#if 0
             try {
-                *soci_session << "delete from competition where id=:id and comp_id=:comp_id",
-                    soci::use(id), soci::use(competition_id);
-                if (soci_session->got_data())
-                    return {};
-
-                return tupal::make_error_code(tupal::error_code::unknown_key);
+                soci::transaction trx(*soci_session);
+                soci::statement stmt = (soci_session->prepare <<
+                        "delete from competition_class where id=:id and comp_id=:comp_id",
+                    soci::use(id), soci::use(competition_id));
+                stmt.execute(true);
+                switch (stmt.get_affected_rows()) {
+                    case 0: return tupal::make_error_code(tupal::error_code::unknown_key);
+                    case 1: trx.commit(); return ok;
+                    default: return tupal::make_error_code(tupal::error_code::constraint_violation);
+                }
             }
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
                 return tupal::make_error_code(tupal::error_code::system_error);
             }
-#endif
-            return ok;
         }
 
         static void init_database(soci::session & session) {
