@@ -335,13 +335,16 @@ namespace {
         }
 
         virtual tupal::result_type get(const std::string & competition_id, const std::string & id) const {
-#if 0
+
             try {
-                std::string result_id, date, title;
-                *soci_session << "select id, date, title from competition where id = :id",
-                    soci::into(result_id), soci::into(date), soci::into(title), soci::use(id);
+                std::string comp_id, cc_id, sg_id, title;
+                *soci_session << 
+                        "select comp_id, id, start_group_id, title from competition_class "
+                        "where id = :id and comp_id=:comp_id",
+                    soci::into(comp_id), soci::into(cc_id), soci::into(sg_id), soci::into(title),
+                    soci::use(id), soci::use(competition_id);
                 if (soci_session->got_data())
-                    return { ok, {{ "id", result_id}, {"date", date}, {"title", title}} };
+                    return { ok, make_competition_class(sg_id, cc_id, title) };
 
                 return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
             }
@@ -350,8 +353,6 @@ namespace {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
                 return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
             }
-#endif
-            return { ok, { { "start_group_id", "sg-id-1" }, { "id", "class-id-1" }, { "name", "P10" } } };
         }
 
         virtual tupal::result_type create(const std::string & competition_id, const boost::json::value & new_data) {
