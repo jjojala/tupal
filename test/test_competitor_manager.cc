@@ -1,3 +1,122 @@
 #include "doctest/doctest.h"
 #include "manager.hh"
 
+TEST_CASE("competition manager list (no comp)") {
+    auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
+    auto competitor_manager = competition_manager->getCompetitorManager();
+
+    auto [ec, competitions]  = competitor_manager->list("comp-001");
+    CHECK(ec == tupal::make_error_code(tupal::error_code::unknown_key));
+}
+
+TEST_CASE("competitor manager list (no comp class)") {
+    auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
+    auto competitor_manager = competition_manager->getCompetitorManager();
+
+    auto [comp_create_ec, created_competition] = competition_manager->create(
+        boost::json::object {
+            { "id", "comp-001" },
+            { "date", "2024-01-01" },
+            { "title", "New Year Competition" }
+        });
+    CHECK(!comp_create_ec);
+
+    auto [ec, competitions]  = competitor_manager->list("comp-001");
+    CHECK(ec == tupal::make_error_code(tupal::error_code::unknown_key));
+}
+
+TEST_CASE("competitor manager list (no data)") {
+    auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
+    auto start_group_manager = competition_manager->getStartGroupManager();
+    auto competition_class_manager = competition_manager->getCompetitionClassManager();
+    auto competitor_manager = competition_manager->getCompetitorManager();
+
+    auto [comp_create_ec, created_competition] = competition_manager->create(
+        boost::json::object {
+            { "id", "comp-001" },
+            { "date", "2024-01-01" },
+            { "title", "New Year Competition" }
+        });
+    CHECK(!comp_create_ec);
+
+    auto [sg_create_ec, created_start_group] = start_group_manager->create("comp-001",
+        boost::json::object {
+            { "id", "sg-001" },
+            { "title", "Start Group 1" },
+            { "start_time", "2024-01-01T10:00:00Z" },
+            { "first_bib", 100 }
+        });
+    CHECK(!sg_create_ec);
+
+    auto [cc_create_ec, created_competition_class] = competition_class_manager->create("comp-001",
+        boost::json::object {
+            { "id", "class-001" },
+            { "title", "P10" },
+            { "start_group_id", "sg-001" }
+        });
+    CHECK(!cc_create_ec);
+
+    auto [list_ec, competitors]  = competitor_manager->list("comp-001");
+    CHECK(!list_ec);
+    CHECK(competitors.is_array());
+    CHECK(competitors.as_array().size() == 0);
+}
+
+TEST_CASE("competitor manager list (with data)") {
+    auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
+    auto start_group_manager = competition_manager->getStartGroupManager();
+    auto competition_class_manager = competition_manager->getCompetitionClassManager();
+    auto competitor_manager = competition_manager->getCompetitorManager();
+
+    auto [comp_create_ec, created_competition] = competition_manager->create(
+        boost::json::object {
+            { "id", "comp-001" },
+            { "date", "2024-01-01" },
+            { "title", "New Year Competition" }
+        });
+    CHECK(!comp_create_ec);
+
+    auto [sg_create_ec, created_start_group] = start_group_manager->create("comp-001",
+        boost::json::object {
+            { "id", "sg-001" },
+            { "title", "Start Group 1" },
+            { "start_time", "2024-01-01T10:00:00Z" },
+            { "first_bib", 100 }
+        });
+    CHECK(!sg_create_ec);
+
+    auto [cc_create_ec, created_competition_class] = competition_class_manager->create("comp-001",
+        boost::json::object {
+            { "id", "class-001" },
+            { "title", "P10" },
+            { "start_group_id", "sg-001" }
+        });
+    CHECK(!cc_create_ec);
+
+    boost::json::value new_competitor1 = boost::json::object {
+        { "id", "competitor-001" },
+        { "comp_class_id", "class-001" },
+        { "bib", 101 },
+        { "start_time_offset", "00:10:00" },
+        { "finish_time", "" },
+        { "status", 0 },
+        { "name", "Alice" }
+    };
+    boost::json::value new_competitor2 = boost::json::object {
+        { "id", "competitor-002" },
+        { "comp_class_id", "class-001" },
+        { "bib", 102 },
+        { "start_time_offset", "00:15:00" },
+        { "finish_time", "" },
+        { "status", 0 },
+        { "name", "Bob" }
+    };
+    auto [create_ec1, created_competitor1] = competitor_manager->create("comp-001", new_competitor1);
+    CHECK(!create_ec1);
+    auto [create_ec2, created_competitor2] = competitor_manager->create("comp-001", new_competitor2);
+    CHECK(!create_ec2); 
+    auto [list_ec, competitors]  = competitor_manager->list("comp-001");
+    CHECK(!list_ec);
+    CHECK(competitors.is_array());
+    CHECK(competitors.as_array().size() == 2);
+}
