@@ -385,30 +385,33 @@ namespace {
         }
 
         virtual tupal::result_type update(const std::string & competition_id, const boost::json::value & new_data) {
-#if 0
             try {
                 const auto helper = tupal::json_helper(new_data).as_object();
                 const auto id = helper.at("id").as_string().value();
                 const auto title = helper.at("title").as_string().value();
-                const auto date = boost::gregorian::to_iso_extended_string(helper.at("date").as_date().value());
+                const auto start_group_id = helper.at("start_group_id").as_string().value();
 
                 soci::transaction trx(*soci_session);
-                *soci_session << "update competition set date=:date, title=:title where id=:id",
-                    soci::use(date), soci::use(title), soci::use(id);
+                soci::statement stmt = (soci_session->prepare << 
+                        "update competition_class "
+                        "set title=:title, start_group_id=:start_group_id "
+                        "where id=:id and comp_id=:comp_id",
+                    soci::use(title), soci::use(start_group_id), soci::use(id), soci::use(competition_id));
+                stmt.execute(true);
+                switch (stmt.get_affected_rows()) {
+                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                    case 1: break;
+                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation), nullptr };
+                }
                 trx.commit();
 
-                if (soci_session->got_data())
-                    return { ok, {{"id", id}, {"date", date}, {"title", title}} };
-                else
-                    return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                return { ok, make_competition_class(start_group_id, id, title) };
             }
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
                 return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
             }
-#endif
-            return { ok, new_data };
         }
 
         std::error_code remove(const std::string & competition_id, const std::string & id) {
