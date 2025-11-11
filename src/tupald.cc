@@ -12,7 +12,41 @@
 
 namespace {
 
-	typedef std::unordered_map<std::string, std::weak_ptr<beauty::websocket_session>> sessions_type;
+
+	class sessions {
+	private:
+		struct session_info {
+			std::weak_ptr<beauty::websocket_session> ws_session;
+			std::string competition_id;
+		};
+
+		std::unordered_map<std::string, session_info> session_list;
+
+	public:
+		void register_client(const std::string & uuid, 
+				const std::string & competition_id, std::shared_ptr<beauty::websocket_session> ws_session) {
+			session_list[uuid] = session_info { ws_session, competition_id };
+		}
+
+		bool unregister_client(const std::string & uuid) {
+			return session_list.erase(uuid) > 0;
+		}
+
+		std::size_t notify_competition(const std::string & competition_id, const std::string & message) const {
+			std::size_t count = 0;
+			std::size_t session_count = session_list.size();
+			for (const auto & session_pair: session_list) {
+				const auto & session_info = session_pair.second;
+				if (session_info.competition_id == competition_id) {
+					if (const auto ws_session = session_info.ws_session.lock()) {
+						ws_session->send(std::string { message });
+						++count;
+					}
+				}
+			}
+			return count;
+		}
+	};
 
 	template <typename T>
 	void and_then(std::optional<T> optional, std::function<void(const T&)> f) {
@@ -24,22 +58,25 @@ namespace {
 		return req.a(name).as_string();
 	}
 
-	boost::json::object message(const char * const op, const char * const type, const boost::json::value & data) {
+	boost::json::object notification(const char * const op, const char * const type, const boost::json::value & data) {
 		return { {"op", op}, {"type", type}, {"item", boost::json::value(data) } };
 	}
 
-	void notify(const sessions_type & sessions, const boost::json::value & data) {
-		const auto message = boost::json::serialize(data);
-		for (const auto session: sessions) {
-			if (const auto s = session.second.lock()) {
-				s->send(std::string { message });
-			}
-		}
+	boost::json::object remove_notification(const char * type, const char * id) {
+		return { {"op", "deleted"}, { "type", type }, {"id", id} };
 	}
 
-	std::function<void(const boost::json::value &)> make_notifier(const sessions_type & sessions, const char * op, const char * type) {
-		return [&sessions,op,type](const boost::json::value & data) { 
-			notify(sessions, message(op, type, data)); };
+	std::function<void(const boost::json::value &)> make_notifier(const sessions & sessions, const std::string & comp_id, 
+			const char * op, const char * type) {
+		return [&sessions,&comp_id,op,type](const boost::json::value & data) { 
+			sessions.notify_competition(comp_id, boost::json::serialize(notification(op, type, data))); };
+	}
+
+	std::function<void(const bool &)> make_remove_notifier(const sessions & sessions,
+			const std::string & competition_id, const char * type, const char * id) {
+		return [&sessions,&competition_id,type,id](const bool &) {
+			sessions.notify_competition(competition_id, 
+				boost::json::serialize(remove_notification(type, id))); };
 	}
 
 	void handle_list(const tupal::result_type result, beauty::response & resp) {
@@ -151,96 +188,108 @@ int main(int argc, char** argv) {
     std::shared_ptr<tupal::CompetitionManager> manager =
         tupal::CompetitionManager::new_competition_manager(parsed["db"].as<std::string>());
 
-    sessions_type sessions;
+    sessions sessions;
 	
 	server.add_route("/").get([](const auto & req, auto & res) { res.body() = "The app...\n"; });
 
-	server.add_route("/ws")
+	server.add_route("/ws/:competition_id")
 		.ws(beauty::ws_handler {
-			.on_connect = [&sessions](const beauty::ws_context & ctx) { sessions[ctx.uuid] = ctx.ws_session; },
-			.on_receive = [](const beauty::ws_context & /* ctx */, const char * /* data */, std::size_t /* size*/, bool /* is_text */) {},
-			.on_disconnect = [&sessions](const beauty::ws_context & ctx) { sessions.erase(ctx.uuid); },
+			.on_connect = [&sessions](const beauty::ws_context & ctx) {
+				const auto competition_id = ctx.attributes.find("competition_id");
+				if (competition_id != ctx.attributes.end()) {
+					sessions.register_client(ctx.uuid, competition_id->second.as_string(), ctx.ws_session.lock());
+				}
+			},
+			.on_disconnect = [&sessions](const beauty::ws_context & ctx) {
+				sessions.unregister_client(ctx.uuid);
+			},
 			.on_error =  [](const boost::system::error_code /* ec */, const char* /* what */) {}
 		});
 
 	server.add_route("/rest/competition/")
 		.get([&](const auto & req, beauty::response & res) { handle_list(manager->list(), res); })
 		.post([&](const beauty::request & req, beauty::response & res) {
-			and_then(handle_create(manager->create(boost::json::parse(req.body())), res), 
-				make_notifier(sessions, "created", "competition"));	});
+			handle_create(manager->create(boost::json::parse(req.body())), res); });
+
 	server.add_route("/rest/competition/:competition_id")
 		.get([&](const auto & req, auto & res) { handle_get(manager->get(param(req, "competition_id")), res); })
 		.put([&](const auto & req, auto & res) {
 			and_then(handle_update(manager->update(boost::json::parse(req.body())), res),
-				make_notifier(sessions, "updated", "competition")); })
+				make_notifier(sessions, param(req, "competition_id"), "updated", "competition")); })
 		.del([&](const auto & req, auto & res) { 
-			const auto competition_id = param(req, "competition_id");
-			and_then(handle_remove(manager->remove(competition_id), res),
-				std::function<void(const bool &)> { [&](const bool &) {
-					notify(sessions, message("deleted", "competition", { {"id", competition_id} })); }
-				});
-			});
+			and_then(handle_remove(manager->remove(param(req, "competition_id")), res),
+				make_remove_notifier(sessions, param(req, "competition_id"), "competition",
+					param(req, "competition_id").c_str()));
+		});
 
 	server.add_route("/rest/competition/:competition_id/competitor/")
 		.get([&](const auto & req, auto & res) {
 			handle_list(manager->getCompetitorManager()->list(param(req, "competition_id")), res); })
 		.post([&](const auto & req, auto & res) {
-			and_then(handle_create(manager->getCompetitorManager()->create(param(req, "competition_id"), boost::json::parse(req.body())), res),
-				make_notifier(sessions, "created", "competitor")); });
+			and_then(handle_create(manager->getCompetitorManager()->create(
+					param(req, "competition_id"), boost::json::parse(req.body())), res),
+				make_notifier(sessions, param(req, "competition_id"), "created", "competitor")); });
+
 	server.add_route("/rest/competition/:competition_id/competitor/:competitor_id")
 		.get([&](const auto & req, auto & res) { 
-			handle_get(manager->getCompetitorManager()->get(param(req, "competition_id"), param(req, "competitor_id")), res); })
+			handle_get(manager->getCompetitorManager()->get(
+				param(req, "competition_id"), param(req, "competitor_id")), res); })
 		.put([&](const auto & req, auto & res) {
-			and_then(handle_update(manager->getCompetitorManager()->update(param(req, "competition_id"), boost::json::parse(req.body())), res),
-				make_notifier(sessions, "updated", "competitor")); })
+			and_then(handle_update(manager->getCompetitorManager()->update(
+					param(req, "competition_id"), boost::json::parse(req.body())), res),
+				make_notifier(sessions, param(req, "competition_id"), "updated", "competitor")); })
 		.del([&](const auto & req, auto & res) {
-			const auto competition_id = param(req, "competition_id");
-			const auto competitor_id = param(req, "competitor_id");
-			and_then(handle_remove(manager->getCompetitorManager()->remove(competition_id, competitor_id), res),
-				std::function<void(const bool &)> { [&](const bool &) { 
-					notify(sessions, message("deleted", "competitor", { {"id", competitor_id}, { "comp_id", competition_id } })); }
-				});
+			and_then(handle_remove(manager->getCompetitorManager()->remove(
+					param(req, "competition_id"), param(req, "competitor_id")), res),
+				make_remove_notifier(sessions, param(req, "competition_id"), "competitor",
+					param(req, "competitor_id").c_str()));
 			});
 
 	server.add_route("/rest/competition/:competition_id/competition_class/")
 		.get([&](const auto & req, auto & res) {
 			handle_list(manager->getCompetitionClassManager()->list(param(req, "competition_id")), res); })
 		.post([&](const auto & req, auto & res) {
-			and_then(handle_create(manager->getCompetitionClassManager()->create(param(req, "competition_id"), boost::json::parse(req.body())), res),
-				make_notifier(sessions, "created", "competition_class")); });
+			and_then(handle_create(manager->getCompetitionClassManager()->create(
+					param(req, "competition_id"), boost::json::parse(req.body())), res),
+				make_notifier(sessions, param(req, "competition_id"), "created", "competition_class")); });
+
 	server.add_route("/rest/competition/:competition_id/competition_class/:competition_class_id")
 		.get([&](const auto & req, auto & res) {
-			handle_get(manager->getCompetitionClassManager()->get(param(req, "competition_id"), param(req, "competition_class_id")), res); })
+			handle_get(manager->getCompetitionClassManager()->get(
+				param(req, "competition_id"), param(req, "competition_class_id")), res); })
 		.put([&](const auto & req, auto & res) {
-			and_then(handle_update(manager->getCompetitionClassManager()->update(param(req, "competition_id"), boost::json::parse(req.body())), res),
-				make_notifier(sessions, "updated", "competition_class")); })
+			and_then(handle_update(manager->getCompetitionClassManager()->update(
+				param(req, "competition_id"), boost::json::parse(req.body())), res),
+				make_notifier(sessions, param(req, "competition_id"), "updated", "competition_class")); })
 		.del([&](const auto & req, auto & res) {
-			const auto competition_id = param(req, "competition_id");
-			const auto competition_class_id = param(req, "competition_class_id");
-			and_then(handle_remove(manager->getCompetitionClassManager()->remove(competition_id, competition_class_id), res),
-				std::function<void(const bool &)> { [&](const bool &) {
-					notify(sessions, message("deleted", "competition_class", { {"id", competition_class_id}, { "comp_id", competition_id } })); }
-				});
-			handle_remove(manager->getCompetitionClassManager()->remove(param(req, "competition_id"), param(req, "competition_class_id")), res); });
+			and_then(handle_remove(manager->getCompetitionClassManager()->remove(
+				param(req, "competition_id"), param(req, "competition_class_id")), res),
+				make_remove_notifier(sessions, param(req, "competition_id"), "competition_class",
+					param(req, "competition_class_id").c_str()));
+			});
 
 	server.add_route("/rest/competition/:competition_id/start_group/")
-		.get([&](const auto & req, auto & res) { handle_list(manager->getStartGroupManager()->list(param(req, "competition_id")), res); })
+		.get([&](const auto & req, auto & res) { handle_list(manager->getStartGroupManager()->list(
+			param(req, "competition_id")), res); })
 		.post([&](const auto & req, auto & res) {
-			and_then(handle_create(manager->getStartGroupManager()->create(param(req, "competition_id"), boost::json::parse(req.body())), res),
-				make_notifier(sessions, "created", "start_group")); });
+			and_then(handle_create(manager->getStartGroupManager()->create(
+				param(req, "competition_id"), boost::json::parse(req.body())), res),
+				make_notifier(sessions, param(req, "competition_id"), "created", "start_group")); 
+		});
+
 	server.add_route("/rest/competition/:competition_id/start_group/:start_group_id")
-		.get([&](const auto & req, auto & res) {
-			handle_get(manager->getStartGroupManager()->get(param(req, "competition_id"), param(req, "start_group_id")), res); })
+		.get([&](const auto & req, auto & res) { handle_get(manager->getStartGroupManager()->get(
+			param(req, "competition_id"), param(req, "start_group_id")), res); })
 		.put([&](const auto & req, auto & res) {
-			and_then(handle_update(manager->getStartGroupManager()->update(param(req, "competition_id"), boost::json::parse(req.body())), res),
-				make_notifier(sessions, "updated", "start_group")); })
+			and_then(handle_update(manager->getStartGroupManager()->update(
+				param(req, "competition_id"), boost::json::parse(req.body())), res),
+				make_notifier(sessions, param(req, "competition_id"), "updated", "start_group"));
+		})
 		.del([&](const auto & req, auto & res) {
-			const auto competition_id = param(req, "competition_id");
-			const auto start_group_id = param(req, "start_group_id");
-			and_then(handle_remove(manager->getStartGroupManager()->remove(competition_id, start_group_id), res),
-				std::function<void(const bool &)> { [&](const bool &) {
-					notify(sessions, message("deleted", "start_group", { {"id", start_group_id}, { "comp_id", competition_id } })); }
-				});	
+			and_then(handle_remove(manager->getStartGroupManager()->remove(
+				param(req, "competition_id"), param(req, "start_group_id")), res),
+				make_remove_notifier(sessions, param(req, "competition_id"), "start_group",
+					param(req, "start_group_id").c_str()));
 			});
 
 	server.listen(8085);
