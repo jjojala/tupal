@@ -56,12 +56,6 @@ FetchContent_Declare(
     GIT_SHALLOW TRUE
     OVERRIDE_FIND_PACKAGE
 )
-FetchContent_GetProperties(soci)
-if (NOT soci_POPULATED)
-    FetchContent_Populate(soci)
-    add_subdirectory(${soci_SOURCE_DIR} ${soci_BINARY_DIR})
-endif()
-set(SOCI_TESTS OFF CACHE BOOL "Disable building tests for soci" FORCE)
 FetchContent_MakeAvailable(soci)
 
 FetchContent_Declare(
