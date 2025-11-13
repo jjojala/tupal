@@ -33,3 +33,24 @@ set_tests_properties(
         LABELS "tupal" 
         TIMEOUT 10
         ENVIRONMENT "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/lib:$ENV{LD_LIBRARY_PATH}")
+
+add_executable(
+        rest_tests
+    test_main.cc
+    rest_test.cc)
+
+target_include_directories(
+        rest_tests 
+    PRIVATE
+        ${doctest_SOURCE_DIR})
+
+target_link_libraries(rest_tests PRIVATE boost_filesystem beauty::beauty)
+
+add_test(NAME rest_tests COMMAND $<TARGET_FILE:rest_tests>)
+
+set_tests_properties(
+        rest_tests
+    PROPERTIES 
+        LABELS "tupal,rest"
+        TIMEOUT 10
+        ENVIRONMENT "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/lib:$ENV{LD_LIBRARY_PATH};PATH=${CMAKE_BINARY_DIR}/src:$ENV{PATH}")
