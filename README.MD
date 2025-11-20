@@ -15,14 +15,27 @@ Trying to get rid of pre-installed packages (striving toward self-standing build
 
 ```
 > ctest --test-dir build -L tupal
+> ctest --test-dir build -L manager
+> ctest --test-dir build -L rest
 ```
+(tupal includes all test sets)
 
 # Run
 
-By default the database `tupald.db` is created/pre-exists to/on current directory.
+*Help:*
 
 ```
-> LD_LIBRARY_PATH=build/lib build/src/tupald
+> build/src/tupald --help
+```
+
+*Start with embedded sqlite3 database*
+```
+> LD_LIBRARY_PATH=build/lib build/src/tupald --db sqlite3://tupal.db
+```
+(soci backend location need to be pointed out with LD_LIBRARY_PATH)
+
+*Testing:*
+```
 > curl -X GET http://localhost:8085/rest/competition/
 > curl -X GET http://localhost:8085/rest/competition/my-comp-id
 > curl -X POST http://localhost:8085/rest/competition/ -d @my-new-comp.json
