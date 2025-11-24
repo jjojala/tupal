@@ -177,6 +177,7 @@ int main(int argc, char** argv) {
     cxxopts::Options opts("tupald", "Backend daemon for tupal results management system");
     opts.add_options()
       ("d,db", "Database URL", cxxopts::value<std::string>()->default_value("sqlite3://:memory:"))
+	  ("r,web-root", "Root directory for static web content", cxxopts::value<std::string>()->default_value("./web"))
       ("h,help", "This usage");
 
     auto parsed = opts.parse(argc, argv);
