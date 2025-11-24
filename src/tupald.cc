@@ -143,148 +143,158 @@ namespace {
 
 int main(int argc, char** argv) {
 
-	beauty::server server;
+	try {
+		beauty::server server;
 
-    cxxopts::Options opts("tupald", "Backend daemon for tupal results management system");
-    opts.add_options()
-      ("d,db", "Database URL", cxxopts::value<std::string>()->default_value("sqlite3://:memory:"))
-	  ("r,web-root", "Root directory for static web content", cxxopts::value<std::string>()->default_value("./web"))
-	  ("S,swagger", "Enable swagger")
-      ("h,help", "This usage");
+		cxxopts::Options opts("tupald", "Backend daemon for tupal results management system");
+		opts.add_options()
+		("d,db", "Database URL", cxxopts::value<std::string>()->default_value("sqlite3://:memory:"))
+		("r,web-root", "Root directory for static web content", cxxopts::value<std::string>()->default_value("./web"))
+		("b,bind", "Bind url for the daemon", cxxopts::value<std::string>()->default_value("http://0.0.0.0:8085"))
+		("S,swagger", "Enable swagger")
+		("h,help", "This usage");
 
-    auto parsed = opts.parse(argc, argv);
-    if (parsed.count("help")) {
-        std::cout << opts.help() << '\n';
-        return 0;
-    }
+		auto parsed = opts.parse(argc, argv);
+		if (parsed.count("help")) {
+			std::cout << opts.help() << '\n';
+			return 0;
+		}
 
-	if (parsed.count("swagger")) {
-		server.enable_swagger("/rest/swagger");
+		if (parsed.count("swagger")) {
+			server.enable_swagger("/rest/swagger");
+		}
+
+		std::shared_ptr<tupal::CompetitionManager> manager =
+			tupal::CompetitionManager::new_competition_manager(parsed["db"].as<std::string>());
+
+		sessions sessions;
+
+		server.add_route("/ws/:competition_id")
+			.ws(beauty::ws_handler {
+				.on_connect = [&sessions](const beauty::ws_context & ctx) {
+					const auto competition_id = ctx.attributes.find("competition_id");
+					if (competition_id != ctx.attributes.end()) {
+						sessions.register_client(ctx.uuid, competition_id->second.as_string(), ctx.ws_session.lock());
+					}
+				},
+				.on_disconnect = [&sessions](const beauty::ws_context & ctx) {
+					sessions.unregister_client(ctx.uuid);
+				},
+				.on_error =  [](const boost::system::error_code /* ec */, const char* /* what */) {}
+			});
+
+		server.add_route("/rest/competition/")
+			.get([&](const auto & req, beauty::response & res) { handle_list(manager->list(), res); })
+			.post([&](const beauty::request & req, beauty::response & res) {
+				handle_create(manager->create(boost::json::parse(req.body())), res); });
+
+		server.add_route("/rest/competition/:competition_id")
+			.get([&](const auto & req, auto & res) { handle_get(manager->get(param(req, "competition_id")), res); })
+			.put([&](const auto & req, auto & res) {
+				and_then(handle_update(manager->update(boost::json::parse(req.body())), res),
+					make_notifier(sessions, param(req, "competition_id"), "updated", "competition")); })
+			.del([&](const auto & req, auto & res) {
+				and_then(handle_remove(manager->remove(param(req, "competition_id")), res),
+					make_remove_notifier(sessions, param(req, "competition_id"), "competition",
+						param(req, "competition_id").c_str()));
+			});
+
+		server.add_route("/rest/competition/:competition_id/competitor/")
+			.get([&](const auto & req, auto & res) {
+				handle_list(manager->getCompetitorManager()->list(param(req, "competition_id")), res); })
+			.post([&](const auto & req, auto & res) {
+				and_then(handle_create(manager->getCompetitorManager()->create(
+						param(req, "competition_id"), boost::json::parse(req.body())), res),
+					make_notifier(sessions, param(req, "competition_id"), "created", "competitor")); });
+
+		server.add_route("/rest/competition/:competition_id/competitor/:competitor_id")
+			.get([&](const auto & req, auto & res) {
+				handle_get(manager->getCompetitorManager()->get(
+					param(req, "competition_id"), param(req, "competitor_id")), res); })
+			.put([&](const auto & req, auto & res) {
+				and_then(handle_update(manager->getCompetitorManager()->update(
+						param(req, "competition_id"), boost::json::parse(req.body())), res),
+					make_notifier(sessions, param(req, "competition_id"), "updated", "competitor")); })
+			.del([&](const auto & req, auto & res) {
+				and_then(handle_remove(manager->getCompetitorManager()->remove(
+						param(req, "competition_id"), param(req, "competitor_id")), res),
+					make_remove_notifier(sessions, param(req, "competition_id"), "competitor",
+						param(req, "competitor_id").c_str()));
+				});
+
+		server.add_route("/rest/competition/:competition_id/competition_class/")
+			.get([&](const auto & req, auto & res) {
+				handle_list(manager->getCompetitionClassManager()->list(param(req, "competition_id")), res); })
+			.post([&](const auto & req, auto & res) {
+				and_then(handle_create(manager->getCompetitionClassManager()->create(
+						param(req, "competition_id"), boost::json::parse(req.body())), res),
+					make_notifier(sessions, param(req, "competition_id"), "created", "competition_class")); });
+
+		server.add_route("/rest/competition/:competition_id/competition_class/:competition_class_id")
+			.get([&](const auto & req, auto & res) {
+				handle_get(manager->getCompetitionClassManager()->get(
+					param(req, "competition_id"), param(req, "competition_class_id")), res); })
+			.put([&](const auto & req, auto & res) {
+				and_then(handle_update(manager->getCompetitionClassManager()->update(
+					param(req, "competition_id"), boost::json::parse(req.body())), res),
+					make_notifier(sessions, param(req, "competition_id"), "updated", "competition_class")); })
+			.del([&](const auto & req, auto & res) {
+				and_then(handle_remove(manager->getCompetitionClassManager()->remove(
+					param(req, "competition_id"), param(req, "competition_class_id")), res),
+					make_remove_notifier(sessions, param(req, "competition_id"), "competition_class",
+						param(req, "competition_class_id").c_str()));
+				});
+
+		server.add_route("/rest/competition/:competition_id/start_group/")
+			.get([&](const auto & req, auto & res) { handle_list(manager->getStartGroupManager()->list(
+				param(req, "competition_id")), res); })
+			.post([&](const auto & req, auto & res) {
+				and_then(handle_create(manager->getStartGroupManager()->create(
+					param(req, "competition_id"), boost::json::parse(req.body())), res),
+					make_notifier(sessions, param(req, "competition_id"), "created", "start_group")); 
+			});
+
+		server.add_route("/rest/competition/:competition_id/start_group/:start_group_id")
+			.get([&](const auto & req, auto & res) { handle_get(manager->getStartGroupManager()->get(
+				param(req, "competition_id"), param(req, "start_group_id")), res); })
+			.put([&](const auto & req, auto & res) {
+				and_then(handle_update(manager->getStartGroupManager()->update(
+					param(req, "competition_id"), boost::json::parse(req.body())), res),
+					make_notifier(sessions, param(req, "competition_id"), "updated", "start_group"));
+			})
+			.del([&](const auto & req, auto & res) {
+				and_then(handle_remove(manager->getStartGroupManager()->remove(
+					param(req, "competition_id"), param(req, "start_group_id")), res),
+					make_remove_notifier(sessions, param(req, "competition_id"), "start_group",
+						param(req, "start_group_id").c_str()));
+				});
+
+		auto handle_get_file = [&](const beauty::request & req, beauty::response & resp) {
+			const auto filename = parsed["web-root"].as<std::string>()
+				+ std::string { req.target().data(), req.target().size() };
+
+			std::ifstream file{filename, std::ios_base::in};
+			if (file) {
+				resp.body() = std::string { std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+			} else {
+				std::cerr << "Opening file '" << filename << "' failed: " << strerror(errno) << std::endl;
+				resp.result(boost::beast::http::status::not_found);
+			}
+		};
+
+		server.add_route("/:file").get(handle_get_file);
+		server.add_route("/:dir2/:file").get(handle_get_file);
+		server.add_route("/:dir1/:dir2/:file").get(handle_get_file);
+
+		const beauty::url bind_url { parsed["bind"].as<std::string>() };
+		server.listen(bind_url.port(), bind_url.host());
+
+		server.wait();
+		std::exit(0);
 	}
 
-    std::shared_ptr<tupal::CompetitionManager> manager =
-        tupal::CompetitionManager::new_competition_manager(parsed["db"].as<std::string>());
-
-    sessions sessions;
-	
-	server.add_route("/ws/:competition_id")
-		.ws(beauty::ws_handler {
-			.on_connect = [&sessions](const beauty::ws_context & ctx) {
-				const auto competition_id = ctx.attributes.find("competition_id");
-				if (competition_id != ctx.attributes.end()) {
-					sessions.register_client(ctx.uuid, competition_id->second.as_string(), ctx.ws_session.lock());
-				}
-			},
-			.on_disconnect = [&sessions](const beauty::ws_context & ctx) {
-				sessions.unregister_client(ctx.uuid);
-			},
-			.on_error =  [](const boost::system::error_code /* ec */, const char* /* what */) {}
-		});
-
-	server.add_route("/rest/competition/")
-		.get([&](const auto & req, beauty::response & res) { handle_list(manager->list(), res); })
-		.post([&](const beauty::request & req, beauty::response & res) {
-			handle_create(manager->create(boost::json::parse(req.body())), res); });
-
-	server.add_route("/rest/competition/:competition_id")
-		.get([&](const auto & req, auto & res) { handle_get(manager->get(param(req, "competition_id")), res); })
-		.put([&](const auto & req, auto & res) {
-			and_then(handle_update(manager->update(boost::json::parse(req.body())), res),
-				make_notifier(sessions, param(req, "competition_id"), "updated", "competition")); })
-		.del([&](const auto & req, auto & res) { 
-			and_then(handle_remove(manager->remove(param(req, "competition_id")), res),
-				make_remove_notifier(sessions, param(req, "competition_id"), "competition",
-					param(req, "competition_id").c_str()));
-		});
-
-	server.add_route("/rest/competition/:competition_id/competitor/")
-		.get([&](const auto & req, auto & res) {
-			handle_list(manager->getCompetitorManager()->list(param(req, "competition_id")), res); })
-		.post([&](const auto & req, auto & res) {
-			and_then(handle_create(manager->getCompetitorManager()->create(
-					param(req, "competition_id"), boost::json::parse(req.body())), res),
-				make_notifier(sessions, param(req, "competition_id"), "created", "competitor")); });
-
-	server.add_route("/rest/competition/:competition_id/competitor/:competitor_id")
-		.get([&](const auto & req, auto & res) { 
-			handle_get(manager->getCompetitorManager()->get(
-				param(req, "competition_id"), param(req, "competitor_id")), res); })
-		.put([&](const auto & req, auto & res) {
-			and_then(handle_update(manager->getCompetitorManager()->update(
-					param(req, "competition_id"), boost::json::parse(req.body())), res),
-				make_notifier(sessions, param(req, "competition_id"), "updated", "competitor")); })
-		.del([&](const auto & req, auto & res) {
-			and_then(handle_remove(manager->getCompetitorManager()->remove(
-					param(req, "competition_id"), param(req, "competitor_id")), res),
-				make_remove_notifier(sessions, param(req, "competition_id"), "competitor",
-					param(req, "competitor_id").c_str()));
-			});
-
-	server.add_route("/rest/competition/:competition_id/competition_class/")
-		.get([&](const auto & req, auto & res) {
-			handle_list(manager->getCompetitionClassManager()->list(param(req, "competition_id")), res); })
-		.post([&](const auto & req, auto & res) {
-			and_then(handle_create(manager->getCompetitionClassManager()->create(
-					param(req, "competition_id"), boost::json::parse(req.body())), res),
-				make_notifier(sessions, param(req, "competition_id"), "created", "competition_class")); });
-
-	server.add_route("/rest/competition/:competition_id/competition_class/:competition_class_id")
-		.get([&](const auto & req, auto & res) {
-			handle_get(manager->getCompetitionClassManager()->get(
-				param(req, "competition_id"), param(req, "competition_class_id")), res); })
-		.put([&](const auto & req, auto & res) {
-			and_then(handle_update(manager->getCompetitionClassManager()->update(
-				param(req, "competition_id"), boost::json::parse(req.body())), res),
-				make_notifier(sessions, param(req, "competition_id"), "updated", "competition_class")); })
-		.del([&](const auto & req, auto & res) {
-			and_then(handle_remove(manager->getCompetitionClassManager()->remove(
-				param(req, "competition_id"), param(req, "competition_class_id")), res),
-				make_remove_notifier(sessions, param(req, "competition_id"), "competition_class",
-					param(req, "competition_class_id").c_str()));
-			});
-
-	server.add_route("/rest/competition/:competition_id/start_group/")
-		.get([&](const auto & req, auto & res) { handle_list(manager->getStartGroupManager()->list(
-			param(req, "competition_id")), res); })
-		.post([&](const auto & req, auto & res) {
-			and_then(handle_create(manager->getStartGroupManager()->create(
-				param(req, "competition_id"), boost::json::parse(req.body())), res),
-				make_notifier(sessions, param(req, "competition_id"), "created", "start_group")); 
-		});
-
-	server.add_route("/rest/competition/:competition_id/start_group/:start_group_id")
-		.get([&](const auto & req, auto & res) { handle_get(manager->getStartGroupManager()->get(
-			param(req, "competition_id"), param(req, "start_group_id")), res); })
-		.put([&](const auto & req, auto & res) {
-			and_then(handle_update(manager->getStartGroupManager()->update(
-				param(req, "competition_id"), boost::json::parse(req.body())), res),
-				make_notifier(sessions, param(req, "competition_id"), "updated", "start_group"));
-		})
-		.del([&](const auto & req, auto & res) {
-			and_then(handle_remove(manager->getStartGroupManager()->remove(
-				param(req, "competition_id"), param(req, "start_group_id")), res),
-				make_remove_notifier(sessions, param(req, "competition_id"), "start_group",
-					param(req, "start_group_id").c_str()));
-			});
-
-	auto handle_get_file = [&](const beauty::request & req, beauty::response & resp) {
-		const auto filename = parsed["web-root"].as<std::string>() 
-			+ std::string { req.target().data(), req.target().size() };
-
-		std::ifstream file{filename, std::ios_base::in};
-		if (file) {
-			resp.body() = std::string { std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
-		} else {
-			std::cerr << "Opening file '" << filename << "' failed: " << strerror(errno) << std::endl;
-			resp.result(boost::beast::http::status::not_found);
-		}
-	};
-
-	server.add_route("/:file").get(handle_get_file);
-	server.add_route("/:dir2/:file").get(handle_get_file);
-	server.add_route("/:dir1/:dir2/:file").get(handle_get_file);
-
-	server.listen(8085);
-
-	server.wait();
+	catch (const std::exception & e) {
+		std::cerr << "tupald failure: " << e.what() << std::endl;
+		std::exit(1);
+	}
 }
