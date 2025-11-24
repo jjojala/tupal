@@ -191,8 +191,6 @@ int main(int argc, char** argv) {
 
     sessions sessions;
 	
-	server.add_route("/").get([](const auto & req, auto & res) { res.body() = "The app...\n"; });
-
 	server.add_route("/ws/:competition_id")
 		.ws(beauty::ws_handler {
 			.on_connect = [&sessions](const beauty::ws_context & ctx) {
@@ -292,6 +290,23 @@ int main(int argc, char** argv) {
 				make_remove_notifier(sessions, param(req, "competition_id"), "start_group",
 					param(req, "start_group_id").c_str()));
 			});
+
+	auto handle_get_file = [&](const beauty::request & req, beauty::response & resp) {
+		const auto filename = parsed["web-root"].as<std::string>() 
+			+ std::string { req.target().data(), req.target().size() };
+
+		std::ifstream file{filename, std::ios_base::in};
+		if (file) {
+			resp.body() = std::string { std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+		} else {
+			std::cerr << "Opening file '" << filename << "' failed: " << strerror(errno) << std::endl;
+			resp.result(boost::beast::http::status::not_found);
+		}
+	};
+
+	server.add_route("/:file").get(handle_get_file);
+	server.add_route("/:dir2/:file").get(handle_get_file);
+	server.add_route("/:dir1/:dir2/:file").get(handle_get_file);
 
 	server.listen(8085);
 
