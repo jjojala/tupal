@@ -142,30 +142,6 @@ namespace {
 
 	void enable_swagger(beauty::server & server) {
 		server.enable_swagger("/rest/swagger");
-		server.get("/rest/swagger/ui", [](const auto& req, auto& res) {
-			res.body() = R"(
-				<!DOCTYPE html>
-				<html lang="en">
-				<head>
-					<meta charset="UTF-8">
-					<meta name="viewport" content="width=device-width, initial-scale=1.0">
-					<title>Swagger UI</title>
-					<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.1.3/swagger-ui.css">
-				</head>
-				<body>
-					<div id="swagger-ui"></div>
-					<script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.1.3/swagger-ui-bundle.js"></script>
-					<script>
-					const ui = SwaggerUIBundle({
-						url: '/rest/swagger',
-						dom_id: '#swagger-ui',
-					});
-					</script>
-				</body>
-				</html>
-			)";
-			res.set(beauty::http::field::content_type, "text/html");
-		});
     }
 }
 
