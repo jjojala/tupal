@@ -139,21 +139,17 @@ namespace {
 		}
 		return std::nullopt;
 	}
-
-	void enable_swagger(beauty::server & server) {
-		server.enable_swagger("/rest/swagger");
-    }
 }
 
 int main(int argc, char** argv) {
 
 	beauty::server server;
-	enable_swagger(server);
 
     cxxopts::Options opts("tupald", "Backend daemon for tupal results management system");
     opts.add_options()
       ("d,db", "Database URL", cxxopts::value<std::string>()->default_value("sqlite3://:memory:"))
 	  ("r,web-root", "Root directory for static web content", cxxopts::value<std::string>()->default_value("./web"))
+	  ("S,swagger", "Enable swagger")
       ("h,help", "This usage");
 
     auto parsed = opts.parse(argc, argv);
@@ -161,6 +157,10 @@ int main(int argc, char** argv) {
         std::cout << opts.help() << '\n';
         return 0;
     }
+
+	if (parsed.count("swagger")) {
+		server.enable_swagger("/rest/swagger");
+	}
 
     std::shared_ptr<tupal::CompetitionManager> manager =
         tupal::CompetitionManager::new_competition_manager(parsed["db"].as<std::string>());
