@@ -99,4 +99,12 @@ TEST_CASE("rest tests (smoke)") {
         CHECK(result.is_array());
         CHECK(result.as_array().size() == 1);
     }
+
+    {
+        auto [ec, response] = client.del("http://localhost:8085/rest/competition/comp-1/start_group/sg-1");
+        CHECK(ec == std::error_code {});
+        CHECK(response.status() == boost::beast::http::status::ok);
+        auto result = boost::json::parse(response.body());
+        MESSAGE(result);
+    }
 }   
