@@ -204,7 +204,7 @@ TEST_CASE("start group manager remove (unknown)") {
     auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
     auto start_group_manager = competition_manager->getStartGroupManager();
 
-    auto remove_ec = start_group_manager->remove("comp-001", "sg-001");
+    auto [ remove_ec, removed_start_group ] = start_group_manager->remove("comp-001", "sg-001");
     CHECK(remove_ec == tupal::make_error_code(tupal::error_code::unknown_key));
 }
 
@@ -230,8 +230,9 @@ TEST_CASE("start group manager create and remove") {
     auto [create_ec, created_start_group] = start_group_manager->create("comp-001", new_start_group);
     CHECK(!create_ec);
 
-    auto remove_ec = start_group_manager->remove("comp-001", "sg-001");
-    CHECK(!remove_ec);
+    auto [remove_ec, removed_start_group] = start_group_manager->remove("comp-001", "sg-001");
+    CHECK(remove_ec == std::error_code {});
+    MESSAGE(removed_start_group);
 
     auto [get_ec, fetched_start_group] = start_group_manager->get("comp-001", "sg-001");
     CHECK(get_ec == tupal::make_error_code(tupal::error_code::unknown_key));

@@ -113,6 +113,13 @@ namespace {
         };
     }
 
+    boost::json::value make_removed(const std::string & comp_id, const std::string & sub_elem_id) {
+        return boost::json::object {
+            { "comp_id", comp_id },
+            { "id", sub_elem_id }
+        };
+    }
+
     std::error_code handle_soci_error(const std::string & backend_name, const soci::soci_error & e) {
         switch (e.get_error_category()) {
             case soci::soci_error::unknown:
@@ -263,7 +270,7 @@ namespace {
             }
         }
 
-        std::error_code remove(const std::string & competition_id, const std::string & id) {
+        virtual tupal::result_type remove(const std::string & competition_id, const std::string & id) {
             try {
                 soci::transaction trx(*soci_session);
                 soci::statement stmt = (soci_session->prepare <<
@@ -271,18 +278,18 @@ namespace {
                      soci::use(id), soci::use(competition_id));
                 stmt.execute(true);
                 switch (stmt.get_affected_rows()) {
-                    case 0: return tupal::make_error_code(tupal::error_code::unknown_key);
+                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
                     case 1: break;
-                    default: return tupal::make_error_code(tupal::error_code::constraint_violation);
+                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation), nullptr };
                 }
                 trx.commit();
 
-                return std::error_code {};
+                return { std::error_code {}, make_removed(competition_id, id) };
             }
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return tupal::make_error_code(tupal::error_code::system_error);
+                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
             }
         }
 
@@ -417,7 +424,7 @@ namespace {
             }
         }
 
-        std::error_code remove(const std::string & competition_id, const std::string & id) {
+        virtual tupal::result_type remove(const std::string & competition_id, const std::string & id) {
             try {
                 soci::transaction trx(*soci_session);
                 soci::statement stmt = (soci_session->prepare <<
@@ -425,15 +432,18 @@ namespace {
                     soci::use(id), soci::use(competition_id));
                 stmt.execute(true);
                 switch (stmt.get_affected_rows()) {
-                    case 0: return tupal::make_error_code(tupal::error_code::unknown_key);
-                    case 1: trx.commit(); return ok;
-                    default: return tupal::make_error_code(tupal::error_code::constraint_violation);
+                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                    case 1: break;
+                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation), nullptr };
                 }
+
+                trx.commit();
+                return { ok, make_removed(competition_id, id) };
             }
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return tupal::make_error_code(tupal::error_code::system_error);
+                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
             }
         }
 
@@ -589,22 +599,25 @@ namespace {
             }
         }
 
-        std::error_code remove(const std::string & competition_id, const std::string & id) {
+        virtual tupal::result_type remove(const std::string & competition_id, const std::string & id) {
             try {
+                soci::transaction trx(*soci_session);
                 soci::statement stmt = (soci_session->prepare << "delete from competitor where id=:id and comp_id=:comp_id",
                     soci::use(id), soci::use(competition_id));
                 stmt.execute(true);
-                if (stmt.get_affected_rows() > 0) {
-                    TUPAL_MESSAGE(std::cout) << "Deleted competitor id=" << id << ", competition_id=" << competition_id << std::endl;
-                    return {};
+                switch (stmt.get_affected_rows()) {
+                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                    case 1: break;
+                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation), nullptr };
                 }
-                TUPAL_MESSAGE(std::cerr) << "Competitor id=" << id << ", competition_id=" << competition_id << " not found for deletion!" << std::endl;
-                return tupal::make_error_code(tupal::error_code::unknown_key);
+
+                trx.commit();
+                return { ok, make_removed(competition_id, id) };
             }
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return tupal::make_error_code(tupal::error_code::system_error);
+                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
             }
         }
 
@@ -752,19 +765,23 @@ namespace {
             }
         }
 
-        virtual std::error_code remove(const std::string & id) {
+        virtual tupal::result_type remove(const std::string & id) {
             try {
+                soci::transaction trx(*soci_session);
                 soci::statement stmt = (soci_session->prepare << "delete from competition where id=:id", soci::use(id));
                 stmt.execute(true);
-                if (stmt.get_affected_rows() > 0)
-                    return std::error_code {};
-
-                return tupal::make_error_code(tupal::error_code::unknown_key);
+                switch (stmt.get_affected_rows()) {
+                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                    case 1: break;
+                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation), nullptr };
+                }
+                trx.commit();
+                return { ok, boost::json::object { {"id", id} } };
             }
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return tupal::make_error_code(tupal::error_code::system_error);
+                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
             }
         }
 

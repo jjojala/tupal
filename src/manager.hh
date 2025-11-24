@@ -51,7 +51,7 @@ namespace tupal {
         virtual result_type get(const std::string & id) const = 0;
         virtual result_type create(const boost::json::value & new_data) = 0;
         virtual result_type update(const boost::json::value & new_data) = 0;
-        virtual std::error_code remove(const std::string & id) = 0;
+        virtual result_type remove(const std::string & id) = 0;
 
         virtual std::shared_ptr<StartGroupManager> getStartGroupManager() = 0;
         virtual std::shared_ptr<CompetitionClassManager> getCompetitionClassManager() = 0;
@@ -65,7 +65,7 @@ namespace tupal {
         virtual result_type get(const std::string & competition_id, const std::string & id) const = 0;
         virtual result_type create(const std::string & competition_id, const boost::json::value & new_data) = 0;
         virtual result_type update(const std::string & competition_id, const boost::json::value & new_data) = 0;
-        virtual std::error_code remove(const std::string & competition_id, const std::string & id) = 0;
+        virtual result_type remove(const std::string & competition_id, const std::string & id) = 0;
     };
 
     class CompetitionClassManager
@@ -75,7 +75,7 @@ namespace tupal {
         virtual result_type get(const std::string & competition_id, const std::string & id) const = 0;
         virtual result_type create(const std::string & competition_id, const boost::json::value & new_data) = 0;
         virtual result_type update(const std::string & competition_id, const boost::json::value & new_data) = 0;
-        virtual std::error_code remove(const std::string & competition_id, const std::string & id) = 0;
+        virtual result_type remove(const std::string & competition_id, const std::string & id) = 0;
     };
 
     class CompetitorManager
@@ -85,7 +85,7 @@ namespace tupal {
         virtual result_type get(const std::string & competition_id, const std::string & id) const = 0;
         virtual result_type create(const std::string & competition_id, const boost::json::value & new_data) = 0;
         virtual result_type update(const std::string & competition_id, const boost::json::value & new_data) = 0;
-        virtual std::error_code remove(const std::string & competition_id, const std::string & id) = 0;
+        virtual result_type remove(const std::string & competition_id, const std::string & id) = 0;
     };
 };
 

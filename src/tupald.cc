@@ -62,21 +62,10 @@ namespace {
 		return { {"op", op}, {"type", type}, {"item", boost::json::value(data) } };
 	}
 
-	boost::json::object remove_notification(const char * type, const char * id) {
-		return { {"op", "deleted"}, { "type", type }, {"id", id} };
-	}
-
 	std::function<void(const boost::json::value &)> make_notifier(const sessions & sessions, const std::string & comp_id, 
 			const char * op, const char * type) {
 		return [&sessions,&comp_id,op,type](const boost::json::value & data) { 
 			sessions.notify_competition(comp_id, boost::json::serialize(notification(op, type, data))); };
-	}
-
-	std::function<void(const bool &)> make_remove_notifier(const sessions & sessions,
-			const std::string & competition_id, const char * type, const char * id) {
-		return [&sessions,&competition_id,type,id](const bool &) {
-			sessions.notify_competition(competition_id, 
-				boost::json::serialize(remove_notification(type, id))); };
 	}
 
 	void handle_list(const tupal::result_type result, beauty::response & resp) {
@@ -127,15 +116,16 @@ namespace {
 		return std::nullopt;
 	}
 
-	std::optional<bool> handle_remove(const std::error_code ec, beauty::response & resp) {
-		if (ec) {
-			if (ec == tupal::make_error_condition(tupal::error_code::unknown_key))
+	std::optional<boost::json::value> handle_remove(const tupal::result_type result, beauty::response & resp) {
+		if (tupal::ec(result)) {
+			if (tupal::ec(result) == tupal::make_error_condition(tupal::error_code::unknown_key))
 				resp.result(boost::beast::http::status::not_found);
 			else
 				resp.result(boost::beast::http::status::internal_server_error);
 		} else {
 			resp.result(boost::beast::http::status::ok);
-			return true;
+			resp.body() = boost::json::serialize(tupal::json(result));
+			return tupal::json(result);
 		}
 		return std::nullopt;
 	}
@@ -195,8 +185,7 @@ int main(int argc, char** argv) {
 					make_notifier(sessions, param(req, "competition_id"), "updated", "competition")); })
 			.del([&](const auto & req, auto & res) {
 				and_then(handle_remove(manager->remove(param(req, "competition_id")), res),
-					make_remove_notifier(sessions, param(req, "competition_id"), "competition",
-						param(req, "competition_id").c_str()));
+					make_notifier(sessions, param(req, "competition_id"), "removed", "competition"));
 			});
 
 		server.add_route("/rest/competition/:competition_id/competitor/")
@@ -218,8 +207,7 @@ int main(int argc, char** argv) {
 			.del([&](const auto & req, auto & res) {
 				and_then(handle_remove(manager->getCompetitorManager()->remove(
 						param(req, "competition_id"), param(req, "competitor_id")), res),
-					make_remove_notifier(sessions, param(req, "competition_id"), "competitor",
-						param(req, "competitor_id").c_str()));
+					make_notifier(sessions, param(req, "competition_id"), "removed", "competitor"));
 				});
 
 		server.add_route("/rest/competition/:competition_id/competition_class/")
@@ -241,8 +229,7 @@ int main(int argc, char** argv) {
 			.del([&](const auto & req, auto & res) {
 				and_then(handle_remove(manager->getCompetitionClassManager()->remove(
 					param(req, "competition_id"), param(req, "competition_class_id")), res),
-					make_remove_notifier(sessions, param(req, "competition_id"), "competition_class",
-						param(req, "competition_class_id").c_str()));
+					make_notifier(sessions, param(req, "competition_id"), "removed", "competition_class"));
 				});
 
 		server.add_route("/rest/competition/:competition_id/start_group/")
@@ -265,8 +252,7 @@ int main(int argc, char** argv) {
 			.del([&](const auto & req, auto & res) {
 				and_then(handle_remove(manager->getStartGroupManager()->remove(
 					param(req, "competition_id"), param(req, "start_group_id")), res),
-					make_remove_notifier(sessions, param(req, "competition_id"), "start_group",
-						param(req, "start_group_id").c_str()));
+					make_notifier(sessions, param(req, "competition_id"), "removed", "start_group"));
 				});
 
 		auto handle_get_file = [&](const beauty::request & req, beauty::response & resp) {

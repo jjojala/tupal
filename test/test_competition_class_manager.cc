@@ -250,7 +250,7 @@ TEST_CASE("competition class manager remove (unknown)") {
     auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
     auto competition_class_manager = competition_manager->getCompetitionClassManager();
 
-    auto remove_ec = competition_class_manager->remove("comp-001", "class-001");
+    auto [ remove_ec, removed_competition_class ] = competition_class_manager->remove("comp-001", "class-001");
     CHECK(remove_ec == tupal::make_error_condition(tupal::error_code::unknown_key));
 }
 
@@ -287,8 +287,8 @@ TEST_CASE("competition class manager remove (existing)") {
     CHECK(created_competition_class.is_object());
     CHECK(created_competition_class.as_object().at("id").as_string() == "class-001");
 
-    auto remove_ec = competition_class_manager->remove("comp-001", "class-001");
-    CHECK(!remove_ec);
+    auto [ remove_ec, removed_competition_class ] = competition_class_manager->remove("comp-001", "class-001");
+    CHECK(remove_ec == std::error_code {} );
     auto [get_ec, fetched_competition_class] = competition_class_manager->get("comp-001", "class-001");
     CHECK(get_ec == tupal::make_error_condition(tupal::error_code::unknown_key));
 }

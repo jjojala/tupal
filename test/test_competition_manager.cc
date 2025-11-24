@@ -53,8 +53,8 @@ TEST_CASE("competition manager update and remove") {
     CHECK(updated_result.is_object());
     CHECK(updated_result.as_object().at("date").as_string() == "2024-02-15");
 
-    auto remove_ec = competition_manager->remove("comp-002");
-    CHECK(!remove_ec);
+    auto [ remove_ec, removed_competition ] = competition_manager->remove("comp-002");
+    CHECK(remove_ec == std::error_code {} );
 
     auto [get_ec, fetched_competition] = competition_manager->get("comp-002");
     CHECK(get_ec); // should return error since it's removed
@@ -98,8 +98,7 @@ TEST_CASE("competition manager get unknown") {
 TEST_CASE("competition manager remove unknown") {
     auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
 
-    auto remove_ec = competition_manager->remove("non-existent-id");
-    CHECK(remove_ec); // should return error since it doesn't exist
+    auto [ remove_ec, removed_competition ] = competition_manager->remove("non-existent-id");
     CHECK(remove_ec == tupal::make_error_code(tupal::error_code::unknown_key));
 }
 

@@ -360,7 +360,7 @@ TEST_CASE("competitor manager remove (unknown)") {
     auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
     auto competitor_manager = competition_manager->getCompetitorManager();
 
-    auto remove_ec = competitor_manager->remove("comp-001", "competitor-001");
+    auto [ remove_ec, removed_competitor ] = competitor_manager->remove("comp-001", "competitor-001");
     CHECK(remove_ec == tupal::make_error_code(tupal::error_code::unknown_key));
 }
 
@@ -407,8 +407,8 @@ TEST_CASE("competitor manager create and remove") {
     auto [create_ec, created_competitor] = competitor_manager->create("comp-001", new_competitor);
     CHECK(!create_ec);
 
-    auto remove_ec = competitor_manager->remove("comp-001", "competitor-001");
-    CHECK(!remove_ec);
+    auto [ remove_ec, removed_competitor ] = competitor_manager->remove("comp-001", "competitor-001");
+    CHECK(remove_ec == std::error_code {} );
     auto [get_ec, fetched_competitor] = competitor_manager->get("comp-001", "competitor-001");
     CHECK(get_ec == tupal::make_error_code(tupal::error_code::unknown_key));
 }
