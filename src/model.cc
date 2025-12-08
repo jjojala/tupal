@@ -1,0 +1,361 @@
+#include <stdexcept>
+#include "model.hh"
+
+namespace {
+
+    inline char get_char(char *& p) { char ch = *p; ++p; return ch; }
+
+    inline void unget(char *& p) { --p; }
+
+    inline void expect_separator(char *& p, char ch) {
+        if (get_char(p) != ch)
+            throw std::invalid_argument("expecting separator");
+    }
+
+    inline uint16_t get_digit(char *& p) { 
+        char ch = get_char(p);
+        if (!std::isdigit(ch))
+            throw std::invalid_argument("expecting digit");
+        return ch - '0';
+    }
+
+    inline uint16_t parse4(char *& p) {
+        return get_digit(p) * 1000 + get_digit(p) * 100 + get_digit(p) * 10 + get_digit(p); }
+
+    inline uint16_t parse3(char *& p) { return get_digit(p) * 100 + get_digit(p) * 10 + get_digit(p); }
+
+    inline uint16_t parse2(char *& p) { return get_digit(p) * 10 + get_digit(p); }
+
+    std::time_t parse_time_t(char *& p) {
+        struct tm tm { .tm_isdst = -1 };
+        tm.tm_year = parse4(p) - 1900;            
+        expect_separator(p, '-');
+        tm.tm_mon = parse2(p) - 1;
+        expect_separator(p, '-');
+        tm.tm_mday = parse2(p);
+        char ch = get_char(p);
+
+        if (ch == '\0') {
+            tm.tm_hour = 0;
+            tm.tm_min = 0;
+            tm.tm_sec = 0;
+            return std::mktime(&tm);
+        } else if (ch != 'T') {
+            throw std::invalid_argument("expecting 'T' or end of string");
+        } else {
+            tm.tm_hour = parse2(p);
+            expect_separator(p, ':');
+            tm.tm_min = parse2(p);
+            expect_separator(p, ':');
+            tm.tm_sec = parse2(p);
+
+            return std::mktime(&tm);
+        }
+    }
+
+    inline uint16_t parse_milliseconds(char *& p) {
+        const char ch = get_char(p);
+        return ch == '.' ? parse3(p) : 0;
+    }
+
+    inline std::time_t parse_seconds(char *& p) {
+        std::time_t seconds = 0;
+        while (std::isdigit(*p)) {
+            seconds = seconds * 10 + (*p - '0'); ++p;
+        }
+        return seconds;
+    }
+
+    tupal::duration parse_duration(char *& p) {
+        tupal::duration dur { 0, 0 };
+        expect_separator(p, 'P');
+        expect_separator(p, 'T');
+        return {
+            .seconds = parse_seconds(p),
+            .milliseconds = parse_milliseconds(p)
+        };
+    }
+}
+
+namespace tupal {
+
+    // duration
+
+    duration from_duration_string(const std::string & iso8601_str) {
+        char * p = const_cast<char*>(iso8601_str.c_str());
+        return parse_duration(p);
+    }
+
+    std::string to_duration_string(const duration duration) {
+        char buffer[20];
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+        std::snprintf(buffer, sizeof(buffer), "PT%lld.%03dS",
+            static_cast<long long>(duration.seconds),
+            duration.milliseconds);
+#pragma GCC diagnostic pop
+        return std::string(buffer);
+    }
+
+    duration & duration::operator+=(const duration & dur) {
+        seconds += dur.seconds;
+        milliseconds += dur.milliseconds;
+        if (milliseconds >= 1000) {
+            ++seconds;
+            milliseconds -= 1000;
+        }
+        return *this;
+    }
+
+    duration & duration::operator-=(const duration & dur) {
+        seconds -= dur.seconds;
+        if (milliseconds < dur.milliseconds) {
+            --seconds;
+            milliseconds = milliseconds + 1000 - dur.milliseconds;
+        } else {
+            milliseconds -= dur.milliseconds;
+        }
+        return *this;
+    }
+
+    duration operator+(const duration & d1, const duration & d2) {
+        duration result = d1;
+        result += d2;
+        return result;
+    }
+
+    duration operator-(const duration & d1, const duration & d2) {
+        duration result = d1;
+        result -= d2;
+        return result;
+    }
+
+    bool operator<(const duration & d1, const duration & d2) {
+        return (d1.seconds < d2.seconds) ? true
+            : (d1.seconds > d2.seconds) ? false
+                : (d1.milliseconds < d2.milliseconds);
+    }
+
+    // date_time
+
+    date_time & date_time::operator+=(const duration & dur) {
+        seconds_since_epoch += dur.seconds;
+        milliseconds += dur.milliseconds;
+        if (milliseconds >= 1000) {
+            ++seconds_since_epoch;
+            milliseconds -= 1000;
+        }
+        return *this;
+    }
+
+    date_time & date_time::operator-=(const duration & dur) {
+        seconds_since_epoch -= dur.seconds;
+        if (milliseconds < dur.milliseconds) {
+            --seconds_since_epoch;
+            milliseconds = milliseconds + 1000 - dur.milliseconds;
+        } else {
+            milliseconds -= dur.milliseconds;
+        }
+        return *this;
+    }
+
+    date_time operator+(const date_time & dt, const duration & dur) {
+        date_time result = dt;
+        result += dur;
+        return result;
+    }
+
+    date_time operator-(const date_time & dt, const duration & dur) {
+        date_time result = dt;
+        result -= dur;
+        return result;
+    }
+
+    duration operator-(const date_time & dt1, const date_time & dt2) {
+        const int32_t msec_diff = static_cast<int32_t>(dt1.milliseconds)
+                - static_cast<int32_t>(dt2.milliseconds);
+        return msec_diff < 0
+            ? duration {
+                .seconds = dt1.seconds_since_epoch - dt2.seconds_since_epoch - 1,
+                .milliseconds = static_cast<uint16_t>(msec_diff + 1000)
+            }
+            : duration {
+                .seconds = dt1.seconds_since_epoch - dt2.seconds_since_epoch,
+                .milliseconds = static_cast<uint16_t>(msec_diff)
+            };
+    }
+
+    date_time from_date_string(const std::string & iso8601_str) {
+        char * p = const_cast<char*>(iso8601_str.c_str());
+        return {
+            .seconds_since_epoch = parse_time_t(p),
+            .milliseconds = parse_milliseconds(p)
+        };
+    }
+
+    bool operator<(const date_time & dt1, const date_time & dt2) {
+        return (dt1.seconds_since_epoch < dt2.seconds_since_epoch) ? true
+            : (dt1.seconds_since_epoch > dt2.seconds_since_epoch) ? false
+                : (dt1.milliseconds < dt2.milliseconds);
+    }
+
+    std::string to_date_string(const date_time & dt) {
+        struct tm * tm = std::localtime(&dt.seconds_since_epoch);
+        char buffer[30];
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+        std::snprintf(buffer, sizeof(buffer), "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",
+            tm->tm_year + 1900,
+            tm->tm_mon + 1,
+            tm->tm_mday,
+            tm->tm_hour,
+            tm->tm_min,
+            tm->tm_sec,
+            dt.milliseconds);
+#pragma GCC diagnostic pop
+        return std::string(buffer);
+    }
+
+    // key
+
+    const boost::json::value to_json(const key & k) {
+        return boost::json::object {
+            { "id", k.id },
+            { "comp_id", k.comp_id }
+        };
+    }
+
+    key to_key(const boost::json::value & obj) {
+        return key {
+            .id = std::string { obj.at("id").as_string() },
+            .comp_id = std::string { obj.at("comp_id").as_string() }
+        };
+    }
+
+    // competition
+
+    const char * type(const competition &) {
+        return "competition";
+    }
+
+    const boost::json::value to_json(const competition & comp) {
+        return boost::json::object {
+            { "id", comp.id },
+            { "date", to_date_string(comp.date) },
+            { "title", comp.title }
+        };
+    }
+
+    competition to_competition(const boost::json::value & obj) {
+        return competition {
+            .id = std::string { obj.at("id").as_string() },
+            .date = from_date_string( std::string { obj.at("date").as_string() } ),
+            .title = std::string { obj.at("title").as_string() }
+        };
+    }
+
+    // start_group
+
+    const char * type(const start_group &) {
+        return "start_group";
+    }
+
+    const boost::json::value to_json(const start_group & sg) {
+        return boost::json::object {
+            { "id", sg.id.id },
+            { "comp_id", sg.id.comp_id },
+            { "title", sg.title },
+            { "first_start_time", to_date_string(sg.first_start_time) },
+            { "first_bib", static_cast<int64_t>(sg.first_bib) }
+        };
+    }
+
+    start_group to_start_group(const boost::json::value & obj) {
+        return start_group {
+            .id {
+                .id = std::string { obj.at("id").as_string() },
+                .comp_id = std::string { obj.at("comp_id").as_string() }
+            },
+            .title = std::string { obj.at("title").as_string() },
+            .first_start_time = from_date_string( std::string { obj.at("first_start_time").as_string() } ),
+            .first_bib = static_cast<uint16_t>(obj.at("first_bib").as_int64())
+        };
+    }
+
+    // competition_class
+
+    const char * type(const competition_class &) {
+        return "competition_class";
+    }
+
+    const boost::json::value to_json(const competition_class & cc) {
+        return boost::json::object {
+            { "id", cc.id.id },
+            { "comp_id", cc.id.comp_id },
+            { "title", cc.title },
+            { "start_group_id", cc.start_group_id }
+        };
+    }
+
+    competition_class to_competition_class(const boost::json::value & obj) {
+        return competition_class {
+            .id {
+                .id = std::string { obj.at("id").as_string() },
+                .comp_id = std::string { obj.at("comp_id").as_string() }
+            },
+            .title = std::string { obj.at("title").as_string() },
+            .start_group_id = std::string { obj.at("start_group_id").as_string() }
+        };
+    }
+
+    // competitor
+
+    competitor_status to_competitor_status(const boost::json::value & val) {
+        const auto status_int = val.as_int64();
+        switch (status_int) {
+            case 0: return competitor_status::NA;
+            case 1: return competitor_status::DNS;
+            case 2: return competitor_status::DNF;
+            case 3: return competitor_status::DSQ;
+            default:
+                throw std::invalid_argument("invalid competitor status value");
+        }
+    }
+
+    const boost::json::value to_json(const competitor_status & status) {
+        return boost::json::value(static_cast<int64_t>(status));
+    }
+
+    const char * type(const competitor &) {
+        return "competitor";
+    }
+
+    competitor to_competitor(const boost::json::value & obj) {
+        return competitor {
+            .id {
+                .id = std::string { obj.at("id").as_string() },
+                .comp_id = std::string { obj.at("comp_id").as_string() }
+            },
+            .bib = static_cast<uint16_t>(obj.at("bib").as_int64()),
+            .name = std::string { obj.at("name").as_string() },
+            .start_time_offset = from_duration_string( std::string { obj.at("start_time_offset").as_string() } ),
+            .finish_time = from_date_string( std::string { obj.at("finish_time").as_string() } ),
+            .status = to_competitor_status( obj.at("status") ),
+            .comp_class_id = std::string { obj.at("comp_class_id").as_string() }
+        };
+    }
+
+    const boost::json::value to_json(const competitor & competitor) {
+        return boost::json::object {
+            { "id", competitor.id.id },
+            { "comp_id", competitor.id.comp_id },
+            { "bib", static_cast<int64_t>(competitor.bib) },
+            { "name", competitor.name },
+            { "start_time_offset", to_duration_string(competitor.start_time_offset) },
+            { "finish_time", to_date_string(competitor.finish_time) },
+            { "status", to_json(competitor.status) },
+            { "comp_class_id", competitor.comp_class_id }
+        };
+    }   
+};
