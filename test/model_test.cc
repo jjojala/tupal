@@ -258,7 +258,7 @@ TEST_CASE("competitor_status JSON serialization/deserialization") {
     tupal::competitor_status status = tupal::competitor_status::DNF;
 
     const auto json_val = tupal::to_json(status);
-    const auto status_deserialized = tupal::to_competitor_status(json_val);
+    const auto status_deserialized = tupal::to_competitor_status(json_val.as_int64());
 
     CHECK(status == status_deserialized);
 }

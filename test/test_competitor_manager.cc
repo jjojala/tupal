@@ -93,7 +93,7 @@ TEST_CASE("competitor manager list (with data)") {
         });
     CHECK(!cc_create_ec);
 
-    boost::json::value new_competitor1 = boost::json::object {
+    boost::json::object new_competitor1 = {
         { "id", "competitor-001" },
         { "comp_class_id", "class-001" },
         { "bib", 101 },
@@ -102,7 +102,7 @@ TEST_CASE("competitor manager list (with data)") {
         { "status", 0 },
         { "name", "Alice" }
     };
-    boost::json::value new_competitor2 = boost::json::object {
+    boost::json::object new_competitor2 = {
         { "id", "competitor-002" },
         { "comp_class_id", "class-001" },
         { "bib", 102 },
@@ -125,7 +125,7 @@ TEST_CASE("competitor manager create (no comp)") {
     auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
     auto competitor_manager = competition_manager->getCompetitorManager();
 
-    boost::json::value new_competitor = boost::json::object {
+    boost::json::object new_competitor = {
         { "id", "competitor-001" },
         { "comp_class_id", "class-001" },
         { "bib", 101 },
@@ -151,7 +151,7 @@ TEST_CASE("competitor manager create (no start group)") {
         });
     CHECK(!comp_create_ec);
 
-    boost::json::value new_competitor = boost::json::object {
+    boost::json::object new_competitor = {
         { "id", "competitor-001" },
         { "comp_class_id", "class-001" },
         { "bib", 101 },
@@ -187,7 +187,7 @@ TEST_CASE("competitor manager create (no comp class)") {
         });
     CHECK(!sg_create_ec);
 
-    boost::json::value new_competitor = boost::json::object {
+    boost::json::object new_competitor = {
         { "id", "competitor-001" },
         { "comp_class_id", "class-001" },
         { "bib", 101 },
@@ -231,7 +231,7 @@ TEST_CASE("competitor manager create and get") {
         });
     CHECK(!cc_create_ec);
 
-    boost::json::value new_competitor = boost::json::object {
+    boost::json::object new_competitor = {
         { "id", "competitor-001" },
         { "comp_class_id", "class-001" },
         { "bib", 101 },
@@ -269,7 +269,7 @@ TEST_CASE("competitor manager update (unknown)") {
     auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
     auto competitor_manager = competition_manager->getCompetitorManager();
 
-    boost::json::value updated_competitor = boost::json::object {
+    boost::json::object updated_competitor = {
         { "id", "competitor-001" },
         { "comp_class_id", "class-001" },
         { "bib", 101 },
@@ -314,7 +314,7 @@ TEST_CASE("competitor manager update (existing)") {
         });
     CHECK(!cc_create_ec);
 
-    boost::json::value new_competitor = boost::json::object {
+    boost::json::object new_competitor = {
         { "id", "competitor-001" },
         { "comp_class_id", "class-001" },
         { "bib", 101 },
@@ -328,7 +328,7 @@ TEST_CASE("competitor manager update (existing)") {
     CHECK(created_competitor.is_object());
     CHECK(created_competitor.as_object().at("id").as_string() == "competitor-001");
 
-    boost::json::value updated_competitor = boost::json::object {
+    boost::json::object updated_competitor = {
         { "id", "competitor-001" },
         { "comp_class_id", "class-001" },
         { "bib", 102 },
@@ -395,7 +395,7 @@ TEST_CASE("competitor manager create and remove") {
         });
     CHECK(!cc_create_ec);
 
-    boost::json::value new_competitor = boost::json::object {
+    boost::json::object new_competitor = {
         { "id", "competitor-001" },
         { "comp_class_id", "class-001" },
         { "bib", 101 },

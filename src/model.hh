@@ -149,20 +149,20 @@ namespace tupal {
     duration from_duration_string(const std::string & iso8601_str);
     std::string to_duration_string(const duration duration);
 
-    const boost::json::value to_json(const competition &);
-    const boost::json::value to_json(const start_group &);
-    const boost::json::value to_json(const competition_class &);
+    const boost::json::object to_json(const competition &);
+    const boost::json::object to_json(const start_group &);
+    const boost::json::object to_json(const competition_class &);
     const boost::json::value to_json(const competitor_status &);
-    const boost::json::value to_json(const competitor &);
-    const boost::json::value to_json(const key &);
-    const boost::json::value to_json(const std::string &);
+    const boost::json::object to_json(const competitor &);
+    const boost::json::object to_json(const key &);
+    const boost::json::object to_json(const std::string &);
 
-    competition to_competition(const boost::json::value &);
-    start_group to_start_group(const boost::json::value &);
-    competition_class to_competition_class(const boost::json::value &);
-    competitor_status to_competitor_status(const boost::json::value &);
-    competitor to_competitor(const boost::json::value &);
-    key to_key(const boost::json::value &);
+    competition to_competition(const boost::json::object &);
+    start_group to_start_group(const boost::json::object &);
+    competition_class to_competition_class(const boost::json::object &);
+    competitor_status to_competitor_status(uint64_t);
+    competitor to_competitor(const boost::json::object &);
+    key to_key(const boost::json::object &);
 
     const char * type(const competition &);
     const char * type(const start_group &);
