@@ -210,7 +210,7 @@ namespace {
             }
         }
 
-        virtual tupal::result_type create(const std::string & competition_id, const boost::json::value & new_data) {
+        virtual tupal::result_type create(const std::string & competition_id, const boost::json::object & new_data) {
             try {
                 auto helper = tupal::json_helper(new_data).as_object();
                 const auto id = helper.at("id").as_string().or_else(boost::lexical_cast<std::string>(uuid_generator()));
@@ -239,7 +239,7 @@ namespace {
             }
         }
 
-        virtual tupal::result_type update(const std::string & competition_id, const boost::json::value & new_data) {
+        virtual tupal::result_type update(const std::string & competition_id, const boost::json::object & new_data) {
             try {
                 auto helper = tupal::json_helper(new_data).as_object();
                 const auto id = helper.at("id").as_string().or_else(boost::lexical_cast<std::string>(uuid_generator()));
@@ -365,7 +365,7 @@ namespace {
             }
         }
 
-        virtual tupal::result_type create(const std::string & competition_id, const boost::json::value & new_data) {
+        virtual tupal::result_type create(const std::string & competition_id, const boost::json::object & new_data) {
             try {
                 auto helper = tupal::json_helper(new_data).as_object();
                 const auto id = helper.at("id").as_string().or_else(boost::lexical_cast<std::string>(uuid_generator()));
@@ -394,7 +394,7 @@ namespace {
             }
         }
 
-        virtual tupal::result_type update(const std::string & competition_id, const boost::json::value & new_data) {
+        virtual tupal::result_type update(const std::string & competition_id, const boost::json::object & new_data) {
             try {
                 const auto helper = tupal::json_helper(new_data).as_object();
                 const auto id = helper.at("id").as_string().value();
@@ -527,7 +527,7 @@ namespace {
             }
         }
 
-        virtual tupal::result_type create(const std::string & competition_id, const boost::json::value & new_data) {
+        virtual tupal::result_type create(const std::string & competition_id, const boost::json::object & new_data) {
             try {               
                 auto helper = tupal::json_helper(new_data).as_object();
                 const auto id = helper.at("id").as_string().or_else(boost::lexical_cast<std::string>(uuid_generator()));
@@ -561,7 +561,7 @@ namespace {
             }
         }
 
-        virtual tupal::result_type update(const std::string & competition_id, const boost::json::value & new_data) {
+        virtual tupal::result_type update(const std::string & competition_id, const boost::json::object & new_data) {
             try {
                 auto helper = tupal::json_helper(new_data).as_object();
                 const auto id = helper.at("id").as_string().value();
@@ -713,7 +713,7 @@ namespace {
             }
         }
 
-        virtual tupal::result_type create(const boost::json::value & new_data) {
+        virtual tupal::result_type create(const boost::json::object & new_data) {
             try {
                 auto helper = tupal::json_helper(new_data).as_object();
                 const auto id = helper.at("id").as_string().or_else(boost::lexical_cast<std::string>(uuid_generator()));
@@ -738,7 +738,7 @@ namespace {
             }
         }
 
-        virtual tupal::result_type update(const boost::json::value & new_data) {
+        virtual tupal::result_type update(const boost::json::object & new_data) {
             try {
                 const auto helper = tupal::json_helper(new_data).as_object();
                 const auto id = helper.at("id").as_string().value();

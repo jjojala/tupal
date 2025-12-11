@@ -12,7 +12,6 @@
 
 namespace {
 
-
 	class sessions {
 	private:
 		struct session_info {
@@ -176,12 +175,12 @@ int main(int argc, char** argv) {
 		server.add_route("/rest/competition/")
 			.get([&](const auto & req, beauty::response & res) { handle_list(manager->list(), res); })
 			.post([&](const beauty::request & req, beauty::response & res) {
-				handle_create(manager->create(boost::json::parse(req.body())), res); });
+				handle_create(manager->create(boost::json::parse(req.body()).as_object()), res); });
 
 		server.add_route("/rest/competition/:competition_id")
 			.get([&](const auto & req, auto & res) { handle_get(manager->get(param(req, "competition_id")), res); })
 			.put([&](const auto & req, auto & res) {
-				and_then(handle_update(manager->update(boost::json::parse(req.body())), res),
+				and_then(handle_update(manager->update(boost::json::parse(req.body()).as_object()), res),
 					make_notifier(sessions, param(req, "competition_id"), "updated", "competition")); })
 			.del([&](const auto & req, auto & res) {
 				and_then(handle_remove(manager->remove(param(req, "competition_id")), res),
@@ -193,7 +192,7 @@ int main(int argc, char** argv) {
 				handle_list(manager->getCompetitorManager()->list(param(req, "competition_id")), res); })
 			.post([&](const auto & req, auto & res) {
 				and_then(handle_create(manager->getCompetitorManager()->create(
-						param(req, "competition_id"), boost::json::parse(req.body())), res),
+						param(req, "competition_id"), boost::json::parse(req.body()).as_object()), res),
 					make_notifier(sessions, param(req, "competition_id"), "created", "competitor")); });
 
 		server.add_route("/rest/competition/:competition_id/competitor/:competitor_id")
@@ -202,7 +201,7 @@ int main(int argc, char** argv) {
 					param(req, "competition_id"), param(req, "competitor_id")), res); })
 			.put([&](const auto & req, auto & res) {
 				and_then(handle_update(manager->getCompetitorManager()->update(
-						param(req, "competition_id"), boost::json::parse(req.body())), res),
+						param(req, "competition_id"), boost::json::parse(req.body()).as_object()), res),
 					make_notifier(sessions, param(req, "competition_id"), "updated", "competitor")); })
 			.del([&](const auto & req, auto & res) {
 				and_then(handle_remove(manager->getCompetitorManager()->remove(
@@ -215,7 +214,7 @@ int main(int argc, char** argv) {
 				handle_list(manager->getCompetitionClassManager()->list(param(req, "competition_id")), res); })
 			.post([&](const auto & req, auto & res) {
 				and_then(handle_create(manager->getCompetitionClassManager()->create(
-						param(req, "competition_id"), boost::json::parse(req.body())), res),
+						param(req, "competition_id"), boost::json::parse(req.body()).as_object()), res),
 					make_notifier(sessions, param(req, "competition_id"), "created", "competition_class")); });
 
 		server.add_route("/rest/competition/:competition_id/competition_class/:competition_class_id")
@@ -224,7 +223,7 @@ int main(int argc, char** argv) {
 					param(req, "competition_id"), param(req, "competition_class_id")), res); })
 			.put([&](const auto & req, auto & res) {
 				and_then(handle_update(manager->getCompetitionClassManager()->update(
-					param(req, "competition_id"), boost::json::parse(req.body())), res),
+					param(req, "competition_id"), boost::json::parse(req.body()).as_object()), res),
 					make_notifier(sessions, param(req, "competition_id"), "updated", "competition_class")); })
 			.del([&](const auto & req, auto & res) {
 				and_then(handle_remove(manager->getCompetitionClassManager()->remove(
@@ -237,7 +236,7 @@ int main(int argc, char** argv) {
 				param(req, "competition_id")), res); })
 			.post([&](const auto & req, auto & res) {
 				and_then(handle_create(manager->getStartGroupManager()->create(
-					param(req, "competition_id"), boost::json::parse(req.body())), res),
+					param(req, "competition_id"), boost::json::parse(req.body()).as_object()), res),
 					make_notifier(sessions, param(req, "competition_id"), "created", "start_group")); 
 			});
 
@@ -246,7 +245,7 @@ int main(int argc, char** argv) {
 				param(req, "competition_id"), param(req, "start_group_id")), res); })
 			.put([&](const auto & req, auto & res) {
 				and_then(handle_update(manager->getStartGroupManager()->update(
-					param(req, "competition_id"), boost::json::parse(req.body())), res),
+					param(req, "competition_id"), boost::json::parse(req.body()).as_object()), res),
 					make_notifier(sessions, param(req, "competition_id"), "updated", "start_group"));
 			})
 			.del([&](const auto & req, auto & res) {

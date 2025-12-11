@@ -13,7 +13,7 @@ TEST_CASE("competition manager list (empty)") {
 TEST_CASE("competition manager create and get") {
     auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
 
-    boost::json::value new_competition = boost::json::object {
+    auto new_competition = boost::json::object {
         { "id", "comp-001" },
         { "date", "2024-01-01" },
         { "title", "New Year Competition" }
@@ -33,7 +33,7 @@ TEST_CASE("competition manager create and get") {
 TEST_CASE("competition manager update and remove") {
     auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
 
-    boost::json::value new_competition = boost::json::object {
+    auto new_competition = boost::json::object {
         { "id", "comp-002" },
         { "date", "2024-02-14" },
         { "title", "Valentine's Day Competition" }
@@ -42,7 +42,7 @@ TEST_CASE("competition manager update and remove") {
     auto [create_ec, created_competition] = competition_manager->create(new_competition);
     CHECK(!create_ec);
 
-    boost::json::value updated_competition = boost::json::object {
+    auto updated_competition = boost::json::object {
         { "id", "comp-002" },
         { "date", "2024-02-15" }, // changed date
         { "title", "Valentine's Day Competition" }
@@ -68,7 +68,7 @@ TEST_CASE("competition manager update and remove") {
 TEST_CASE("competition manager duplicate create") {
     auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
 
-    boost::json::value new_competition = boost::json::object {
+    auto new_competition = boost::json::object {
         { "id", "comp-003" },
         { "date", "2024-03-17" },
         { "title", "St. Patrick's Day Competition" }
@@ -105,7 +105,7 @@ TEST_CASE("competition manager remove unknown") {
 TEST_CASE("competition manager update unknown") {
     auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
 
-    boost::json::value updated_competition = boost::json::object {
+    auto updated_competition = boost::json::object {
         { "id", "non-existent-id" },
         { "date", "2024-12-31" },
         { "title", "Non Existent Competition" }
@@ -120,7 +120,7 @@ TEST_CASE("competition manager list after multiple creates") {
     auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
 
     for (int i = 1; i <= 5; ++i) {
-        boost::json::value new_competition = boost::json::object {
+        auto new_competition = boost::json::object {
             { "id", std::string("comp-") + std::to_string(i) },
             { "date", std::string("2024-04-") + (i < 10 ? "0" : "") + std::to_string(i) },
             { "title", std::string("Competition ") + std::to_string(i) }

@@ -47,10 +47,10 @@ namespace tupal {
     public:
         static std::shared_ptr<CompetitionManager> new_competition_manager(const std::string & connection_spec);
 
-        virtual result_type list(/* boost::json::value & result */) const = 0;
+        virtual result_type list(/* boost::json::object & result */) const = 0;
         virtual result_type get(const std::string & id) const = 0;
-        virtual result_type create(const boost::json::value & new_data) = 0;
-        virtual result_type update(const boost::json::value & new_data) = 0;
+        virtual result_type create(const boost::json::object & new_data) = 0;
+        virtual result_type update(const boost::json::object & new_data) = 0;
         virtual result_type remove(const std::string & id) = 0;
 
         virtual std::shared_ptr<StartGroupManager> getStartGroupManager() = 0;
@@ -63,8 +63,8 @@ namespace tupal {
     public:
         virtual result_type list(const std::string & competition_id) const = 0;
         virtual result_type get(const std::string & competition_id, const std::string & id) const = 0;
-        virtual result_type create(const std::string & competition_id, const boost::json::value & new_data) = 0;
-        virtual result_type update(const std::string & competition_id, const boost::json::value & new_data) = 0;
+        virtual result_type create(const std::string & competition_id, const boost::json::object & new_data) = 0;
+        virtual result_type update(const std::string & competition_id, const boost::json::object & new_data) = 0;
         virtual result_type remove(const std::string & competition_id, const std::string & id) = 0;
     };
 
@@ -73,8 +73,8 @@ namespace tupal {
     public:
         virtual result_type list(const std::string & competition_id) const = 0;
         virtual result_type get(const std::string & competition_id, const std::string & id) const = 0;
-        virtual result_type create(const std::string & competition_id, const boost::json::value & new_data) = 0;
-        virtual result_type update(const std::string & competition_id, const boost::json::value & new_data) = 0;
+        virtual result_type create(const std::string & competition_id, const boost::json::object & new_data) = 0;
+        virtual result_type update(const std::string & competition_id, const boost::json::object & new_data) = 0;
         virtual result_type remove(const std::string & competition_id, const std::string & id) = 0;
     };
 
@@ -83,8 +83,8 @@ namespace tupal {
     public:
         virtual result_type list(const std::string & competition_id) const = 0;
         virtual result_type get(const std::string & competition_id, const std::string & id) const = 0;
-        virtual result_type create(const std::string & competition_id, const boost::json::value & new_data) = 0;
-        virtual result_type update(const std::string & competition_id, const boost::json::value & new_data) = 0;
+        virtual result_type create(const std::string & competition_id, const boost::json::object & new_data) = 0;
+        virtual result_type update(const std::string & competition_id, const boost::json::object & new_data) = 0;
         virtual result_type remove(const std::string & competition_id, const std::string & id) = 0;
     };
 };

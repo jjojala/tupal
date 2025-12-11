@@ -136,7 +136,7 @@ TEST_CASE("competition class manager create (comp not found)") {
     auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
     auto competition_class_manager = competition_manager->getCompetitionClassManager();
 
-    boost::json::value new_competition_class = boost::json::object {
+    auto new_competition_class = boost::json::object {
         { "id", "class-001" },
         { "title", "P10" },
         { "start_group_id", "sg-001" }
@@ -168,7 +168,7 @@ TEST_CASE("competition class manager create and duplicate") {
         });
     CHECK(!sg_create_ec);
 
-    boost::json::value new_competition_class = boost::json::object {
+    boost::json::object new_competition_class = {
         { "id", "class-001" },
         { "title", "P10" },
         { "start_group_id", "sg-001" }
@@ -187,7 +187,7 @@ TEST_CASE("competition class manager update (unknown)") {
     auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
     auto competition_class_manager = competition_manager->getCompetitionClassManager();
 
-    boost::json::value updated_competition_class = boost::json::object {
+    boost::json::object updated_competition_class = {
         { "id", "class-001" },
         { "title", "P12" },
         { "start_group_id", "sg-001" }
@@ -219,7 +219,7 @@ TEST_CASE("competition class manager update (existing)") {
         });
     CHECK(!sg_create_ec);
 
-    boost::json::value new_competition_class = boost::json::object {
+    boost::json::object new_competition_class = {
         { "id", "class-001" },
         { "title", "P10" },
         { "start_group_id", "sg-001" }
@@ -230,7 +230,7 @@ TEST_CASE("competition class manager update (existing)") {
     CHECK(created_competition_class.is_object());
     CHECK(created_competition_class.as_object().at("id").as_string() == "class-001");
 
-    boost::json::value updated_competition_class = boost::json::object {
+    boost::json::object updated_competition_class = {
         { "id", "class-001" },
         { "title", "P12" },
         { "start_group_id", "sg-001" }
@@ -276,7 +276,7 @@ TEST_CASE("competition class manager remove (existing)") {
         });
     CHECK(!sg_create_ec);
 
-    boost::json::value new_competition_class = boost::json::object {
+    boost::json::object new_competition_class = {
         { "id", "class-001" },
         { "title", "P10" },
         { "start_group_id", "sg-001" }

@@ -219,14 +219,14 @@ namespace tupal {
 
     // key
 
-    const boost::json::value to_json(const key & k) {
+    const boost::json::object to_json(const key & k) {
         return boost::json::object {
             { "id", k.id },
             { "comp_id", k.comp_id }
         };
     }
 
-    key to_key(const boost::json::value & obj) {
+    key to_key(const boost::json::object & obj) {
         return key {
             .id = std::string { obj.at("id").as_string() },
             .comp_id = std::string { obj.at("comp_id").as_string() }
@@ -239,7 +239,7 @@ namespace tupal {
         return "competition";
     }
 
-    const boost::json::value to_json(const competition & comp) {
+    const boost::json::object to_json(const competition & comp) {
         return boost::json::object {
             { "id", comp.id },
             { "date", to_date_string(comp.date) },
@@ -247,7 +247,7 @@ namespace tupal {
         };
     }
 
-    competition to_competition(const boost::json::value & obj) {
+    competition to_competition(const boost::json::object & obj) {
         return competition {
             .id = std::string { obj.at("id").as_string() },
             .date = from_date_string( std::string { obj.at("date").as_string() } ),
@@ -261,7 +261,7 @@ namespace tupal {
         return "start_group";
     }
 
-    const boost::json::value to_json(const start_group & sg) {
+    const boost::json::object to_json(const start_group & sg) {
         return boost::json::object {
             { "id", sg.id.id },
             { "comp_id", sg.id.comp_id },
@@ -271,7 +271,7 @@ namespace tupal {
         };
     }
 
-    start_group to_start_group(const boost::json::value & obj) {
+    start_group to_start_group(const boost::json::object & obj) {
         return start_group {
             .id {
                 .id = std::string { obj.at("id").as_string() },
@@ -289,7 +289,7 @@ namespace tupal {
         return "competition_class";
     }
 
-    const boost::json::value to_json(const competition_class & cc) {
+    const boost::json::object to_json(const competition_class & cc) {
         return boost::json::object {
             { "id", cc.id.id },
             { "comp_id", cc.id.comp_id },
@@ -298,7 +298,7 @@ namespace tupal {
         };
     }
 
-    competition_class to_competition_class(const boost::json::value & obj) {
+    competition_class to_competition_class(const boost::json::object & obj) {
         return competition_class {
             .id {
                 .id = std::string { obj.at("id").as_string() },
@@ -311,9 +311,8 @@ namespace tupal {
 
     // competitor
 
-    competitor_status to_competitor_status(const boost::json::value & val) {
-        const auto status_int = val.as_int64();
-        switch (status_int) {
+    competitor_status to_competitor_status(uint64_t val) {
+        switch (val) {
             case 0: return competitor_status::NA;
             case 1: return competitor_status::DNS;
             case 2: return competitor_status::DNF;
@@ -331,7 +330,7 @@ namespace tupal {
         return "competitor";
     }
 
-    competitor to_competitor(const boost::json::value & obj) {
+    competitor to_competitor(const boost::json::object & obj) {
         return competitor {
             .id {
                 .id = std::string { obj.at("id").as_string() },
@@ -346,7 +345,7 @@ namespace tupal {
         };
     }
 
-    const boost::json::value to_json(const competitor & competitor) {
+    const boost::json::object to_json(const competitor & competitor) {
         return boost::json::object {
             { "id", competitor.id.id },
             { "comp_id", competitor.id.comp_id },

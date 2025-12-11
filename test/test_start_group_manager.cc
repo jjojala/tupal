@@ -39,14 +39,14 @@ TEST_CASE("start group manager list with entries") {
         });
     CHECK(!comp_create_ec);
 
-    boost::json::value new_start_group1 = boost::json::object {
+    auto new_start_group1 = boost::json::object {
         { "id", "sg-001" },
         { "title", "Start Group 1" },
         { "start_time", "2024-01-01T10:00:00Z" },
         { "first_bib", 100 }
     };
 
-    boost::json::value new_start_group2 = boost::json::object {
+    auto new_start_group2 = boost::json::object {
         { "id", "sg-002" },
         { "title", "Start Group 2" },
         { "start_time", "2024-01-01T11:00:00Z" },
@@ -68,7 +68,7 @@ TEST_CASE("start group manager create (comp not found)") {
     auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
     auto start_group_manager = competition_manager->getStartGroupManager();
 
-    boost::json::value new_start_group = boost::json::object {
+    auto new_start_group = boost::json::object {
         { "id", "sg-001" },
         { "title", "Start Group 1" },
         { "start_time", "2024-01-01T10:00:00Z" },
@@ -91,7 +91,7 @@ TEST_CASE("start group manager create and get") {
         });
     CHECK(!comp_create_ec);
 
-    boost::json::value new_start_group = boost::json::object {
+    auto new_start_group = boost::json::object {
         { "id", "sg-001" },
         { "title", "Start Group 1" },
         { "start_time", "2024-01-01T10:00:00Z" },
@@ -129,7 +129,7 @@ TEST_CASE("start group manager create (duplicate)") {
         });
     CHECK(!comp_create_ec);
 
-    boost::json::value new_start_group = boost::json::object {
+    auto new_start_group = boost::json::object {
         { "id", "sg-001" },
         { "title", "Start Group 1" },
         { "start_time", "2024-01-01T10:00:00Z" },
@@ -147,7 +147,7 @@ TEST_CASE("start group manager update (unknown)") {
     auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
     auto start_group_manager = competition_manager->getStartGroupManager();
 
-    boost::json::value updated_start_group = boost::json::object {
+    auto updated_start_group = boost::json::object {
         { "id", "sg-001" },
         { "title", "Updated Start Group" },
         { "start_time", "2024-01-01T12:00:00Z" },
@@ -170,7 +170,7 @@ TEST_CASE("start group manager create and update") {
         });
     CHECK(!comp_create_ec);
 
-    boost::json::value new_start_group = boost::json::object {
+    auto new_start_group = boost::json::object {
         { "id", "sg-001" },
         { "title", "Start Group 1" },
         { "start_time", "2024-01-01T10:00:00Z" },
@@ -180,7 +180,7 @@ TEST_CASE("start group manager create and update") {
     auto [create_ec, created_start_group] = start_group_manager->create("comp-001", new_start_group);
     CHECK(!create_ec);
 
-    boost::json::value updated_start_group = boost::json::object {
+    auto updated_start_group = boost::json::object {
         { "id", "sg-001" },
         { "title", "Updated Start Group" },
         { "start_time", "2024-01-01T12:00:00Z" },
@@ -220,7 +220,7 @@ TEST_CASE("start group manager create and remove") {
         });
     CHECK(!comp_create_ec);
 
-    boost::json::value new_start_group = boost::json::object {
+    auto new_start_group = boost::json::object {
         { "id", "sg-001" },
         { "title", "Start Group 1" },
         { "start_time", "2024-01-01T10:00:00Z" },
