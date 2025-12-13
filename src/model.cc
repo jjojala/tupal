@@ -342,8 +342,10 @@ namespace tupal {
 
     competition to_competition(const boost::json::object & obj) {
         return competition {
-            .id = std::string { obj.at("id").as_string() },
-            .date = from_date_string( std::string { obj.at("date").as_string() } ),
+            .id = make_unique_id( obj.at("id") ),
+            .date = at<std::string>(obj, "date", non_empty)
+                .map<tupal::date_time>(tupal::from_date_string)
+                .or_else(date_time{0, 0}),
             .title = std::string { obj.at("title").as_string() }
         };
     }
@@ -365,15 +367,16 @@ namespace tupal {
     }
 
     start_group to_start_group(const boost::json::object & obj) {
-        return start_group {
+        auto sg = start_group {
             .id {
-                .id = std::string { obj.at("id").as_string() },
-                .comp_id = std::string { obj.at("comp_id").as_string() }
+                .id = make_unique_id( obj.at("id") ),
+                .comp_id = at<std::string>(obj, "comp_id").or_else("")
             },
             .title = std::string { obj.at("title").as_string() },
             .first_start_time = from_date_string( std::string { obj.at("first_start_time").as_string() } ),
-            .first_bib = static_cast<uint16_t>(obj.at("first_bib").as_int64())
+            .first_bib = static_cast<uint16_t>(at<int64_t>(obj, "first_bib").or_else(0))
         };
+        return sg;
     }
 
     // competition_class
@@ -394,8 +397,8 @@ namespace tupal {
     competition_class to_competition_class(const boost::json::object & obj) {
         return competition_class {
             .id {
-                .id = std::string { obj.at("id").as_string() },
-                .comp_id = std::string { obj.at("comp_id").as_string() }
+                .id = make_unique_id( obj.at("id") ),
+                .comp_id = at<std::string>(obj, "comp_id").or_else("")
             },
             .title = std::string { obj.at("title").as_string() },
             .start_group_id = std::string { obj.at("start_group_id").as_string() }
@@ -426,14 +429,16 @@ namespace tupal {
     competitor to_competitor(const boost::json::object & obj) {
         return competitor {
             .id {
-                .id = std::string { obj.at("id").as_string() },
-                .comp_id = std::string { obj.at("comp_id").as_string() }
+                .id = make_unique_id( obj.at("id").as_string() ),
+                .comp_id = at<std::string>(obj, "comp_id").or_else("")
             },
-            .bib = static_cast<uint16_t>(obj.at("bib").as_int64()),
+            .bib = static_cast<uint16_t>(at<int64_t>(obj, "bib").or_else(0)),
             .name = std::string { obj.at("name").as_string() },
             .start_time_offset = from_duration_string( std::string { obj.at("start_time_offset").as_string() } ),
-            .finish_time = from_date_string( std::string { obj.at("finish_time").as_string() } ),
-            .status = to_competitor_status( obj.at("status") ),
+            .finish_time = at<std::string>(obj, "finish_time", non_empty)
+                .map<tupal::date_time>(tupal::from_date_string)
+                .or_else(date_time{0, 0}),
+            .status = to_competitor_status( obj.at("status").as_int64() ),
             .comp_class_id = std::string { obj.at("comp_class_id").as_string() }
         };
     }
