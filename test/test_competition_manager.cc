@@ -51,7 +51,7 @@ TEST_CASE("competition manager update and remove") {
     auto [update_ec, updated_result] = competition_manager->update(updated_competition);
     CHECK(!update_ec);
     CHECK(updated_result.is_object());
-    CHECK(updated_result.as_object().at("date").as_string() == "2024-02-15");
+    CHECK(updated_result.as_object().at("date").as_string() == "2024-02-15T00:00:00.000Z");
 
     auto [ remove_ec, removed_competition ] = competition_manager->remove("comp-002");
     CHECK(remove_ec == std::error_code {} );

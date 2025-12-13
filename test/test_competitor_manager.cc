@@ -43,7 +43,7 @@ TEST_CASE("competitor manager list (no data)") {
         boost::json::object {
             { "id", "sg-001" },
             { "title", "Start Group 1" },
-            { "start_time", "2024-01-01T10:00:00Z" },
+            { "first_start_time", "2024-01-01T10:00:00Z" },
             { "first_bib", 100 }
         });
     CHECK(!sg_create_ec);
@@ -80,7 +80,7 @@ TEST_CASE("competitor manager list (with data)") {
         boost::json::object {
             { "id", "sg-001" },
             { "title", "Start Group 1" },
-            { "start_time", "2024-01-01T10:00:00Z" },
+            { "first_start_time", "2024-01-01T10:00:00Z" },
             { "first_bib", 100 }
         });
     CHECK(!sg_create_ec);
@@ -96,18 +96,18 @@ TEST_CASE("competitor manager list (with data)") {
     boost::json::object new_competitor1 = {
         { "id", "competitor-001" },
         { "comp_class_id", "class-001" },
-        { "bib", 101 },
-        { "start_time_offset", "00:10:00" },
-        { "finish_time", "" },
+        { "bib", 101UL },
+        { "start_time_offset", "PT600.000S" },
+        { "finish_time", "2024-01-01T10:59:11.231Z" },
         { "status", 0 },
         { "name", "Alice" }
     };
     boost::json::object new_competitor2 = {
         { "id", "competitor-002" },
         { "comp_class_id", "class-001" },
-        { "bib", 102 },
-        { "start_time_offset", "00:15:00" },
-        { "finish_time", "" },
+        { "bib", 102UL },
+        { "start_time_offset", "PT900.000S" },
+        { "finish_time", "2024-01-01T11:01:22.911Z" },
         { "status", 0 },
         { "name", "Bob" }
     };
@@ -129,7 +129,7 @@ TEST_CASE("competitor manager create (no comp)") {
         { "id", "competitor-001" },
         { "comp_class_id", "class-001" },
         { "bib", 101 },
-        { "start_time_offset", "00:10:00" },
+        { "start_time_offset", "PT600.000S" },
         { "finish_time", "" },
         { "status", 0 },
         { "name", "Alice" }
@@ -155,7 +155,7 @@ TEST_CASE("competitor manager create (no start group)") {
         { "id", "competitor-001" },
         { "comp_class_id", "class-001" },
         { "bib", 101 },
-        { "start_time_offset", "00:10:00" },
+        { "start_time_offset", "PT600.000S" },
         { "finish_time", "" },
         { "status", 0 },
         { "name", "Alice" }
@@ -182,7 +182,7 @@ TEST_CASE("competitor manager create (no comp class)") {
         boost::json::object {
             { "id", "sg-001" },
             { "title", "Start Group 1" },
-            { "start_time", "2024-01-01T10:00:00Z" },
+            { "first_start_time", "2024-01-01T10:00:00Z" },
             { "first_bib", 100 }
         });
     CHECK(!sg_create_ec);
@@ -191,7 +191,7 @@ TEST_CASE("competitor manager create (no comp class)") {
         { "id", "competitor-001" },
         { "comp_class_id", "class-001" },
         { "bib", 101 },
-        { "start_time_offset", "00:10:00" },
+        { "start_time_offset", "PT600.000S" },
         { "finish_time", "" },
         { "status", 0 },
         { "name", "Alice" }
@@ -218,7 +218,7 @@ TEST_CASE("competitor manager create and get") {
         boost::json::object {
             { "id", "sg-001" },
             { "title", "Start Group 1" },
-            { "start_time", "2024-01-01T10:00:00Z" },
+            { "first_start_time", "2024-01-01T10:00:00Z" },
             { "first_bib", 100 }
         });
     CHECK(!sg_create_ec);
@@ -235,7 +235,7 @@ TEST_CASE("competitor manager create and get") {
         { "id", "competitor-001" },
         { "comp_class_id", "class-001" },
         { "bib", 101 },
-        { "start_time_offset", "00:10:00" },
+        { "start_time_offset", "PT600.000S" },
         { "finish_time", "" },
         { "status", 0 },
         { "name", "Alice" }
@@ -246,8 +246,8 @@ TEST_CASE("competitor manager create and get") {
     CHECK(created_competitor.as_object().at("id").as_string() == "competitor-001");
     CHECK(created_competitor.as_object().at("comp_class_id").as_string() == "class-001");
     CHECK(created_competitor.as_object().at("bib").as_int64() == 101);
-    CHECK(created_competitor.as_object().at("start_time_offset").as_string() == "00:10:00");
-    CHECK(created_competitor.as_object().at("finish_time").as_string() == "");
+    CHECK(created_competitor.as_object().at("start_time_offset").as_string() == "PT600.000S");
+    CHECK(created_competitor.as_object().at("finish_time").as_string() == "1970-01-01T02:00:00.000Z");
     CHECK(created_competitor.as_object().at("status").as_int64() == 0);
     CHECK(created_competitor.as_object().at("name").as_string() == "Alice");
 
@@ -273,7 +273,7 @@ TEST_CASE("competitor manager update (unknown)") {
         { "id", "competitor-001" },
         { "comp_class_id", "class-001" },
         { "bib", 101 },
-        { "start_time_offset", "00:10:00" },
+        { "start_time_offset", "PT600.000S" },
         { "finish_time", "" },
         { "status", 0 },
         { "name", "Alice" }
@@ -301,7 +301,7 @@ TEST_CASE("competitor manager update (existing)") {
         boost::json::object {
             { "id", "sg-001" },
             { "title", "Start Group 1" },
-            { "start_time", "2024-01-01T10:00:00Z" },
+            { "first_start_time", "2024-01-01T10:00:00Z" },
             { "first_bib", 100 }
         });
     CHECK(!sg_create_ec);
@@ -318,7 +318,7 @@ TEST_CASE("competitor manager update (existing)") {
         { "id", "competitor-001" },
         { "comp_class_id", "class-001" },
         { "bib", 101 },
-        { "start_time_offset", "00:10:00" },
+        { "start_time_offset", "PT600.000S" },
         { "finish_time", "" },
         { "status", 0 },
         { "name", "Alice" }
@@ -332,8 +332,8 @@ TEST_CASE("competitor manager update (existing)") {
         { "id", "competitor-001" },
         { "comp_class_id", "class-001" },
         { "bib", 102 },
-        { "start_time_offset", "00:12:00" },
-        { "finish_time", "01:00:00" },
+        { "start_time_offset", "PT720.000S" },
+        { "finish_time", "2025-12-13T22:35:29.000Z" },
         { "status", 1 },
         { "name", "Alice Smith" }
     };
@@ -341,8 +341,8 @@ TEST_CASE("competitor manager update (existing)") {
     CHECK(!update_ec);
     CHECK(updated_result.is_object());
     CHECK(updated_result.as_object().at("bib").as_int64() == 102);
-    CHECK(updated_result.as_object().at("start_time_offset").as_string() == "00:12:00");
-    CHECK(updated_result.as_object().at("finish_time").as_string() == "01:00:00");
+    CHECK(updated_result.as_object().at("start_time_offset").as_string() == "PT720.000S");
+    CHECK(updated_result.as_object().at("finish_time").as_string() == "2025-12-13T22:35:29.000Z");
     CHECK(updated_result.as_object().at("status").as_int64() == 1);
     CHECK(updated_result.as_object().at("name").as_string() == "Alice Smith");
 
@@ -350,8 +350,8 @@ TEST_CASE("competitor manager update (existing)") {
     CHECK(!get_ec);
     CHECK(fetched_competitor.is_object());
     CHECK(fetched_competitor.as_object().at("bib").as_int64() == 102);
-    CHECK(fetched_competitor.as_object().at("start_time_offset").as_string() == "00:12:00");
-    CHECK(fetched_competitor.as_object().at("finish_time").as_string() == "01:00:00");
+    CHECK(fetched_competitor.as_object().at("start_time_offset").as_string() == "PT720.000S");
+    CHECK(fetched_competitor.as_object().at("finish_time").as_string() == "2025-12-13T22:35:29.000Z");
     CHECK(fetched_competitor.as_object().at("status").as_int64() == 1);
     CHECK(fetched_competitor.as_object().at("name").as_string() == "Alice Smith");
 }
@@ -382,7 +382,7 @@ TEST_CASE("competitor manager create and remove") {
         boost::json::object {
             { "id", "sg-001" },
             { "title", "Start Group 1" },
-            { "start_time", "2024-01-01T10:00:00Z" },
+            { "first_start_time", "2024-01-01T10:00:00Z" },
             { "first_bib", 100 }
         });
     CHECK(!sg_create_ec);
@@ -399,7 +399,7 @@ TEST_CASE("competitor manager create and remove") {
         { "id", "competitor-001" },
         { "comp_class_id", "class-001" },
         { "bib", 101 },
-        { "start_time_offset", "00:10:00" },
+        { "start_time_offset", "PT600.000S" },
         { "finish_time", "" },
         { "status", 0 },
         { "name", "Alice" }

@@ -65,7 +65,7 @@ TEST_CASE("rest tests (smoke)") {
             R"({ 
                 "id": "sg-1",
                 "title": "Start group 1",
-                "start_time": "2025-11-11T18:00:00Z",
+                "first_start_time": "2025-11-11T18:00:00.000Z",
                 "first_bib": 1
             })");
         CHECK(ec == std::error_code {});

@@ -40,8 +40,9 @@ TEST_CASE("competition class manager list (empty)") {
     auto [sg_create_ec, created_start_group] = start_group_manager->create("comp-001",
         boost::json::object {
             { "id", "sg-001" },
+            { "comp_id", "comp-001" },
             { "title", "Start Group 1" },
-            { "start_time", "2024-01-01T10:00:00Z" },
+            { "first_start_time", "2024-01-01T10:00:00Z" },
             { "first_bib", 100 }
         });
     CHECK(!sg_create_ec);
@@ -69,7 +70,7 @@ TEST_CASE("competition class manager list (with data)") {
         boost::json::object {
             { "id", "sg-001" },
             { "title", "Start Group 1" },
-            { "start_time", "2024-01-01T10:00:00Z" },
+            { "first_start_time", "2024-01-01T10:00:00.000Z" },
             { "first_bib", 100 }
         });
     CHECK(!sg_create_ec);
@@ -113,8 +114,7 @@ TEST_CASE("competition class manager get (existing)") {
         boost::json::object {
             { "id", "sg-001" },
             { "title", "Start Group 1" },
-            { "start_time", "2024-01-01T10:00:00Z" },
-            { "first_bib", 100 }
+            { "first_start_time", "2024-01-01T10:00:00Z" }
         });
     CHECK(!sg_create_ec);
 
@@ -163,7 +163,7 @@ TEST_CASE("competition class manager create and duplicate") {
         boost::json::object {
             { "id", "sg-001" },
             { "title", "Start Group 1" },
-            { "start_time", "2024-01-01T10:00:00Z" },
+            { "first_start_time", "2024-01-01T10:00:00Z" },
             { "first_bib", 100 }
         });
     CHECK(!sg_create_ec);
@@ -214,7 +214,7 @@ TEST_CASE("competition class manager update (existing)") {
         boost::json::object {
             { "id", "sg-001" },
             { "title", "Start Group 1" },
-            { "start_time", "2024-01-01T10:00:00Z" },
+            { "first_start_time", "2024-01-01T10:00:00Z" },
             { "first_bib", 100 }
         });
     CHECK(!sg_create_ec);
@@ -271,7 +271,7 @@ TEST_CASE("competition class manager remove (existing)") {
         boost::json::object {
             { "id", "sg-001" },
             { "title", "Start Group 1" },
-            { "start_time", "2024-01-01T10:00:00Z" },
+            { "first_start_time", "2024-01-01T10:00:00Z" },
             { "first_bib", 100 }
         });
     CHECK(!sg_create_ec);

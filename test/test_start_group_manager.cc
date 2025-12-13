@@ -42,14 +42,14 @@ TEST_CASE("start group manager list with entries") {
     auto new_start_group1 = boost::json::object {
         { "id", "sg-001" },
         { "title", "Start Group 1" },
-        { "start_time", "2024-01-01T10:00:00Z" },
+        { "first_start_time", "2024-01-01T10:00:00.000Z" },
         { "first_bib", 100 }
     };
 
     auto new_start_group2 = boost::json::object {
         { "id", "sg-002" },
         { "title", "Start Group 2" },
-        { "start_time", "2024-01-01T11:00:00Z" },
+        { "first_start_time", "2024-01-01T11:00:00.000Z" },
         { "first_bib", 200 }
     };
 
@@ -71,7 +71,7 @@ TEST_CASE("start group manager create (comp not found)") {
     auto new_start_group = boost::json::object {
         { "id", "sg-001" },
         { "title", "Start Group 1" },
-        { "start_time", "2024-01-01T10:00:00Z" },
+        { "first_start_time", "2024-01-01T10:00:00.000Z" },
         { "first_bib", 100 }
     };
 
@@ -94,7 +94,7 @@ TEST_CASE("start group manager create and get") {
     auto new_start_group = boost::json::object {
         { "id", "sg-001" },
         { "title", "Start Group 1" },
-        { "start_time", "2024-01-01T10:00:00Z" },
+        { "first_start_time", "2024-01-01T10:00:00.000Z" },
         { "first_bib", 100 }
     };
 
@@ -132,7 +132,7 @@ TEST_CASE("start group manager create (duplicate)") {
     auto new_start_group = boost::json::object {
         { "id", "sg-001" },
         { "title", "Start Group 1" },
-        { "start_time", "2024-01-01T10:00:00Z" },
+        { "first_start_time", "2024-01-01T10:00:00.000Z" },
         { "first_bib", 100 }
     };
 
@@ -150,7 +150,7 @@ TEST_CASE("start group manager update (unknown)") {
     auto updated_start_group = boost::json::object {
         { "id", "sg-001" },
         { "title", "Updated Start Group" },
-        { "start_time", "2024-01-01T12:00:00Z" },
+        { "first_start_time", "2024-01-01T12:00:00.000Z" },
         { "first_bib", 150 }
     };
 
@@ -173,7 +173,7 @@ TEST_CASE("start group manager create and update") {
     auto new_start_group = boost::json::object {
         { "id", "sg-001" },
         { "title", "Start Group 1" },
-        { "start_time", "2024-01-01T10:00:00Z" },
+        { "first_start_time", "2024-01-01T10:00:00.000Z" },
         { "first_bib", 100 }
     };
 
@@ -183,7 +183,7 @@ TEST_CASE("start group manager create and update") {
     auto updated_start_group = boost::json::object {
         { "id", "sg-001" },
         { "title", "Updated Start Group" },
-        { "start_time", "2024-01-01T12:00:00Z" },
+        { "first_start_time", "2024-01-01T12:00:00.000Z" },
         { "first_bib", 150 }
     };
 
@@ -196,7 +196,7 @@ TEST_CASE("start group manager create and update") {
     auto [get_ec, fetched_start_group] = start_group_manager->get("comp-001", "sg-001");
     CHECK(!get_ec);
     CHECK(fetched_start_group.is_object());
-    CHECK(fetched_start_group.as_object().at("start_time").as_string() == "2024-01-01T12:00:00Z");
+    CHECK(fetched_start_group.as_object().at("first_start_time").as_string() == "2024-01-01T12:00:00.000Z");
     CHECK(fetched_start_group.as_object().at("first_bib").as_int64() == 150);
 }
 
@@ -223,7 +223,7 @@ TEST_CASE("start group manager create and remove") {
     auto new_start_group = boost::json::object {
         { "id", "sg-001" },
         { "title", "Start Group 1" },
-        { "start_time", "2024-01-01T10:00:00Z" },
+        { "first_start_time", "2024-01-01T10:00:00.000Z" },
         { "first_bib", 100 }
     };
 
@@ -232,7 +232,6 @@ TEST_CASE("start group manager create and remove") {
 
     auto [remove_ec, removed_start_group] = start_group_manager->remove("comp-001", "sg-001");
     CHECK(remove_ec == std::error_code {});
-    MESSAGE(removed_start_group);
 
     auto [get_ec, fetched_start_group] = start_group_manager->get("comp-001", "sg-001");
     CHECK(get_ec == tupal::make_error_code(tupal::error_code::unknown_key));
