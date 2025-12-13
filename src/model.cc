@@ -166,8 +166,12 @@ namespace tupal {
     // duration
 
     duration from_duration_string(const std::string & iso8601_str) {
-        char * p = const_cast<char*>(iso8601_str.c_str());
-        return parse_duration(p);
+        try {
+            char * p = const_cast<char*>(iso8601_str.c_str());
+            return parse_duration(p);
+        } catch (const std::invalid_argument & e) {
+            throw std::invalid_argument("invalid duration '" + iso8601_str + "': " + e.what());
+        }
     }
 
     std::string to_duration_string(const duration duration) {
@@ -270,11 +274,16 @@ namespace tupal {
     }
 
     date_time from_date_string(const std::string & iso8601_str) {
-        char * p = const_cast<char*>(iso8601_str.c_str());
-        return {
-            .seconds_since_epoch = parse_time_t(p),
-            .milliseconds = parse_milliseconds(p)
-        };
+        try {
+            char * p = const_cast<char*>(iso8601_str.c_str());
+            return {
+                .seconds_since_epoch = parse_time_t(p),
+                .milliseconds = parse_milliseconds(p)
+            };
+        }
+        catch (const std::invalid_argument & e) {
+            throw std::invalid_argument("invalid date_time '" + iso8601_str + "': " + e.what());
+        }
     }
 
     bool operator<(const date_time & dt1, const date_time & dt2) {
