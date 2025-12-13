@@ -384,7 +384,7 @@ namespace tupal {
 
     // competitor
 
-    competitor_status to_competitor_status(uint64_t val) {
+    competitor_status to_competitor_status(int64_t val) {
         switch (val) {
             case 0: return competitor_status::NA;
             case 1: return competitor_status::DNS;

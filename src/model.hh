@@ -160,7 +160,7 @@ namespace tupal {
     competition to_competition(const boost::json::object &);
     start_group to_start_group(const boost::json::object &);
     competition_class to_competition_class(const boost::json::object &);
-    competitor_status to_competitor_status(uint64_t);
+    competitor_status to_competitor_status(int64_t);
     competitor to_competitor(const boost::json::object &);
     key to_key(const boost::json::object &);
 
