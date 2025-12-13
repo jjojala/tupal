@@ -70,10 +70,11 @@ namespace {
         tupal::duration dur { 0, 0 };
         expect_separator(p, 'P');
         expect_separator(p, 'T');
-        return {
-            .seconds = parse_seconds(p),
-            .milliseconds = parse_milliseconds(p)
-        };
+        dur.seconds = parse_seconds(p);
+        expect_separator(p, '.');
+        dur.milliseconds = parse3(p);
+        return dur;
+    }
 
     /**
      * @brief Monad 'optional'
