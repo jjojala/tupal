@@ -74,6 +74,46 @@ namespace {
             .seconds = parse_seconds(p),
             .milliseconds = parse_milliseconds(p)
         };
+
+    /**
+     * @brief Monad 'optional'
+     * @param T object type for enclosing optional. Few requirements for T:
+     *   T must be default constructable
+     *   T must be copy-constructable.
+     *   T must be assignable.
+     *
+     * @note optional is already supporeted by standard library in most recent c++ stardars!
+     * */
+    template<class T>
+    class optional {
+    private:
+        bool is_set;
+        T value;
+    public:
+        /** @brief default constructor initalizes an empty 'optional'.  */
+        optional() : is_set(false), value() {}
+
+        /** @brief destructor */
+        ~optional() noexcept = default;
+
+        /** @brief copy-constror, initializes optional with given val of type T */
+        optional(const T & val) : is_set(true), value(val) {}
+
+        /** @brief Returns enclosed object if set, othervise val. */
+        inline const T & or_else(const T & val) const { return is_set ? value : val; }
+
+        /**
+         * @brief Mapper.
+         * Converts enclosed value to type U. If value is not set, returns an
+         * empty optional of type U. U must support the same features as T.
+         * @param mapper is a function that takes reference to const T (current enclosed value)
+         *  and returns object of type U. I.e. it can make conversion routines from T to U.
+         */
+        template <class U>
+        inline optional<U> map(U (*mapper)(const T&)) const {
+            return is_set ? optional<U>(mapper(value)) : optional<U>();
+        }
+    };
     }
 }
 
