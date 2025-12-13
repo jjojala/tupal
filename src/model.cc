@@ -115,6 +115,38 @@ namespace {
             return is_set ? optional<U>(mapper(value)) : optional<U>();
         }
     };
+
+    /** @brief Predicate function returning 'true' if val can be considered non-empty. */
+    bool non_empty(const boost::json::value & val) {
+        if (val.is_null())
+            return false;
+        return ((val.is_array() && !val.as_array().empty())
+                || (val.is_object() && !val.as_object().empty())
+                || (val.is_string() && !val.as_string().empty()));
+    }
+
+    /** @brief Predicate function returning 'true' if val is non-null. */
+    bool non_null(const boost::json::value & val) {
+        return !val.is_null();
+    }
+
+    /**
+     * @brief Safe accessor to json object attributes. 
+     * @param obj const reference to json object.
+     * @param name non-empty name of the attribute being accessed.
+     * @param validate predicate function to validate the objects's value. Default
+     *   is non-null, which means that only attributes having meaningfull value are accepted.
+     * @return optional of desired type. Note, that only types supported by json::value are accepted.
+     */
+    template <class T>
+    optional<T> at(const boost::json::object & obj, const char * name,
+            bool (*validate)(const boost::json::value&) = non_null) {
+        auto it = obj.find(name);
+        if (it != obj.end() && validate(it->value())) {
+            return optional<T>(boost::json::value_to<T>(it->value()));
+        } else {
+            return optional<T>();
+        }
     }
 }
 
