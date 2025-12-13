@@ -1,4 +1,7 @@
 #include <stdexcept>
+#include "boost/uuid/uuid.hpp"
+#include "boost/uuid/uuid_generators.hpp"
+#include "boost/uuid/uuid_io.hpp"
 #include "model.hh"
 
 namespace {
@@ -74,6 +77,14 @@ namespace {
         expect_separator(p, '.');
         dur.milliseconds = parse3(p);
         return dur;
+    }
+
+    static boost::uuids::random_generator uuid_generator;
+
+    std::string make_unique_id(const boost::json::value & val) {
+        return val.is_null()
+            ? boost::lexical_cast<std::string>(uuid_generator())
+            : std::string { val.as_string() };
     }
 
     /**
