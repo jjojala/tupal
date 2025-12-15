@@ -293,6 +293,9 @@ namespace tupal {
     }
 
     std::string to_date_string(const date_time & dt) {
+        if (dt.seconds_since_epoch == 0)
+            return "1970-01-01T00:00:00.000Z";
+
         struct tm * tm = std::localtime(&dt.seconds_since_epoch);
         char buffer[30];
 
