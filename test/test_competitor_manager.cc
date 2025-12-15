@@ -247,7 +247,7 @@ TEST_CASE("competitor manager create and get") {
     CHECK(created_competitor.as_object().at("comp_class_id").as_string() == "class-001");
     CHECK(created_competitor.as_object().at("bib").as_int64() == 101);
     CHECK(created_competitor.as_object().at("start_time_offset").as_string() == "PT600.000S");
-    CHECK(created_competitor.as_object().at("finish_time").as_string() == "1970-01-01T02:00:00.000Z");
+    CHECK(created_competitor.as_object().at("finish_time").as_string() == "1970-01-01T00:00:00.000Z");
     CHECK(created_competitor.as_object().at("status").as_int64() == 0);
     CHECK(created_competitor.as_object().at("name").as_string() == "Alice");
 
