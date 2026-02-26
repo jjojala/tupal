@@ -23,11 +23,16 @@ TEST_CASE("competition manager create and get") {
     CHECK(!create_ec);
     CHECK(created_competition.is_object());
     CHECK(created_competition.as_object().at("id").as_string() == "comp-001");
+    CHECK(created_competition.as_object().at("date").as_string() == "2024-01-01T00:00:00.000Z");
+    CHECK(created_competition.as_object().at("title").as_string() == "New Year Competition");
 
     auto [get_ec, fetched_competition] = competition_manager->get("comp-001");
     CHECK(!get_ec);
     CHECK(fetched_competition.is_object());
     CHECK(fetched_competition.as_object().at("title").as_string() == "New Year Competition");
+    CHECK(fetched_competition.as_object().at("date").as_string() == "2024-01-01T00:00:00.000Z");
+    CHECK(fetched_competition.as_object().at("id").as_string() == "comp-001");
+    CHECK(fetched_competition.as_object().size() == new_competition.size());
 }
 
 TEST_CASE("competition manager update and remove") {
