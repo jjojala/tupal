@@ -716,8 +716,10 @@ namespace {
 
                 *soci_session << "select id, date, title from competition where id = :id",
                     soci::into(comp.id), soci::into(date_str), soci::into(comp.title), soci::use(comp.id);
-                if (soci_session->got_data())
+                if (soci_session->got_data()) {
+                    comp.date = tupal::from_date_string(date_str);
                     return { ok, tupal::to_json(comp) };
+                }
 
                 return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
             }
