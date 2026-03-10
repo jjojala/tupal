@@ -14,9 +14,12 @@ Trying to get rid of pre-installed packages (striving toward self-standing build
 # Run tests
 
 ```
-> ctest --test-dir build -L tupal
-> ctest --test-dir build -L manager
-> ctest --test-dir build -L rest
+# tupal -tests:
+> ctest --test-dir build -L tupal --output-on-failure
+> ctest --test-dir build -L manager --output-on-failure
+> ctest --test-dir build -L rest --output-on-failure
+# or all:
+> ctest --test-dir build --output-on-failure
 ```
 (tupal includes all test sets)
 
