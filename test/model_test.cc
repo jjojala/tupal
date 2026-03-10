@@ -3,6 +3,26 @@
 #include "doctest/doctest.h"
 #include "model.hh"
 
+TEST_CASE("iso8601 date --> date_time") {
+    const std::string date_str = "2026-02-27";
+    const std::tm tm = {
+        .tm_sec = 0,
+        .tm_min = 0,
+        .tm_hour = 0,
+        .tm_mday = 27,
+        .tm_mon = 02 - 1,
+        .tm_year = 2026 - 1900,
+        .tm_isdst = -1
+    };
+
+    const auto dt = tupal::from_date_string(date_str);
+    CHECK(dt.seconds_since_epoch == std::mktime(const_cast<std::tm*>(&tm)));
+    CHECK(dt.milliseconds == 0);
+
+    const std::string result = tupal::to_date_string(dt);
+    CHECK(result == "2026-02-27T00:00:00.000Z");
+}
+
 TEST_CASE("iso8601 --> date_time") {
     const std::string date_str = "2025-12-31T23:59:59.123Z";
     const std::tm tm = {
