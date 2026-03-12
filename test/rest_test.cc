@@ -68,6 +68,9 @@ TEST_CASE("rest tests (smoke)") {
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
     MESSAGE("WebSocket client set up, starting REST tests...");
+    CHECK(ws_messages.size() == 1);
+    CHECK(ws_messages.front() == R"({})");
+    ws_messages.clear();
 
     {
         auto [ec, response] = client.get(base_url + "/rest/competition/");
