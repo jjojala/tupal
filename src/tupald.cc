@@ -128,6 +128,27 @@ namespace {
 		}
 		return std::nullopt;
 	}
+
+	boost::json::array to_array(const tupal::result_type result) {
+		if (tupal::ec(result)) {
+			return {};
+		} else {
+			return tupal::json(result).as_array();
+		}
+	}
+
+	boost::json::object get_competition_data(tupal::CompetitionManager & manager, const std::string & competition_id) {
+		const auto [ec, competition] = manager.get(competition_id);
+		if (!ec) {
+			auto competition_data = competition.as_object();
+			competition_data["start_groups"] = to_array(manager.getStartGroupManager()->list(competition_id));
+			competition_data["classes"] = to_array(manager.getCompetitionClassManager()->list(competition_id));
+			competition_data["competitors"] = to_array(manager.getCompetitorManager()->list(competition_id));
+			return competition_data;
+		}
+
+		return {};
+	}
 }
 
 int main(int argc, char** argv) {
@@ -160,10 +181,13 @@ int main(int argc, char** argv) {
 
 		server.add_route("/ws/:competition_id")
 			.ws(beauty::ws_handler {
-				.on_connect = [&sessions](const beauty::ws_context & ctx) {
+				.on_connect = [&sessions, &manager](const beauty::ws_context & ctx) {
 					const auto competition_id = ctx.attributes.find("competition_id");
 					if (competition_id != ctx.attributes.end()) {
 						sessions.register_client(ctx.uuid, competition_id->second.as_string(), ctx.ws_session.lock());
+
+						ctx.ws_session.lock()->send(boost::json::serialize(
+							get_competition_data(*manager, competition_id->second.as_string())));
 					}
 				},
 				.on_disconnect = [&sessions](const beauty::ws_context & ctx) {
