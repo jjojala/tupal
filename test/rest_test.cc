@@ -10,16 +10,16 @@ namespace {
     const std::string base_url = "http://localhost:8085";
 
     /** @see definition below */
-    bool check(const boost::json::value &, const boost::json::value &);
+    bool contains(const boost::json::value &, const boost::json::value &);
 
-    bool check(const boost::json::object & obj, const boost::json::value & item) {
+    bool contains(const boost::json::object & obj, const boost::json::value & item) {
         if (item.is_object()) {
             bool status = true;
 
             const auto item_object = item.as_object();
             for (const auto & [key, value] : obj) {
                 if (item_object.contains(key)) {
-                    if (!check(value, item_object.at(key)))
+                    if (!contains(value, item_object.at(key)))
                         status = false;
                 } else {
                     MESSAGE("Object '", item, "' expected to have key '", key, "' but it was not found");
@@ -33,14 +33,14 @@ namespace {
         return false;
     }
 
-    bool check(const boost::json::value & val, const boost::json::value & item) {
+    bool contains(const boost::json::value & val, const boost::json::value & item) {
         if (val.is_object())
-            return check(val.as_object(), item);
+            return contains(val.as_object(), item);
 
         else if (val.is_array()) {
             bool status = true;
             for (const auto values: val.as_array())
-                if (!check(values, item))
+                if (!contains(values, item))
                     status = false;
             return status;
         }
@@ -89,7 +89,7 @@ TEST_CASE("rest tests (smoke)") {
             CHECK(ec == std::error_code {});
             CHECK(response.status() == boost::beast::http::status::created);
             const auto result = boost::json::parse(response.body());
-            CHECK(check(boost::json::parse(data), result));
+            CHECK(contains(boost::json::parse(data), result));
 
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             CHECK(ws_messages.size() == 0);
@@ -100,7 +100,7 @@ TEST_CASE("rest tests (smoke)") {
             CHECK(ec == std::error_code {});
             CHECK(response.status() == boost::beast::http::status::ok);
             const auto result = boost::json::parse(response.body());
-            CHECK(check(boost::json::parse(data), result));
+            CHECK(contains(boost::json::parse(data), result));
             MESSAGE("\nSent    : ", boost::json::parse(data), "\nReceived: ", result);
         }
 
@@ -111,7 +111,7 @@ TEST_CASE("rest tests (smoke)") {
             auto result = boost::json::parse(response.body());
             CHECK(result.is_array());
             CHECK(result.as_array().size() == 1);
-            CHECK(check(boost::json::parse(data), result.as_array().front()));
+            CHECK(contains(boost::json::parse(data), result.as_array().front()));
         }
     }
 
@@ -137,7 +137,7 @@ TEST_CASE("rest tests (smoke)") {
             CHECK(ec == std::error_code {});
             CHECK(response.status() == boost::beast::http::status::created);
             const auto result = boost::json::parse(response.body());
-            CHECK(check(boost::json::parse(data), result));
+            CHECK(contains(boost::json::parse(data), result));
             CHECK(result.as_object().at("comp_id").as_string() == "comp-1");
             CHECK(result.as_object().size() == (boost::json::parse(data).as_object().size() + 1));
             MESSAGE(result);
@@ -150,7 +150,7 @@ TEST_CASE("rest tests (smoke)") {
             CHECK(msg.as_object().size() == 3);
             CHECK(msg.as_object().at("op").as_string() == "created");
             CHECK(msg.as_object().at("type").as_string() == "start_group");
-            CHECK(check(boost::json::parse(data), msg.as_object().at("item")));
+            CHECK(contains(boost::json::parse(data), msg.as_object().at("item")));
             CHECK(msg.as_object().at("item").as_object().at("comp_id").as_string() == "comp-1");
             CHECK(msg.as_object().at("item").as_object().size() == (boost::json::parse(data).as_object().size() + 1));
 
@@ -165,7 +165,7 @@ TEST_CASE("rest tests (smoke)") {
             CHECK(result.is_array());
             CHECK(result.as_array().size() == 1);
             const auto & item = result.as_array().front();
-            CHECK(check(boost::json::parse(data), item));
+            CHECK(contains(boost::json::parse(data), item));
             CHECK(item.as_object().at("comp_id").as_string() == "comp-1");
             CHECK(item.as_object().size() == (boost::json::parse(data).as_object().size() + 1));
         }
@@ -176,7 +176,7 @@ TEST_CASE("rest tests (smoke)") {
             CHECK(response.status() == boost::beast::http::status::ok);
             const auto result = boost::json::parse(response.body());
             CHECK(result.is_object());
-            CHECK(check(boost::json::parse(data), result));
+            CHECK(contains(boost::json::parse(data), result));
             CHECK(result.as_object().at("comp_id").as_string() == "comp-1");
             CHECK(result.as_object().size() == (boost::json::parse(data).as_object().size() + 1));
         }
@@ -204,7 +204,7 @@ TEST_CASE("rest tests (smoke)") {
             CHECK(response.status() == boost::beast::http::status::created);
 
             const auto result = boost::json::parse(response.body());
-            CHECK(check(boost::json::parse(data), result));
+            CHECK(contains(boost::json::parse(data), result));
             CHECK(result.as_object().at("comp_id").as_string() == "comp-1");
             CHECK(result.as_object().size() == (boost::json::parse(data).as_object().size() + 1));
 
@@ -214,7 +214,7 @@ TEST_CASE("rest tests (smoke)") {
             CHECK(msg.as_object().size() == 3);
             CHECK(msg.as_object().at("op").as_string() == "created");
             CHECK(msg.as_object().at("type").as_string() == "competition_class");
-            CHECK(check(boost::json::parse(data), msg.as_object().at("item")));
+            CHECK(contains(boost::json::parse(data), msg.as_object().at("item")));
             CHECK(msg.as_object().at("item").as_object().at("comp_id").as_string() == "comp-1");
             CHECK(msg.as_object().at("item").as_object().size() == (boost::json::parse(data).as_object().size() + 1));
 
@@ -229,7 +229,7 @@ TEST_CASE("rest tests (smoke)") {
             CHECK(result.is_array());
             CHECK(result.as_array().size() == 1);
             const auto & item = result.as_array().front();
-            CHECK(check(boost::json::parse(data), item));
+            CHECK(contains(boost::json::parse(data), item));
             CHECK(item.as_object().at("comp_id").as_string() == "comp-1");
             CHECK(item.as_object().size() == (boost::json::parse(data).as_object().size() + 1));
         }
@@ -239,7 +239,7 @@ TEST_CASE("rest tests (smoke)") {
             CHECK(ec == std::error_code {});
             CHECK(response.status() == boost::beast::http::status::ok);
             const auto result = boost::json::parse(response.body());
-            CHECK(check(boost::json::parse(data), result));
+            CHECK(contains(boost::json::parse(data), result));
             CHECK(result.as_object().at("comp_id").as_string() == "comp-1");
             CHECK(result.as_object().size() == (boost::json::parse(data).as_object().size() + 1));
         }
@@ -268,7 +268,7 @@ TEST_CASE("rest tests (smoke)") {
             CHECK(ec == std::error_code {});
             CHECK(response.status() == boost::beast::http::status::created);
             const auto result = boost::json::parse(response.body());
-            CHECK(check(boost::json::parse(data), result));
+            CHECK(contains(boost::json::parse(data), result));
             CHECK(result.as_object().at("comp_id").as_string() == "comp-1");
             CHECK(result.as_object().size() == (boost::json::parse(data).as_object().size() + 1));
 
@@ -281,7 +281,7 @@ TEST_CASE("rest tests (smoke)") {
             CHECK(msg.as_object().at("type").as_string() == "competitor");
 
             const auto & item = msg.as_object().at("item");
-            CHECK(check(boost::json::parse(data), item));
+            CHECK(contains(boost::json::parse(data), item));
             CHECK(item.as_object().at("comp_id").as_string() == "comp-1");
             CHECK(item.as_object().size() == (boost::json::parse(data).as_object().size() + 1));
 
