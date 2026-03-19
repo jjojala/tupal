@@ -15,13 +15,21 @@ Trying to get rid of pre-installed packages (striving toward self-standing build
 
 ```
 # tupal -tests:
-> ctest --test-dir build -L tupal --output-on-failure
+> ctest --test-dir build -L tupal --output-on-failure   # MESSAGE's printed on failure
 > ctest --test-dir build -L manager --output-on-failure
-> ctest --test-dir build -L rest --output-on-failure
+> ctest --test-dir build -L rest --verbose               # MESSAGE's and more printed by default
 # or all:
 > ctest --test-dir build --output-on-failure
 ```
 (tupal includes all test sets)
+
+With command `ctest --test-dir build -V -N` you can see the environment and command for individual tests. With 
+that information it is possible to debug tests, e.g.
+
+```
+> PATH=... LD_LIBRARY_PATH=... gdb rest_test
+```
+
 
 # Run
 
