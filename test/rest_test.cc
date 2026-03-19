@@ -51,22 +51,59 @@ namespace {
         MESSAGE("Value '", item, "' expected to be '", val, "' but it was not");
         return false;
     }
+
+    /** @brief This is a doctest fixture for test cases that do not use ws or want to set it up by themselves. */
+    class daemon_fixture {
+    private:
+        boost::process::child daemon;
+    protected:
+        beauty::client client;
+    public:
+        typedef std::vector<std::string> ws_messages_type;
+
+        daemon_fixture() {
+            daemon = boost::process::child(boost::process::search_path("tupald"));
+
+            beauty::client client;
+            while (true) {
+                const auto [ec, resp] = client.get(base_url + "/rest/competition/");
+                if (!ec && resp.status() == boost::beast::http::status::ok && resp.body() == "[]")
+                    break;
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            }
+            MESSAGE("Daemon is up and running");
+        }
+
+        void init_ws(const std::string & comp_id, ws_messages_type & ws_messages) {
+            client.ws(base_url + "/ws/" + comp_id, beauty::ws_handler {
+                .on_receive = [&ws_messages](const beauty::ws_context &, const char * data, std::size_t size, bool) {
+                    ws_messages.push_back(std::string { data, size });
+                }
+            });
+
+            while(ws_messages.empty()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            }
+            MESSAGE("WebSocket connection established");
+        }
+    };
+
+    /** @brief This is a doctest fixture that set up a ws for 'comp-1' */
+    class ws_daemon_fixture : public daemon_fixture {
+    protected:
+        std::vector<std::string> ws_messages;
+    public:
+        ws_daemon_fixture() : daemon_fixture() {
+            init_ws("comp-1", ws_messages);
+            ws_messages.clear();
+        }
+    };
 }
 
-TEST_CASE("rest tests (smoke)") {
-    boost::process::child daemon(boost::process::search_path("tupald"));
-    std::this_thread::sleep_for(std::chrono::seconds(2));
+}
 
-    std::deque<std::string> ws_messages; // this is for received messages
-    beauty::client client;
+TEST_CASE_FIXTURE(ws_daemon_fixture, "rest tests (smoke)") {
 
-    client.ws(base_url + "/ws/comp-1", beauty::ws_handler {
-        .on_receive = [&ws_messages](const beauty::ws_context &, const char * data, std::size_t size, bool) {
-            ws_messages.push_back(std::string { data, size });
-        }
-    });
-
-    std::this_thread::sleep_for(std::chrono::seconds(1));
     MESSAGE("WebSocket client set up, starting REST tests...");
     CHECK(ws_messages.size() == 1);
     CHECK(ws_messages.front() == R"({})");
