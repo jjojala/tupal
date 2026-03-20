@@ -100,6 +100,39 @@ namespace {
     };
 }
 
+#define CHECK_RESPONSE_CREATED(resp) { \
+    auto [ec, response] = resp; \
+    CHECK(ec == std::error_code {}); \
+    CHECK(response.status() == boost::beast::http::status::created); }
+
+TEST_CASE_FIXTURE(daemon_fixture, "WS connect response") {
+    const auto comp_data = R"({ "id": "comp-2", "title": "Competition 1", "date": "2025-11-11T00:00:00.000Z" })";
+    const std::string comp_id { boost::json::parse(comp_data).as_object().at("id").as_string().c_str() };
+    const auto comp_url = base_url + "/rest/competition/" + comp_id;
+
+    const auto start_group_data { R"({ "id": "sg-1", "title": "Start group 1", "first_start_time": "2025-11-11T18:00:00.000Z",
+            "first_bib": 1 })" };
+    const auto comp_class_data { R"({ "id": "cc-1", "title": "Competition class 1", "start_group_id": "sg-1" })" };
+    const auto competitor_data { R"({ "id": "c-1", "comp_class_id": "cc-1", "bib": 101,
+            "start_time_offset": "PT600.000S", "finish_time": "2024-01-01T10:59:11.231Z", "status": 0, "name": "Alice" })" };
+
+    CHECK_RESPONSE_CREATED(client.post(base_url + "/rest/competition/", comp_data));
+    CHECK_RESPONSE_CREATED(client.post(comp_url + "/start_group/", start_group_data));
+    CHECK_RESPONSE_CREATED(client.post(comp_url + "/competition_class/", comp_class_data));
+    CHECK_RESPONSE_CREATED(client.post(comp_url + "/competitor/", competitor_data));
+
+    ws_messages_type ws_messages;
+    init_ws(comp_id, ws_messages);
+    CHECK(ws_messages.size() == 1);
+
+    const auto msg = boost::json::parse(ws_messages.front()).as_object();
+    MESSAGE(msg);
+
+    CHECK(contains(boost::json::parse(comp_data), msg));
+    CHECK(contains(boost::json::parse(start_group_data), msg.at("start_groups").as_array().front()));
+    CHECK(contains(boost::json::parse(comp_class_data), msg.at("classes").as_array().front()));
+    CHECK(contains(boost::json::parse(competitor_data), msg.at("competitors").as_array().front()));
+}
 }
 
 TEST_CASE_FIXTURE(ws_daemon_fixture, "rest tests (smoke)") {
