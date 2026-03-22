@@ -272,6 +272,50 @@ TEST_CASE_FIXTURE(ws_daemon_fixture, "Create, read, update and delete a competit
                 boost::beast::http::status::not_found);
 }
 
+TEST_CASE_FIXTURE(ws_daemon_fixture, "Create, read, update and delete a start group") {
+
+    const auto comp_data = R"({ "id": "comp-1", "title": "Competition 1", "date": "2025-11-11T00:00:00.000Z" })";
+    TUPAL_TEST_CREATE_NO_NOTIFICATION([&]() { return client.post(base_url + "/rest/competition/", comp_data); }, comp_data);
+
+    const auto sg_url = base_url + "/rest/competition/comp-1/start_group/";
+    TUPAL_TEST_GET([&]() { return client.get(sg_url); }, "[]");
+
+#if 0 // #44
+    TUPAL_CHECK_STATUS([&]() { return client.get(sg_url + "sg-1"); }, boost::beast::http::status::not_found);
+#endif
+
+    const auto data = R"({ "id": "sg-1", "title": "Start Group 1", "first_start_time": "2025-11-11T18:00:00.000Z", "first_bib": 1 })";
+    TUPAL_TEST_CREATE_WITH_NOTIFICATIONS([&]() { return client.post(sg_url, data); }, "start_group", data, ws_messages);
+    TUPAL_TEST_GET([&]() { return client.get(sg_url); }, to_list(data) );
+    TUPAL_TEST_GET([&]() { return client.get(sg_url + "sg-1"); }, std::string { data });
+
+    const auto updated_data = update_json(data, [](boost::json::object & val) { val["title"] = "New Start Group 1"; });
+    TUPAL_TEST_UPDATE_WITH_NOTIFICATION([&]() { return client.put(sg_url + "sg-1", updated_data.c_str()); },
+        "start_group", updated_data.c_str(), ws_messages);
+
+#if 0 // #45  
+// responds with "ok" in case the url contains non-existent id, but the body of the mssage
+// refers to existing id (this is basically "bad data"). However, if message body refers also to non-existent id,
+// one get not_found as expected.
+    TUPAL_CHECK_STATUS([&]() { return client.put(sg_url + "sg-not-fond", updated_data.c_str()); },
+            boost::beast::http::status::not_found);
+#endif
+
+    // Updating non-existent competition (--> not_found)
+    TUPAL_CHECK_STATUS([&]() { return client.put(sg_url + "sg-not-found",
+            R"({ "id": "sg-not-found", "title": "New Start Group 1",
+                    "first_start_time": "2025-11-11T18:00:00.000Z", "first_bib": 1 })"); },
+        boost::beast::http::status::not_found);
+
+    // Removing existing competition
+    TUPAL_TEST_REMOVE_WITH_NOTIFICATION([&]() { return client.del(sg_url + "sg-1"); },
+            "start_group", "sg-1", ws_messages);
+
+    // Removing non-existent competition (--> not_found)
+    TUPAL_CHECK_STATUS([&]() { return client.del(sg_url + "sg-non-existent"); },
+                boost::beast::http::status::not_found);
+}
+
 TEST_CASE_FIXTURE(ws_daemon_fixture, "rest tests (smoke)") {
 
 #if 0
