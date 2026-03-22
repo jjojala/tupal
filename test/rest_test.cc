@@ -316,6 +316,54 @@ TEST_CASE_FIXTURE(ws_daemon_fixture, "Create, read, update and delete a start gr
                 boost::beast::http::status::not_found);
 }
 
+TEST_CASE_FIXTURE(ws_daemon_fixture, "Create, read, update and delete a competition class") {
+
+    const auto comp_data = R"({ "id": "comp-1", "title": "Competition 1", "date": "2025-11-11T00:00:00.000Z" })";
+    TUPAL_TEST_CREATE_NO_NOTIFICATION([&]() { return client.post(base_url + "/rest/competition/", comp_data); }, comp_data);
+
+    const auto sg_data = R"({ "id": "sg-1", "title": "Start Group 1", "first_start_time": "2025-11-11T18:00:00.000Z", "first_bib": 1 })";
+    TUPAL_TEST_CREATE_WITH_NOTIFICATIONS([&]() { return client.post(base_url + "/rest/competition/comp-1/start_group/", sg_data); },
+            "start_group", sg_data, ws_messages);
+
+
+    const auto cc_url = base_url + "/rest/competition/comp-1/competition_class/";
+    TUPAL_TEST_GET([&]() { return client.get(cc_url); }, "[]");
+
+#if 0 // #44
+    TUPAL_CHECK_STATUS([&]() { return client.get(cc_url + "cc-not_found"); }, boost::beast::http::status::not_found);
+#endif
+
+    const auto data = R"({ "id": "cc-1", "title": "Competition class 1", "start_group_id": "sg-1" })";
+    TUPAL_TEST_CREATE_WITH_NOTIFICATIONS([&]() { return client.post(cc_url, data); }, "competition_class", data, ws_messages);
+    TUPAL_TEST_GET([&]() { return client.get(cc_url); }, to_list(data) );
+    TUPAL_TEST_GET([&]() { return client.get(cc_url + "cc-1"); }, std::string { data });
+
+    const auto updated_data = update_json(data, [](boost::json::object & val) { val["title"] = "New Competition Class 1"; });
+    TUPAL_TEST_UPDATE_WITH_NOTIFICATION([&]() { return client.put(cc_url + "cc-1", updated_data.c_str()); },
+        "competition_class", updated_data.c_str(), ws_messages);
+
+#if 0 // #45
+// responds with "ok" in case the url contains non-existent id, but the body of the mssage
+// refers to existing id (this is basically "bad data"). However, if message body refers also to non-existent id,
+// one get not_found as expected.
+    TUPAL_CHECK_STATUS([&]() { return client.put(cc_url + "cc-not_fond", updated_data.c_str()); },
+            boost::beast::http::status::not_found);
+#endif
+
+    // Updating non-existent competition (--> not_found)
+    TUPAL_CHECK_STATUS([&]() { return client.put(cc_url + "sg-not_found",
+            R"({ "id": "sg-not_found", "title": "New Competition class 1", "start_group_id": "sg-1" })"); },
+        boost::beast::http::status::not_found);
+
+    // Removing existing competition
+    TUPAL_TEST_REMOVE_WITH_NOTIFICATION([&]() { return client.del(cc_url + "cc-1"); },
+            "competition_class", "cc-1", ws_messages);
+
+    // Removing non-existent competition (--> not_found)
+    TUPAL_CHECK_STATUS([&]() { return client.del(cc_url + "sg-not_found"); },
+                boost::beast::http::status::not_found);
+}
+
 TEST_CASE_FIXTURE(ws_daemon_fixture, "rest tests (smoke)") {
 
 #if 0
