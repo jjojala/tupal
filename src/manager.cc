@@ -122,7 +122,8 @@ namespace {
     
                 auto begin = rows.begin();
                 if (begin == rows.end()) { // competition not found
-                    return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                    return { tupal::make_error_code(tupal::error_code::unknown_key),
+                        to_json(str(boost::format("Competition '%1%' not found!") % competition_id)) };
                 }
 
                 boost::json::array objects;
@@ -285,7 +286,8 @@ namespace {
 
                 auto begin = rows.begin();
                 if (begin == rows.end()) { // no competition found
-                    return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                    return { tupal::make_error_code(tupal::error_code::unknown_key),
+                        to_json(str(boost::format("Competition '%1%' not found!") % competition_id)) };
                 }
 
                 boost::json::array objects;
@@ -441,7 +443,8 @@ namespace {
 
                 auto begin = rows.begin();
                 if (begin == rows.end()) { // no competition found
-                    return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                    return { tupal::make_error_code(tupal::error_code::unknown_key),
+                        to_json(str(boost::format("Competition '%1%' not found!") % competition_id)) };
                 }
 
                 boost::json::array objects;
