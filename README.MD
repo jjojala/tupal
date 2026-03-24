@@ -52,7 +52,8 @@ that information it is possible to debug tests, e.g.
 > curl -X POST http://localhost:8085/rest/competition/ -d @my-new-comp.json
 > ...
 ```
-*Swagger UI*
+*Swagger UI:*
+
 Start with swagger enabled, eg: `LD_LIBRARY_PATH=build/lib build/src/tupal -S`
 , then with your browser hit url e.g. `http://localhost:8005/swagger.html`
 
@@ -66,3 +67,4 @@ Some examples:
 > sqlite3 tupel.db "select title from competition"
 > sqlite3 tupel.db .schema
 ```
+By default, sqlite3 is used as a database, but also others such as PostreSQL, MySQL and others are supported in code.
