@@ -7,7 +7,7 @@ TEST_CASE("start group manager list (competition not found)") {
     auto [ec, start_groups]  = start_group_manager->list("comp-001");
     CHECK(ec); // should return error since competition does not exist
     CHECK(ec == tupal::make_error_code(tupal::error_code::unknown_key));
-    CHECK(start_groups.is_null());
+    CHECK(start_groups != boost::json::value {});
 }
 
 TEST_CASE("start group manager list (empty)") {
@@ -77,6 +77,8 @@ TEST_CASE("start group manager create (comp not found)") {
 
     auto [create_ec, created_start_group] = start_group_manager->create("comp-001", new_start_group);
     CHECK(create_ec == tupal::make_error_code(tupal::error_code::unknown_key));
+    CHECK(created_start_group != boost::json::value {});
+
 }
 
 TEST_CASE("start group manager create and get") {
@@ -115,6 +117,7 @@ TEST_CASE("start group manager get (unknown)") {
 
     auto [get_ec, fetched_start_group] = start_group_manager->get("comp-001", "sg-001");
     CHECK(get_ec == tupal::make_error_code(tupal::error_code::unknown_key));
+    CHECK(fetched_start_group != boost::json::value {});
 }
 
 TEST_CASE("start group manager create (duplicate)") {
@@ -141,6 +144,7 @@ TEST_CASE("start group manager create (duplicate)") {
 
     auto [create_ec2, created_start_group2] = start_group_manager->create("comp-001", new_start_group);
     CHECK(create_ec2 == tupal::make_error_code(tupal::error_code::duplicate_key));
+    CHECK(created_start_group2 != boost::json::value {});
 }
 
 TEST_CASE("start group manager update (unknown)") {
@@ -156,6 +160,7 @@ TEST_CASE("start group manager update (unknown)") {
 
     auto [update_ec, updated_result] = start_group_manager->update("comp-001", updated_start_group);
     CHECK(update_ec == tupal::make_error_code(tupal::error_code::unknown_key));
+    CHECK(updated_result != boost::json::value {});
 }
 
 TEST_CASE("start group manager create and update") {
@@ -206,6 +211,7 @@ TEST_CASE("start group manager remove (unknown)") {
 
     auto [ remove_ec, removed_start_group ] = start_group_manager->remove("comp-001", "sg-001");
     CHECK(remove_ec == tupal::make_error_code(tupal::error_code::unknown_key));
+    CHECK(removed_start_group != boost::json::value {});
 }
 
 TEST_CASE("start group manager create and remove") {
@@ -235,4 +241,5 @@ TEST_CASE("start group manager create and remove") {
 
     auto [get_ec, fetched_start_group] = start_group_manager->get("comp-001", "sg-001");
     CHECK(get_ec == tupal::make_error_code(tupal::error_code::unknown_key));
-}   
+    CHECK(fetched_start_group != boost::json::value {});
+}

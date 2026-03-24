@@ -146,7 +146,8 @@ namespace {
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
+                return { tupal::make_error_code(tupal::error_code::system_error),
+                    to_json(str(boost::format("%1%: competition '%2%'") % e.what() % competition_id)) };
             }
         }
 
@@ -165,12 +166,14 @@ namespace {
                     return { ok, tupal::to_json(sg) };
                 }
 
-                return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                return { tupal::make_error_code(tupal::error_code::unknown_key),
+                    to_json(str(boost::format("Competition '%1%' or start group '%2%' not found!") % competition_id % id)) };
             }
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
+                return { tupal::make_error_code(tupal::error_code::system_error),
+                    to_json(str(boost::format("%1%: competition '%2%', start group '%3%'") % e.what() % competition_id % id)) };
             }
         }
 
@@ -191,14 +194,17 @@ namespace {
             }
 
             catch (const soci::soci_error & e) {
-                const auto ec = handle_soci_error(soci_session->get_backend_name(), e);
-                if (ec == tupal::make_error_condition(tupal::error_code::constraint_violation)) {
-                    return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
-                } else if (ec == tupal::make_error_condition(tupal::error_code::system_error)) {
-                    TUPAL_MESSAGE(std::cerr) << "SOCI system error: " << e.what() << std::endl;
-                }
+                TUPAL_MESSAGE(std::cerr) << "SOCI system error: " << e.what() << std::endl;
 
-                return { ec, nullptr };
+                const auto error_msg { str(boost::format("%1%: competition '%2%'") % e.what() % competition_id) };
+                const auto ec = handle_soci_error(soci_session->get_backend_name(), e);
+
+                if (ec == tupal::make_error_condition(tupal::error_code::constraint_violation))
+                    return { tupal::make_error_code(tupal::error_code::unknown_key), to_json(error_msg, new_data) };
+                if (ec == tupal::make_error_condition(tupal::error_code::system_error))
+                    return { tupal::make_error_code(tupal::error_code::system_error), to_json(error_msg, new_data) };
+
+                return { ec, to_json(error_msg, new_data) };
             }
         }
 
@@ -216,9 +222,11 @@ namespace {
                     soci::use(new_sg.id.id), soci::use(new_sg.id.comp_id));
                 stmt.execute(true);
                 switch (stmt.get_affected_rows()) {
-                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key),
+                        to_json(str(boost::format("Not found: competition '%1%'") % competition_id), new_data) };
                     case 1: break;
-                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation), nullptr };
+                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation),
+                        to_json(str(boost::format("Multiple match: competition '%1%'") % competition_id), new_data) };
                 }
                 trx.commit();
 
@@ -227,7 +235,8 @@ namespace {
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
+                return { tupal::make_error_code(tupal::error_code::system_error),
+                    to_json(str(boost::format("%1%: competition '%2%'") % e.what() % competition_id), new_data) };
             }
         }
 
@@ -239,9 +248,11 @@ namespace {
                      soci::use(id), soci::use(competition_id));
                 stmt.execute(true);
                 switch (stmt.get_affected_rows()) {
-                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key),
+                        to_json(str(boost::format("Not found: competition '%1%', start group '%2%'") % competition_id % id)) };
                     case 1: break;
-                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation), nullptr };
+                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation),
+                        to_json(str(boost::format("Multiple match: competition '%1%', start group '%2%'") % competition_id % id)) };
                 }
                 trx.commit();
 
@@ -250,7 +261,8 @@ namespace {
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
+                return { tupal::make_error_code(tupal::error_code::system_error),
+                    to_json(str(boost::format("%1%: competition '%2%', start group '%3%'") % e.what() % competition_id % id)) };
             }
         }
 
@@ -308,7 +320,8 @@ namespace {
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
+                return { tupal::make_error_code(tupal::error_code::system_error),
+                    to_json(str(boost::format("%1%: competition '%2%'") % e.what() % competition_id)) };
             }
         }
 
@@ -323,12 +336,14 @@ namespace {
                 if (soci_session->got_data())
                     return { ok, tupal::to_json(cc) };
 
-                return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                return { tupal::make_error_code(tupal::error_code::unknown_key),
+                    to_json(str(boost::format("Competition '%1%' or class '%2%' not found!") % competition_id % id)) };
             }
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
+                return { tupal::make_error_code(tupal::error_code::system_error),
+                    to_json(str(boost::format("%1%: competition '%2%', competition class '%3%'") % e.what() % competition_id % id)) };
             }
         }
 
@@ -348,14 +363,20 @@ namespace {
             }
 
             catch (const soci::soci_error & e) {
+                TUPAL_MESSAGE(std::cerr) << "SOCI system error: " << e.what() << std::endl;
+                const auto error_msg { str(boost::format("%1%: competition '%2%'") % e.what() % competition_id) };
+
                 const auto ec = handle_soci_error(soci_session->get_backend_name(), e);
                 if (ec == tupal::make_error_condition(tupal::error_code::constraint_violation))
-                    return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                    return { tupal::make_error_code(tupal::error_code::unknown_key), to_json(
+                        str(boost::format("New competition class refers likely to non-existent competition '%1%") % competition_id),
+                        new_data) };
 
                 if (ec == tupal::make_error_condition(tupal::error_code::system_error))
-                    TUPAL_MESSAGE(std::cerr) << "SOCI system error: " << e.what() << std::endl;
+                    return { tupal::make_error_code(tupal::error_code::system_error),
+                       to_json(str(boost::format("System error: %1%") % e.what())) };
 
-                return { ec, nullptr };
+                return { ec, to_json(str(boost::format("%1%: competition '%2%'") % e.what() % competition_id), new_data) };
             }
         }
 
@@ -372,9 +393,11 @@ namespace {
                     soci::use(cc.title), soci::use(cc.start_group_id), soci::use(cc.id.id), soci::use(cc.id.comp_id));
                 stmt.execute(true);
                 switch (stmt.get_affected_rows()) {
-                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key),
+                        to_json(str(boost::format("Not found: competition '%1%'") % competition_id), new_data) };
                     case 1: break;
-                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation), nullptr };
+                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation),
+                        to_json(str(boost::format("Multiple match: competition '%1%'") % competition_id), new_data) };
                 }
                 trx.commit();
 
@@ -383,7 +406,8 @@ namespace {
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
+                return { tupal::make_error_code(tupal::error_code::system_error),
+                    to_json(str(boost::format("%1%: competition '%2%'") % e.what() % competition_id), new_data) };
             }
         }
 
@@ -395,9 +419,11 @@ namespace {
                     soci::use(id), soci::use(competition_id));
                 stmt.execute(true);
                 switch (stmt.get_affected_rows()) {
-                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key),
+                        to_json(str(boost::format("Not found: competition '%1%', competition class '%2%'") % competition_id % id)) };
                     case 1: break;
-                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation), nullptr };
+                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation),
+                        to_json(str(boost::format("Multiple match: competition '%1%', competition class '%2%'") % competition_id % id)) };
                 }
 
                 trx.commit();
@@ -406,7 +432,8 @@ namespace {
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
+                return { tupal::make_error_code(tupal::error_code::system_error),
+                    to_json(str(boost::format("%1%: competition '%2%', competition class '%3%'") % e.what() % competition_id % id)) };
             }
         }
 
@@ -470,7 +497,8 @@ namespace {
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
+                return { tupal::make_error_code(tupal::error_code::system_error),
+                    to_json(str(boost::format("%1%: competition '%2%'") % e.what() % competition_id)) };
             }
         }
 
@@ -493,12 +521,14 @@ namespace {
                     return { ok, tupal::to_json(ctor) };
                 }
 
-                return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                return { tupal::make_error_code(tupal::error_code::unknown_key),
+                    to_json(str(boost::format("Competition '%1%' or competitor '%2%' not found!") % competition_id % id)) };
             }
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
+                return { tupal::make_error_code(tupal::error_code::system_error),
+                    to_json(str(boost::format("%1%: competition '%2%', competitor '%3%'") % e.what() % competition_id % id)) };
             }
         }
 
@@ -522,14 +552,20 @@ namespace {
             }
 
             catch (const soci::soci_error & e) {
+                TUPAL_MESSAGE(std::cerr) << "SOCI system error: " << e.what() << std::endl;
+                const auto error_msg { str(boost::format("%1%: competition '%2%'") % e.what() % competition_id) };
+
                 const auto ec = handle_soci_error(soci_session->get_backend_name(), e);
                 if (ec == tupal::make_error_condition(tupal::error_code::constraint_violation))
-                    return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                    return { tupal::make_error_code(tupal::error_code::unknown_key), to_json(
+                        str(boost::format("New competitor refers likely to non-existent competition '%1%") % competition_id),
+                        new_data) };
 
                 if (ec == tupal::make_error_condition(tupal::error_code::system_error))
-                    TUPAL_MESSAGE(std::cerr) << "SOCI system error: " << e.what() << std::endl;
+                    return { tupal::make_error_code(tupal::error_code::system_error),
+                        to_json(str(boost::format("System error: %1%") % e.what())) };
 
-                return { ec, nullptr };
+                return { ec, to_json(str(boost::format("%1%: competition '%2%'") % e.what() % competition_id), new_data) };
             }
         }
 
@@ -553,9 +589,11 @@ namespace {
                 stmt.execute(true);
 
                 switch (stmt.get_affected_rows()) {
-                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key),
+                        to_json(str(boost::format("Not found: competition '%1%'") % competition_id), new_data) };
                     case 1: break;
-                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation), nullptr };
+                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation),
+                        to_json(str(boost::format("Multiple match: competition '%1%'") % competition_id), new_data) };
                 }
                 trx.commit();
 
@@ -564,7 +602,8 @@ namespace {
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
+                return { tupal::make_error_code(tupal::error_code::system_error),
+                    to_json(str(boost::format("%1%: competition '%2%'") % e.what() % competition_id), new_data) };
             }
         }
 
@@ -575,9 +614,11 @@ namespace {
                     soci::use(id), soci::use(competition_id));
                 stmt.execute(true);
                 switch (stmt.get_affected_rows()) {
-                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key),
+                        to_json(str(boost::format("Not found: competition '%1%', competitor '%2%'") % competition_id % id)) };
                     case 1: break;
-                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation), nullptr };
+                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation),
+                        to_json(str(boost::format("Multiple match: competition '%1%', competitor '%2%'") % competition_id % id)) };
                 }
 
                 trx.commit();
@@ -586,7 +627,8 @@ namespace {
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
+                return { tupal::make_error_code(tupal::error_code::system_error),
+                    to_json(str(boost::format("%1%: competition '%2%', competitor '%3%'") % e.what() % competition_id % id)) };
             }
         }
 
@@ -662,7 +704,7 @@ namespace {
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
+                return { tupal::make_error_code(tupal::error_code::system_error), to_json(e.what()) };
             }
         }
 
@@ -679,12 +721,14 @@ namespace {
                     return { ok, tupal::to_json(comp) };
                 }
 
-                return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                return { tupal::make_error_code(tupal::error_code::unknown_key),
+                    to_json(str(boost::format("Competition '%1%' not found!") % id)) };
             }
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
+                return { tupal::make_error_code(tupal::error_code::system_error),
+                    to_json(str(boost::format("%1%: competition '%2%'") % e.what() % id)) };
             }
         }
 
@@ -702,12 +746,13 @@ namespace {
             }
 
             catch (const soci::soci_error & e) {
-                const auto ec = handle_soci_error(soci_session->get_backend_name(), e);
-                if (ec == tupal::make_error_condition(tupal::error_code::system_error)) {
-                    TUPAL_MESSAGE(std::cerr) << "SOCI system error: " << e.what() << std::endl;
-                }
+                TUPAL_MESSAGE(std::cerr) << "SOCI system error: " << e.what() << std::endl;
 
-                return { ec, nullptr };
+                const auto ec = handle_soci_error(soci_session->get_backend_name(), e);
+                if (ec == tupal::make_error_condition(tupal::error_code::system_error))
+                    return { tupal::make_error_code(tupal::error_code::system_error), to_json(e.what(), new_data) };
+
+                return { ec, to_json(e.what(), new_data) };
             }
         }
 
@@ -721,9 +766,11 @@ namespace {
                     soci::use(date_str), soci::use(comp.title), soci::use(comp.id));
                 stmt.execute(true);
                 switch (stmt.get_affected_rows()) {
-                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key),
+                        to_json("Not found", new_data) };
                     case 1: break;
-                    default: return { tupal::make_error_code(tupal::error_code::duplicate_key), nullptr };
+                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation),
+                        to_json("Multiple match", new_data) };
                 }
                 trx.commit();
 
@@ -732,7 +779,7 @@ namespace {
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
+                return { tupal::make_error_code(tupal::error_code::system_error), to_json(e.what(), new_data) };
             }
         }
 
@@ -742,9 +789,11 @@ namespace {
                 soci::statement stmt = (soci_session->prepare << "delete from competition where id=:id", soci::use(id));
                 stmt.execute(true);
                 switch (stmt.get_affected_rows()) {
-                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key), nullptr };
+                    case 0: return { tupal::make_error_code(tupal::error_code::unknown_key),
+                        to_json(str(boost::format("Not found: competition '%1%'") % id)) };
                     case 1: break;
-                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation), nullptr };
+                    default: return { tupal::make_error_code(tupal::error_code::constraint_violation),
+                        to_json(str(boost::format("Multiple match: competition '%1%'") % id)) };
                 }
                 trx.commit();
                 return { ok, boost::json::object { {"id", id} } };
@@ -752,7 +801,8 @@ namespace {
 
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return { tupal::make_error_code(tupal::error_code::system_error), nullptr };
+                return { tupal::make_error_code(tupal::error_code::system_error),
+                    to_json(str(boost::format("%1%: competition '%2%'") % e.what() % id)) };
             }
         }
 

@@ -6,6 +6,7 @@ TEST_CASE("competition class manager list (no competition)") {
     auto competition_class_manager = competition_manager->getCompetitionClassManager();
     auto [ec, competition_classes]  = competition_class_manager->list("comp-001");
     CHECK(ec == tupal::make_error_condition(tupal::error_code::unknown_key));
+    CHECK(competition_classes != boost::json::value {});
 }
 
 TEST_CASE("competition class manager list (no start groups)") {
@@ -22,6 +23,7 @@ TEST_CASE("competition class manager list (no start groups)") {
 
     auto [ec, competition_classes]  = competition_class_manager->list("comp-001");
     CHECK(ec == tupal::make_error_condition(tupal::error_code::unknown_key));
+    CHECK(competition_classes != boost::json::value {});
 }
 
 TEST_CASE("competition class manager list (empty)") {
@@ -95,6 +97,7 @@ TEST_CASE("competition class manager get (unknown)") {
 
     auto [get_ec, fetched_competition_class] = competition_class_manager->get("comp-001", "class-001");
     CHECK(get_ec == tupal::make_error_condition(tupal::error_code::unknown_key));
+    CHECK(fetched_competition_class != boost::json::value {});
 }
 
 TEST_CASE("competition class manager get (existing)") {
@@ -144,6 +147,7 @@ TEST_CASE("competition class manager create (comp not found)") {
 
     auto [create_ec, created_competition_class] = competition_class_manager->create("comp-001", new_competition_class);
     CHECK(create_ec == tupal::make_error_condition(tupal::error_code::unknown_key));
+    CHECK(created_competition_class != boost::json::value {});
 }
 
 TEST_CASE("competition class manager create and duplicate") {
@@ -181,6 +185,7 @@ TEST_CASE("competition class manager create and duplicate") {
 
     auto [create_ec2, created_competition2] = competition_class_manager->create("comp-001", new_competition_class);
     CHECK(create_ec2 == tupal::make_error_condition(tupal::error_code::duplicate_key));
+    CHECK(created_competition2 != boost::json::value {});
 }
 
 TEST_CASE("competition class manager update (unknown)") {
@@ -195,6 +200,7 @@ TEST_CASE("competition class manager update (unknown)") {
 
     auto [update_ec, updated_result] = competition_class_manager->update("comp-001", updated_competition_class);
     CHECK(update_ec == tupal::make_error_condition(tupal::error_code::unknown_key));
+    CHECK(updated_result != boost::json::value {});
 }
 
 TEST_CASE("competition class manager update (existing)") {
@@ -252,6 +258,7 @@ TEST_CASE("competition class manager remove (unknown)") {
 
     auto [ remove_ec, removed_competition_class ] = competition_class_manager->remove("comp-001", "class-001");
     CHECK(remove_ec == tupal::make_error_condition(tupal::error_code::unknown_key));
+    CHECK(removed_competition_class != boost::json::value {});
 }
 
 TEST_CASE("competition class manager remove (existing)") {
@@ -291,4 +298,5 @@ TEST_CASE("competition class manager remove (existing)") {
     CHECK(remove_ec == std::error_code {} );
     auto [get_ec, fetched_competition_class] = competition_class_manager->get("comp-001", "class-001");
     CHECK(get_ec == tupal::make_error_condition(tupal::error_code::unknown_key));
+    CHECK(fetched_competition_class != boost::json::value {});
 }

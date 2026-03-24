@@ -85,6 +85,7 @@ TEST_CASE("competition manager duplicate create") {
     auto [create_ec2, created_competition2] = competition_manager->create(new_competition);
     CHECK(create_ec2); // should return error for duplicate key
     CHECK(create_ec2 == tupal::make_error_code(tupal::error_code::duplicate_key));
+    CHECK(created_competition2 != boost::json::value {});
 
     auto [list_ec, competitions] = competition_manager->list();
     CHECK(!list_ec);
@@ -98,6 +99,7 @@ TEST_CASE("competition manager get unknown") {
     auto [get_ec, fetched_competition] = competition_manager->get("non-existent-id");
     CHECK(get_ec); // should return error since it doesn't exist
     CHECK(get_ec == tupal::make_error_code(tupal::error_code::unknown_key));
+    CHECK(fetched_competition != boost::json::value {});
 }
 
 TEST_CASE("competition manager remove unknown") {
@@ -105,6 +107,7 @@ TEST_CASE("competition manager remove unknown") {
 
     auto [ remove_ec, removed_competition ] = competition_manager->remove("non-existent-id");
     CHECK(remove_ec == tupal::make_error_code(tupal::error_code::unknown_key));
+    CHECK(removed_competition != boost::json::value {});
 }
 
 TEST_CASE("competition manager update unknown") {
@@ -119,6 +122,7 @@ TEST_CASE("competition manager update unknown") {
     auto [update_ec, updated_result] = competition_manager->update(updated_competition);
     CHECK(update_ec); // should return error since it doesn't exist
     CHECK(update_ec == tupal::make_error_code(tupal::error_code::unknown_key));
+    CHECK(updated_result != boost::json::value {});
 }
 
 TEST_CASE("competition manager list after multiple creates") {
