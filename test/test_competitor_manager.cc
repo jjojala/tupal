@@ -7,6 +7,7 @@ TEST_CASE("competition manager list (no comp)") {
 
     auto [ec, competitions]  = competitor_manager->list("comp-001");
     CHECK(ec == tupal::make_error_code(tupal::error_code::unknown_key));
+    CHECK(competitions != boost::json::value {});
 }
 
 TEST_CASE("competitor manager list (no comp class)") {
@@ -23,6 +24,7 @@ TEST_CASE("competitor manager list (no comp class)") {
 
     auto [ec, competitions]  = competitor_manager->list("comp-001");
     CHECK(ec == tupal::make_error_code(tupal::error_code::unknown_key));
+    CHECK(competitions != boost::json::value {});
 }
 
 TEST_CASE("competitor manager list (no data)") {
@@ -137,6 +139,7 @@ TEST_CASE("competitor manager create (no comp)") {
 
     auto [create_ec, created_competitor] = competitor_manager->create("comp-001", new_competitor);
     CHECK(create_ec == tupal::make_error_code(tupal::error_code::unknown_key));
+    CHECK(created_competitor != boost::json::value {});
 }
 
 TEST_CASE("competitor manager create (no start group)") {
@@ -163,6 +166,7 @@ TEST_CASE("competitor manager create (no start group)") {
 
     auto [create_ec, created_competitor] = competitor_manager->create("comp-001", new_competitor);
     CHECK(create_ec == tupal::make_error_code(tupal::error_code::unknown_key));
+    CHECK(created_competitor != boost::json::value {});
 }
 
 TEST_CASE("competitor manager create (no comp class)") {
@@ -198,6 +202,7 @@ TEST_CASE("competitor manager create (no comp class)") {
     };
     auto [create_ec, created_competitor] = competitor_manager->create("comp-001", new_competitor);
     CHECK(create_ec == tupal::make_error_code(tupal::error_code::unknown_key));
+    CHECK(created_competitor != boost::json::value {});
 }
 
 TEST_CASE("competitor manager create and get") {
@@ -263,6 +268,7 @@ TEST_CASE("competitor manager get (unknown)") {
 
     auto [get_ec, fetched_competitor] = competitor_manager->get("comp-001", "competitor-001");
     CHECK(get_ec == tupal::make_error_code(tupal::error_code::unknown_key));
+    CHECK(fetched_competitor != boost::json::value {});
 }
 
 TEST_CASE("competitor manager update (unknown)") {
@@ -281,6 +287,7 @@ TEST_CASE("competitor manager update (unknown)") {
 
     auto [update_ec, updated_result] = competitor_manager->update("comp-001", updated_competitor);
     CHECK(update_ec == tupal::make_error_code(tupal::error_code::unknown_key));
+    CHECK(updated_result != boost::json::value {});
 }
 
 TEST_CASE("competitor manager update (existing)") {
@@ -362,6 +369,7 @@ TEST_CASE("competitor manager remove (unknown)") {
 
     auto [ remove_ec, removed_competitor ] = competitor_manager->remove("comp-001", "competitor-001");
     CHECK(remove_ec == tupal::make_error_code(tupal::error_code::unknown_key));
+    CHECK(removed_competitor != boost::json::value {});
 }
 
 TEST_CASE("competitor manager create and remove") {
@@ -411,4 +419,5 @@ TEST_CASE("competitor manager create and remove") {
     CHECK(remove_ec == std::error_code {} );
     auto [get_ec, fetched_competitor] = competitor_manager->get("comp-001", "competitor-001");
     CHECK(get_ec == tupal::make_error_code(tupal::error_code::unknown_key));
+    CHECK(fetched_competitor != boost::json::value {});
 }
