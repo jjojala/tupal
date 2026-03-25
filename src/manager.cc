@@ -65,59 +65,6 @@ namespace {
 
     const static std::error_code ok = std::error_code {};
 
-#if 0
-    const boost::json::value make_start_group(const std::string & id, const std::string & comp_id, const std::string & title,
-            const std::string & start_time, int first_bib) {
-        return boost::json::object {
-            { "id", id },
-            { "comp_id", comp_id },
-            { "title", title },
-            { "start_time", start_time },
-            { "first_bib", first_bib }
-        };
-    }
-
-    boost::json::value make_competitor(const std::string & id, const std::string & comp_id,
-            const std::string & comp_class_id, int bib, const std::string & start_time_offset,
-            const std::string & finish_time, int status, const std::string & name) {
-        return boost::json::object {
-            { "id", id },
-            { "comp_id", comp_id },
-            { "comp_class_id", comp_class_id },
-            { "bib", bib },
-            { "start_time_offset", start_time_offset },
-            { "finish_time", finish_time },
-            { "status", status },
-            { "name", name }
-        };
-    }
-
-    boost::json::value make_competition(const std::string & id, const std::string & date,
-            const std::string & title) {
-        return boost::json::object {
-            { "id", id },
-            { "date", date },
-            { "title", title }
-        };
-    }
-
-    boost::json::value make_competition_class(const std::string & start_group_id, const std::string & id,
-            const std::string & name) {
-        return boost::json::object {
-            { "start_group_id", start_group_id },
-            { "id", id },
-            { "title", name }
-        };
-    }
-
-    boost::json::value make_removed(const std::string & comp_id, const std::string & sub_elem_id) {
-        return boost::json::object {
-            { "comp_id", comp_id },
-            { "id", sub_elem_id }
-        };
-    }
-#endif
-
     std::error_code handle_soci_error(const std::string & backend_name, const soci::soci_error & e) {
         switch (e.get_error_category()) {
             case soci::soci_error::unknown:
