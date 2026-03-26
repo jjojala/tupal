@@ -6,6 +6,7 @@
 #include "boost/url.hpp"
 #include "boost/date_time.hpp"
 #include "boost/current_function.hpp"
+#include "boost/format.hpp"
 
 #include "soci/soci.h"
 #include "soci/sqlite3/soci-sqlite3.h"
@@ -64,6 +65,13 @@ namespace {
         ")";
 
     const static std::error_code ok = std::error_code {};
+
+    boost::json::value to_json(const std::string & message, const boost::json::value & data = {}) {
+        return boost::json::object {
+            { "message", message },
+            { "item", data }
+        };
+    }
 
     std::error_code handle_soci_error(const std::string & backend_name, const soci::soci_error & e) {
         switch (e.get_error_category()) {
