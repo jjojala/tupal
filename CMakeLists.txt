@@ -24,7 +24,7 @@ set(BEAUTY_BUILD_EXAMPLES OFF)
 FetchContent_Declare(
     beauty
     GIT_REPOSITORY https://github.com/dfleury2/beauty
-    GIT_TAG 1.0.6
+    GIT_TAG 1.0.8
     GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(beauty)
