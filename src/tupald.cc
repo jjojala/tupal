@@ -142,7 +142,7 @@ namespace {
 		if (!ec) {
 			auto competition_data = competition.as_object();
 			competition_data["start_groups"] = to_array(manager.getStartGroupManager()->list(competition_id));
-			competition_data["classes"] = to_array(manager.getCompetitionClassManager()->list(competition_id));
+			competition_data["competition_classes"] = to_array(manager.getCompetitionClassManager()->list(competition_id));
 			competition_data["competitors"] = to_array(manager.getCompetitorManager()->list(competition_id));
 			return competition_data;
 		}
