@@ -221,7 +221,7 @@ TEST_CASE_FIXTURE(daemon_fixture, "WS connect response") {
 
     CHECK(contains(boost::json::parse(comp_data), msg));
     CHECK(contains(boost::json::parse(start_group_data), msg.at("start_groups").as_array().front()));
-    CHECK(contains(boost::json::parse(comp_class_data), msg.at("classes").as_array().front()));
+    CHECK(contains(boost::json::parse(comp_class_data), msg.at("competition_classes").as_array().front()));
     CHECK(contains(boost::json::parse(competitor_data), msg.at("competitors").as_array().front()));
 }
 
