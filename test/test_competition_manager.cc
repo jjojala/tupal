@@ -10,6 +10,13 @@ TEST_CASE("competition manager list (empty)") {
     CHECK(competitions.as_array().size() == 0);
 }
 
+TEST_CASE("competition manager get (non-existing id)") {
+    auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
+    auto [ec, competition] = competition_manager->get("comp-non-existent");
+    CHECK(ec == tupal::error_code::unknown_key);
+    MESSAGE(boost::json::serialize(competition));
+}
+
 TEST_CASE("competition manager create and get") {
     auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
 
