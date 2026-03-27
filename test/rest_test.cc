@@ -228,10 +228,9 @@ TEST_CASE_FIXTURE(daemon_fixture, "WS connect response") {
 TEST_CASE_FIXTURE(ws_daemon_fixture, "Create, read, update and delete a competition") {
     TUPAL_TEST_GET([&]() { return client.get(base_url + "/rest/competition/"); }, "[]");
 
-#if 0 // #44
     // Get non-existing competition (--> not_found)
-    TUPAL_CHECK_STATUS([&]() { return client.get(base_url + "/rest/competition/comp-1"); }, boost::beast::http::status::not_found);
-#endif
+    TUPAL_CHECK_STATUS([&]() { return client.get(base_url + "/rest/competition/comp-1"); },
+            boost::beast::http::status::not_found);
 
     const auto data = R"({ "id": "comp-1", "title": "Competition 1", "date": "2025-11-11T00:00:00.000Z" })";
     TUPAL_TEST_CREATE_NO_NOTIFICATION([&]() { return client.post(base_url + "/rest/competition/", data); }, data);
@@ -277,9 +276,7 @@ TEST_CASE_FIXTURE(ws_daemon_fixture, "Create, read, update and delete a start gr
     const auto sg_url = base_url + "/rest/competition/comp-1/start_group/";
     TUPAL_TEST_GET([&]() { return client.get(sg_url); }, "[]");
 
-#if 0 // #44
     TUPAL_CHECK_STATUS([&]() { return client.get(sg_url + "sg-1"); }, boost::beast::http::status::not_found);
-#endif
 
     const auto data = R"({ "id": "sg-1", "title": "Start Group 1", "first_start_time": "2025-11-11T18:00:00.000Z", "first_bib": 1 })";
     TUPAL_TEST_CREATE_WITH_NOTIFICATIONS([&]() { return client.post(sg_url, data); }, "start_group", data, ws_messages);
@@ -326,9 +323,7 @@ TEST_CASE_FIXTURE(ws_daemon_fixture, "Create, read, update and delete a competit
     const auto cc_url = base_url + "/rest/competition/comp-1/competition_class/";
     TUPAL_TEST_GET([&]() { return client.get(cc_url); }, "[]");
 
-#if 0 // #44
     TUPAL_CHECK_STATUS([&]() { return client.get(cc_url + "cc-not_found"); }, boost::beast::http::status::not_found);
-#endif
 
     const auto data = R"({ "id": "cc-1", "title": "Competition class 1", "start_group_id": "sg-1" })";
     TUPAL_TEST_CREATE_WITH_NOTIFICATIONS([&]() { return client.post(cc_url, data); }, "competition_class", data, ws_messages);
@@ -377,9 +372,7 @@ TEST_CASE_FIXTURE(ws_daemon_fixture, "Create, read, update and delete a competit
     const auto ctor_url = base_url + "/rest/competition/comp-1/competitor/";
     TUPAL_TEST_GET([&]() { return client.get(ctor_url); }, "[]");
 
-#if 0 // #44
     TUPAL_CHECK_STATUS([&]() { return client.get(ctor_url + "ctor-not_found"); }, boost::beast::http::status::not_found);
-#endif
 
     const auto data = R"({
             "id": "ctor-1",

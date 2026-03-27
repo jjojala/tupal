@@ -67,65 +67,53 @@ namespace {
 			sessions.notify_competition(comp_id, boost::json::serialize(notification(op, type, data))); };
 	}
 
+	boost::beast::http::status to_status(const std::error_code & ec) {
+		if (ec == std::error_code {} || ec == tupal::make_error_condition(tupal::error_code::ok))
+			return boost::beast::http::status::ok;
+		if (ec == tupal::make_error_condition(tupal::error_code::unknown_key))
+			return boost::beast::http::status::not_found;
+		if (ec == tupal::make_error_condition(tupal::error_code::duplicate_key) 
+				|| ec == tupal::make_error_condition(tupal::error_code::constraint_violation))
+			return boost::beast::http::status::conflict;
+		if (ec == tupal::make_error_condition(tupal::error_code::invalid_arguments))
+			return boost::beast::http::status::bad_request;
+
+		return boost::beast::http::status::internal_server_error;
+	}
+
 	void handle_list(const tupal::result_type result, beauty::response & resp) {
-		if (tupal::ec(result)) {
-			resp.result(boost::beast::http::status::internal_server_error);
-		} else {
-			resp.result(boost::beast::http::status::ok);
-			resp.body() = boost::json::serialize(tupal::json(result));
-		}
+		resp.result(to_status(tupal::ec(result)));
+		resp.body() = boost::json::serialize(tupal::json(result));
 	}
 
 	void handle_get(const tupal::result_type result, beauty::response & resp) {
-		if (tupal::ec(result)) {
-			resp.result(boost::beast::http::status::internal_server_error);
-		} else if (tupal::json(result).is_null()) {
-			resp.result(boost::beast::http::status::not_found);
-		} else {
-			resp.result(boost::beast::http::status::ok);
-			resp.body() = boost::json::serialize(tupal::json(result));
-		}
+		resp.result(to_status(tupal::ec(result)));
+		resp.body() = boost::json::serialize(tupal::json(result));
 	}
 
 	std::optional<boost::json::value> handle_create(const tupal::result_type result, beauty::response & resp) {
-		if (tupal::ec(result)) {
-			if (tupal::ec(result) == tupal::make_error_condition(tupal::error_code::duplicate_key))
-				resp.result(boost::beast::http::status::conflict);
-			else
-				resp.result(boost::beast::http::status::internal_server_error);
-		} else {
+		resp.body() = boost::json::serialize(tupal::json(result));
+		if (!tupal::ec(result)) {
 			resp.result(boost::beast::http::status::created);
-			resp.body() = boost::json::serialize(tupal::json(result));
 			return tupal::json(result);
 		}
+		resp.result(to_status(tupal::ec(result)));
 		return std::nullopt;
 	}
 
 	std::optional<boost::json::value> handle_update(const tupal::result_type result, beauty::response & resp) {
-		if (tupal::ec(result)) {
-			if (tupal::ec(result) == tupal::make_error_condition(tupal::error_code::unknown_key))
-				resp.result(boost::beast::http::status::not_found);
-			else
-				resp.result(boost::beast::http::status::internal_server_error);
-		} else {
-			resp.result(boost::beast::http::status::ok);
-			resp.body() = boost::json::serialize(tupal::json(result));
+		resp.body() = boost::json::serialize(tupal::json(result));
+		resp.result(to_status(tupal::ec(result)));
+		if (!tupal::ec(result))
 			return tupal::json(result);
-		}
 		return std::nullopt;
 	}
 
 	std::optional<boost::json::value> handle_remove(const tupal::result_type result, beauty::response & resp) {
-		if (tupal::ec(result)) {
-			if (tupal::ec(result) == tupal::make_error_condition(tupal::error_code::unknown_key))
-				resp.result(boost::beast::http::status::not_found);
-			else
-				resp.result(boost::beast::http::status::internal_server_error);
-		} else {
-			resp.result(boost::beast::http::status::ok);
-			resp.body() = boost::json::serialize(tupal::json(result));
+		resp.body() = boost::json::serialize(tupal::json(result));
+		resp.result(to_status(tupal::ec(result)));
+		if (!tupal::ec(result))
 			return tupal::json(result);
-		}
 		return std::nullopt;
 	}
 
