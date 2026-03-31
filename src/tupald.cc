@@ -84,15 +84,18 @@ namespace {
 	void handle_list(const tupal::result_type result, beauty::response & resp) {
 		resp.result(to_status(tupal::ec(result)));
 		resp.body() = boost::json::serialize(tupal::json(result));
+		resp.set_header(boost::beast::http::field::content_type, "application/json");
 	}
 
 	void handle_get(const tupal::result_type result, beauty::response & resp) {
 		resp.result(to_status(tupal::ec(result)));
 		resp.body() = boost::json::serialize(tupal::json(result));
+		resp.set_header(boost::beast::http::field::content_type, "application/json");
 	}
 
 	std::optional<boost::json::value> handle_create(const tupal::result_type result, beauty::response & resp) {
 		resp.body() = boost::json::serialize(tupal::json(result));
+		resp.set_header(boost::beast::http::field::content_type, "application/json");
 		if (!tupal::ec(result)) {
 			resp.result(boost::beast::http::status::created);
 			return tupal::json(result);
@@ -103,6 +106,7 @@ namespace {
 
 	std::optional<boost::json::value> handle_update(const tupal::result_type result, beauty::response & resp) {
 		resp.body() = boost::json::serialize(tupal::json(result));
+		resp.set_header(boost::beast::http::field::content_type, "application/json");
 		resp.result(to_status(tupal::ec(result)));
 		if (!tupal::ec(result))
 			return tupal::json(result);
@@ -111,6 +115,7 @@ namespace {
 
 	std::optional<boost::json::value> handle_remove(const tupal::result_type result, beauty::response & resp) {
 		resp.body() = boost::json::serialize(tupal::json(result));
+		resp.set_header(boost::beast::http::field::content_type, "application/json");
 		resp.result(to_status(tupal::ec(result)));
 		if (!tupal::ec(result))
 			return tupal::json(result);
