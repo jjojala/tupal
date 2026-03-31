@@ -55,7 +55,9 @@ that information it is possible to debug tests, e.g.
 *Swagger UI:*
 
 Start with swagger enabled, eg: `LD_LIBRARY_PATH=build/lib build/src/tupald -S`
-, then with your browser hit url e.g. `http://localhost:8005/swagger.html`
+, then with your browser hit the url e.g. `http://localhost:8005/swagger.html`
+
+Note, that swagger support is part of the beauty -library, and still under development...
 
 # Database
 
