@@ -15,10 +15,8 @@ jobs:
 
       matrix:
         os: [ubuntu-latest, windows-latest]
-        #os: [ubuntu-latest]
         build_type: [Release]
         c_compiler: [gcc, clang, cl]
-        #c_compiler: [gcc, clang]
         include:
           - os: windows-latest
             c_compiler: cl
@@ -30,10 +28,10 @@ jobs:
             c_compiler: clang
             cpp_compiler: clang++
         exclude:
-        #  - os: windows-latest
-        #    c_compiler: gcc
-        #  - os: windows-latest
-        #    c_compiler: clang
+          - os: windows-latest
+            c_compiler: gcc
+          - os: windows-latest
+            c_compiler: clang
           - os: ubuntu-latest
             c_compiler: cl
 
@@ -50,24 +48,10 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libboost-all-dev
 
     - name: Install pre-requisites (Windows)
       if: matrix.os == 'windows-latest'
       uses: ilammy/msvc-dev-cmd@v1
-
-    - name: Install Boost (Windows)
-      if: matrix.os == 'windows-latest'
-      uses: MarkusJx/install-boost@v2.4.1
-      with:
-        boost_version: 1.81.0
-        toolset: msvc
-        arch: x86
-
-    - name: Install SQLite3 (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        choco install sqlite -y
 
     - name: Configure CMake
       run: >
@@ -75,6 +59,8 @@ jobs:
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DSQLITE3_INCLUDE_DIR=${{ env.SQLITE3_INCLUDE_DIR }}
+        -DSQLITE3_LIBRARY=${{ env.SQLITE3_LIBRARY }}
         -S ${{ github.workspace }}
 
     - name: Build
