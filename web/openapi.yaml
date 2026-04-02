@@ -1,0 +1,474 @@
+openapi: 3.0.3
+info:
+  title: TUPAL API
+  version: 1.0.0
+  description: REST interface for result service daemon
+
+
+paths:
+  /rest/competition/:
+    get:
+      summary: List Competitions
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Competition'
+
+    post:
+      summary: Create a Competition
+      requestBody:
+        description: Competition data
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Competition'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Competition'
+
+  /rest/competition/{compId}:
+    parameters:
+      - name: compId
+        in: path
+        required: true
+        schema:
+          type: string
+          description: |
+            Unique identifier of existing Competition.
+            The identifier shall be determined by the client.
+          example: 'comp-1'
+
+    get:
+      summary: Get a cCompetition
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Competition"
+
+    put:
+      summary: Update a competition
+      requestBody:
+        description: Content for the replacing Competition
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Competition'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Competition'
+
+    delete:
+      summary: Remove a competition
+      responses:
+        '200':
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompetitionId'
+
+  /rest/competition/{compId}/start_group/:
+    parameters:
+      - name: compId
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Unique identifier of existing Competition
+          example: 'comp-1'
+
+    get:
+      summary: Get a list of Start Groups of a specific Competition
+      responses:
+        '200':
+          description: Ok
+          content: 
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StartGroup'
+
+    post:
+      summary: Create a new Start Group to a specific competition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartGroup'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartGroup'
+
+  /rest/competition/{compId}/start_group/{sgId}:
+    parameters:
+      - name: compId
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Unique identifier of existing Competition
+          example: 'comp-1'
+      - name: sgId
+        in: path
+        required: true
+        schema:
+          type: string
+          description: !
+            Unique identifier of existing Start Group.
+            The identifier shall be determined by the client.
+          example: 'sg-1'
+
+    get:
+      summary: Get a Start Group within a specific competition
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartGroup'
+
+    put:
+      summary: Update on existing Start Group within a specific Competition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartGroup'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartGroup'
+
+    delete:
+      summary: Remove a Start Group
+      responses:
+        '200':
+          description: Removed
+          content:
+            application/json: 
+              schema:
+                $ref: '#/components/schemas/EmbeddedEntityId'
+
+  /rest/competition/{compId}/competition_class/:
+    parameters:
+      - name: compId
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Unique identifier of existing Competition
+          example: 'comp-1'
+
+    get:
+      summary: Get list of Competition Classes within a Competition
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json: 
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CompetitionClass'
+
+    post:
+      summary: Create a new Competition Class within a Competition
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompetitionClass'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompetitionClass'
+
+  /rest/competition/{compId}/competition_class/{ccId}:
+    parameters:
+      - name: compId
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Unique identifier of existing Competition
+          example: 'comp-1'
+      - name: ccId
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Unique identifier of existing Competition Class
+          example: 'cc-1'
+
+    get:
+      summary: Get a Competition Class
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompetitionClass'
+
+    put:
+      summary: Update an existing Competition Class
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompetitionClass'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompetitionClass'
+
+    delete:
+      summary: Remove an existing Competition Class
+      responses:
+        '200':
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmbeddedEntityId'
+
+  /rest/competition/{compId}/competitor/:
+    parameters:
+      - name: compId
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Unique identifier of existing Competitor
+          example: 'ctor-1'
+
+    get:
+      summary: Get list of Competitor within a Competition
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Competitor'
+
+    post:
+      summary: Create a new Competitor within a Competition
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Competitor'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Competitor'
+
+  /rest/competition/{compId}/competitor/{ctorId}:
+    parameters:
+      - name: compId
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Unique identifier of existing Competition
+          example: 'comp-1'
+      - name: ctorId
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Unique identifier of existing Competitor
+          example: 'ctor-1'
+
+    get:
+      summary: Get a Competitor
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json: 
+              schema:
+                $ref: '#/components/schemas/Competitor'
+
+    put:
+      summary: Update an existing Competitor
+      requestBody:
+        required: true
+        content:
+          application/json: 
+            schema:
+              $ref: '#/components/schemas/Competitor'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Competitor'
+
+    delete:
+      summary: Remove an existing Competitor
+      responses:
+        '200':
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmbeddedEntityId'
+
+components:
+  schemas:
+    Competition:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique id of the Competition
+          example: 'comp-1'
+        date:
+          type: string
+          format: date
+          description: Date of event
+          example: '2025-12-31'
+        title:
+          type: string
+          description: Brief name of the Competition
+          example: 'Pirkkalan Hölkkä'
+
+    StartGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique id of the Start Group
+          example: 'sg-1'
+        title:
+          type: string
+          description: Brief name of the Start Group
+          example: 'Lasten lähtö'
+        first_start_time:
+          type: string
+          format: date-time
+          description: First start time within this Start Group
+          example: '2025-12-31T18:30:00'
+        first_bib:
+          type: integer
+          minimum: 0
+          example: 501
+
+    CompetitionClass:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the Competition Class
+          example: 'cc-1'
+        title:
+          type: string
+          description: Brief name of a Competition Class
+          example: 'M18'
+        start_group_id:
+          type: string
+          description: |
+            Identifier of the Start Groug to which this Competition Class belongs to
+          example: 'sg-1'
+
+    Competitor:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the Competitor
+          example: 'ctor-1'
+        comp_class_id:
+          type: string
+          description: Identifier of the Competition Class this Competitor is enrolled to
+          example: 'cc-1'
+        bib:
+          type: integer
+          minimum: 0
+          description: Competitor's bib.
+        start_time_offset:
+          type: string
+          format: duration
+          pattern: 'PT[0-9]+\.[0-9]{3}S'
+          description: Start time offset relative to Start Group's first start time.
+          example: 'PT0.000S'
+        finish_time:
+          type: string
+          format: date-time
+          description: Time in the finish line.
+          example: '2025-12-31T18:30:00.000Z'
+        status:
+          type: integer
+          minimum: 0
+          maximum: 3
+          description: Competitor's status, 0-n/a, 1-dns, 2-dnf, 3-dsq
+          example: 0
+        name:
+          type: string
+          description: Competitor's name, preferrable family name first, and then given name
+          example: 'Edison Thomas'
+
+    CompetitionId:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Identity of a Competition
+          example: 'comp-1'
+
+    EmbeddedEntityId:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Identity of embedded entity.
+          example: 'sg-1'
+        comp_id:
+          type: string
+          description: Identity of embedding Competition
+          example: 'comp-1'
+
