@@ -73,13 +73,16 @@ namespace {
         };
     }
 
-    std::error_code handle_soci_error(const std::string & backend_name, const soci::soci_error & e) {
+    std::error_code handle_soci_error(const std::string & /* backend_name */, const soci::soci_error & e) {
+
         switch (e.get_error_category()) {
             case soci::soci_error::unknown:
                 break;
             case soci::soci_error::no_data:
                 return tupal::make_error_code(tupal::error_code::unknown_key);
             case soci::soci_error::constraint_violation:
+                if (boost::icontains(e.what(), "UNIQUE constraint failed") || boost::icontains(e.what(), "duplicate key"))
+                    return tupal::make_error_code(tupal::error_code::duplicate_key);
                 return tupal::make_error_code(tupal::error_code::constraint_violation);
             case soci::soci_error::connection_error:
             case soci::soci_error::invalid_statement:
@@ -88,14 +91,6 @@ namespace {
             case soci::soci_error::system_error:
             default:
                 return tupal::make_error_code(tupal::error_code::system_error);
-        }
-
-        if (backend_name == "sqlite3" && boost::icontains(e.what(), "unique constraint")) {
-            return tupal::make_error_code(tupal::error_code::duplicate_key);
-        }
-
-        if (backend_name == "sqlite3" && boost::icontains(e.what(), "foreign key constraint")) {
-            return tupal::make_error_code(tupal::error_code::constraint_violation);
         }
 
         return tupal::make_error_code(tupal::error_code::system_error);
@@ -552,10 +547,11 @@ namespace {
             }
 
             catch (const soci::soci_error & e) {
-                TUPAL_MESSAGE(std::cerr) << "SOCI system error: " << e.what() << std::endl;
+                const auto backend_name = soci_session->get_backend_name();
+                TUPAL_MESSAGE(std::cerr) << "SOCI exception (" << backend_name << "): " << e.what() << std::endl;
                 const auto error_msg { str(boost::format("%1%: competition '%2%'") % e.what() % competition_id) };
 
-                const auto ec = handle_soci_error(soci_session->get_backend_name(), e);
+                const auto ec = handle_soci_error(backend_name, e);
                 if (ec == tupal::make_error_condition(tupal::error_code::constraint_violation))
                     return { tupal::make_error_code(tupal::error_code::unknown_key), to_json(
                         str(boost::format("New competitor refers likely to non-existent competition '%1%") % competition_id),
