@@ -27,7 +27,7 @@ With command `ctest --test-dir build -V -N` you can see the environment and comm
 that information it is possible to debug tests, e.g.
 
 ```
-> PATH=... LD_LIBRARY_PATH=... gdb rest_test
+> PATH=... gdb rest_test
 ```
 
 
@@ -41,9 +41,8 @@ that information it is possible to debug tests, e.g.
 
 *Start with embedded sqlite3 database*
 ```
-> LD_LIBRARY_PATH=build/lib build/src/tupald --db sqlite3://tupal.db
+> build/src/tupald --db sqlite3://tupal.db
 ```
-(soci backend location need to be pointed out with LD_LIBRARY_PATH)
 
 *Testing:*
 ```
@@ -54,10 +53,7 @@ that information it is possible to debug tests, e.g.
 ```
 *Swagger UI:*
 
-Start with swagger enabled, eg: `LD_LIBRARY_PATH=build/lib build/src/tupald -S`
-, then with your browser hit the url e.g. `http://localhost:8005/swagger.html`
-
-Note, that swagger support is part of the beauty -library, and still under development...
+Swagger is by default supported. Just hite the browser with url, e.g. `http://localhost:8005/swagger.html`
 
 # Database
 

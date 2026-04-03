@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.21)
 set(VERSION 1.0.0)
 set(CMAKE_CXX_STANDARD 17)
 
-project(tupal LANGUAGES CXX VERSION ${VERSION})
+project(tupal LANGUAGES C CXX VERSION ${VERSION})
 
 include(FetchContent)
 
@@ -15,8 +15,33 @@ if(NOT BUILD_DEPENDENCY_TESTS)
 endif()
 
 find_package(Boost REQUIRED)
-find_package(SQLite3 REQUIRED)
 find_package(PostgreSQL)
+
+#set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+FetchContent_Declare(
+  sqlite3_src
+  GIT_REPOSITORY https://github.com/azadkuh/sqlite-amalgamation
+  GIT_TAG 3.38.2
+  GIT_SHALLOW TRUE
+)
+
+FetchContent_GetProperties(sqlite3_src)
+if(NOT sqlite3_src_POPULATED)
+  FetchContent_Populate(sqlite3_src)
+endif()
+
+set(SQLITE3_DIR ${sqlite3_src_SOURCE_DIR})
+
+add_library(sqlite3 STATIC
+  "${SQLITE3_DIR}/sqlite3.c"
+  "${SQLITE3_DIR}/sqlite3.h"
+)
+set_target_properties(sqlite3 PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_include_directories(sqlite3 PUBLIC "${SQLITE3_DIR}")
+target_compile_definitions(sqlite3 PRIVATE SQLITE_API=)
+
+add_library(SQLite::SQLite3 ALIAS sqlite3)
 
 set(CONAN OFF)
 set(BEAUTY_BUILD_EXAMPLES OFF)
@@ -48,6 +73,10 @@ set(SOCI_DB2 OFF)
 set(SOCI_FIREBIRD OFF)
 set(SOCI_MYSQL OFF)
 set(SOCI_ODBC OFF)
+
+# Set SQLite3 include and library paths for soci-src dependency
+set(SQLite3_INCLUDE_DIR "${SQLITE3_DIR}")
+set(SQLite3_LIBRARY sqlite3)
 
 FetchContent_Declare(
     soci
