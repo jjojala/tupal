@@ -91,6 +91,7 @@ TEST_CASE("competition manager duplicate create") {
 
     auto [create_ec2, created_competition2] = competition_manager->create(new_competition);
     CHECK(create_ec2); // should return error for duplicate key
+    MESSAGE(created_competition2);
     CHECK(create_ec2 == tupal::make_error_code(tupal::error_code::duplicate_key));
     CHECK(created_competition2 != boost::json::value {});
 

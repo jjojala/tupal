@@ -52,7 +52,7 @@ set(SOCI_ODBC OFF)
 FetchContent_Declare(
     soci
     GIT_REPOSITORY https://github.com/SOCI/soci
-    GIT_TAG v4.0.3
+    GIT_TAG v4.1.2
     GIT_SHALLOW TRUE
     OVERRIDE_FIND_PACKAGE
 )

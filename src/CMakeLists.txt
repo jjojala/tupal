@@ -15,7 +15,10 @@ target_include_directories(tupal_core
         ${soci_BINARY_DIR}/include
         ${cxxopts_SOURCE_DIR}/include)
 
-target_link_libraries(tupal_core PRIVATE soci_core_static boost_url)
+target_link_libraries(tupal_core
+    PRIVATE
+        soci_core
+        boost_url)
 
 add_executable(tupald tupald.cc)
 target_link_libraries(tupald PRIVATE tupal_core beauty::beauty)
