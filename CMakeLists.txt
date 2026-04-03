@@ -74,6 +74,10 @@ set(SOCI_FIREBIRD OFF)
 set(SOCI_MYSQL OFF)
 set(SOCI_ODBC OFF)
 
+# Set SQLite3 include and library paths for soci-src dependency
+set(SQLite3_INCLUDE_DIR "${SQLITE3_DIR}")
+set(SQLite3_LIBRARY sqlite3)
+
 FetchContent_Declare(
     soci
     GIT_REPOSITORY https://github.com/SOCI/soci
