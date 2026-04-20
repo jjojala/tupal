@@ -14,7 +14,6 @@ if(NOT BUILD_DEPENDENCY_TESTS)
   set(BUILD_TESTING OFF CACHE BOOL "Disable building tests for dependencies" FORCE)
 endif()
 
-find_package(Boost REQUIRED)
 find_package(PostgreSQL)
 
 #set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -94,6 +93,16 @@ FetchContent_Declare(
   GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(cxxopts)
+
+# Fetch Boost via FetchContent
+FetchContent_Declare(
+  boost
+  GIT_REPOSITORY https://github.com/boostorg/boost.git
+  GIT_TAG boost-1.83.0
+  GIT_SHALLOW TRUE
+)
+
+FetchContent_MakeAvailable(boost)
 
 add_subdirectory(src)
 
