@@ -8,6 +8,19 @@ The frontend functionality can be briefly divided into the following categories:
 1. Numbers - This is a tool for adding comptitor's bib numbers to system in the order they enter the finish line. Numbers are automatically paired with the times. This task is done at the field with a mobile device.
 1. Finishline - this is for the officials working literally on finishline for a small events when a distinct times or numbers officials are inapproprate or for a supervicing official that "fills the gaps" and helps on rushes, makes potentinal DSQ's. Fundamentally this combines the functions of distinct Times and Numbers functions. Task is carried out at the finishline, i.e. very much at the field with a mobile device.
 
+## General
+
+### GEN-1 - Sign-on and user identification
+
+1. No user identification is, at least primarily required
+1. Sing-on may be based on PIN, tag etc, which is generally known by the officials during their tasks
+
+### GEN-2 - Concurrent use
+
+1. Many of the functions are intended to be used simulaneously and many instances of a single function may co-exist simultaneously
+1. So the system must handle conflicting changes, and report them accordingly for the user
+1. However, the usage is mostly distributed so, that the manipulated data gets naturally distributed in time or space, or by concentrated to a different data item.
+
 ## Competition Management
 
 ### MAN-1 — Browse and select competitions
