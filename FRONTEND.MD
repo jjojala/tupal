@@ -1,4 +1,59 @@
 # Epic: Management
+
+## MAN-1 — Browse and select competitions
+
+1. Show a list of competitions and let the user open a competition in Management.
+1. Optimize the Management interface primarily for desktop use.
+
+## MAN-2 — Manage classes, start groups, and competitors
+
+1. Add, edit, and delete competition classes and start groups.
+1. Add, edit, and delete competitors, and assign them to classes and start groups.
+1. Allow editing a competitor’s bib number and start time.
+1. Require confirmation before deletion; preserve the history of recorded events.
+
+## MAN-3 — Change a start group’s start time
+
+1. Let the user change the start time for an entire start group in one action.
+1. Reflect the change in the Start app.
+
+## MAN-4 — Show competition status totals
+
+1. Show totals for started, not started, confirmed DNS, finished/resulted, and open competitors.
+1. Finished/resulted includes competitors with either an accepted result or a DSQ.
+1. Open = total competitors − competitors with a result − confirmed DNS competitors.
+1. The started and finished totals may overlap.
+1. DNS suggestions are not shown in Management and do not affect these totals.
+1. Let the user open a filtered competitor list from each total.
+
+## MAN-5 — Review timing and number-entry records
+
+1. Show timing and number-entry records in order, with their status: normal, uncertain, incorrect, or missing.
+1. Show unmatched time and number entries.
+1. Let the user review and correct records without deleting the original entries.
+
+## MAN-6 — Generate results
+
+1. Generate results from timing records, number entries, and competitor data.
+1. Flag missing or conflicting data for review.
+1. Preserve a DSQ competitor’s time and make it available for review, even though the competitor’s result is recorded as DSQ.
+
+# Epic: Start
+
+## START-1 — Open a Start task from a link
+
+1. Open the Start app directly to the correct competition and task from a link.
+1. Do not require sign-in or competition selection at this stage.
+
+## START-2 — Display the start list
+
+1. Display bib numbers in start-time order.
+1. Show the start time and associated bib numbers on each row.
+
+## START-3 — Mark competitors as started
+
+1. Let the official mark an individual competitor as started.
+1. Save the mark and update the competitor’s status.
 1. Save the mark and update the competitor’s status.
 
 ## START-4 — Create DNS suggestions automatically
