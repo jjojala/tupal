@@ -18,7 +18,9 @@ target_include_directories(tupal_core
 target_link_libraries(tupal_core
     PRIVATE
         soci_core
-        boost_url)
+        ${Boost_JSON_LIBRARY}
+        ${Boost_URL_LIBRARY}
+        ${Boost_DATE_TIME_LIBRARY})
 
 add_executable(tupald tupald.cc)
 target_link_libraries(tupald PRIVATE tupal_core beauty::beauty)

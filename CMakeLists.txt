@@ -14,7 +14,7 @@ if(NOT BUILD_DEPENDENCY_TESTS)
   set(BUILD_TESTING OFF CACHE BOOL "Disable building tests for dependencies" FORCE)
 endif()
 
-find_package(Boost REQUIRED)
+find_package(Boost REQUIRED COMPONENTS date_time json url filesystem)
 find_package(PostgreSQL)
 
 #set(CMAKE_POSITION_INDEPENDENT_CODE ON)
