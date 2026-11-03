@@ -1,2 +1,4 @@
 build/
 build-release/
+web/node_modules/
+web/dist/
