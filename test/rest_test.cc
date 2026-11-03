@@ -1,5 +1,10 @@
 #include "doctest/doctest.h"
+#include "boost/version.hpp"
+#if BOOST_VERSION >= 108700
+#include "boost/process/v1.hpp"
+#else
 #include "boost/process.hpp"
+#endif
 #include "boost/asio.hpp"
 #include "boost/json.hpp"
 #include "beauty/beauty.hpp"
@@ -7,6 +12,12 @@
 #include <chrono>
 
 namespace {
+#if BOOST_VERSION >= 108700
+    namespace bp = boost::process::v1;
+#else
+    namespace bp = boost::process;
+#endif
+
     const std::string base_url = "http://localhost:8085";
 
     /**{ declarations, @see definitions below */
@@ -72,14 +83,14 @@ namespace {
     /** @brief This is a doctest fixture for test cases that do not use ws or want to set it up by themselves. */
     class daemon_fixture {
     private:
-        boost::process::child daemon;
+        bp::child daemon;
     protected:
         beauty::client client;
     public:
         typedef std::vector<std::string> ws_messages_type;
 
         daemon_fixture() {
-            daemon = boost::process::child(boost::process::search_path("tupald"));
+            daemon = bp::child(bp::search_path("tupald"));
 
             beauty::client client;
             while (true) {
