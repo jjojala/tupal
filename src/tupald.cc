@@ -2,6 +2,8 @@
 #include <memory>
 #include <sstream>
 #include <fstream>
+#include <algorithm>
+#include <filesystem>
 #include <system_error>
 
 #include <beauty/beauty.hpp>
@@ -271,19 +273,107 @@ int main(int argc, char** argv) {
 					make_notifier(sessions, param(req, "competition_id"), "removed", "start_group"));
 				});
 
-		auto handle_get_file = [&](const beauty::request & req, beauty::response & resp) {
-			const auto filename = parsed["web-root"].as<std::string>()
-				+ std::string { req.target().data(), req.target().size() };
-
+		const auto serve_file = [&](const std::string & filename, beauty::response & resp) {
 			std::ifstream file{filename, std::ios_base::in};
 			if (file) {
 				resp.body() = std::string { std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+				const auto extension_pos = filename.find_last_of('.');
+				const auto extension = extension_pos == std::string::npos
+					? std::string {}
+					: filename.substr(extension_pos);
+				const char * content_type = "application/octet-stream";
+				if (extension == ".html") content_type = "text/html; charset=utf-8";
+				else if (extension == ".js") content_type = "text/javascript; charset=utf-8";
+				else if (extension == ".css") content_type = "text/css; charset=utf-8";
+				else if (extension == ".svg") content_type = "image/svg+xml";
+				else if (extension == ".json") content_type = "application/json";
+				else if (extension == ".yaml" || extension == ".yml") content_type = "text/yaml; charset=utf-8";
+				else if (extension == ".woff2") content_type = "font/woff2";
+				resp.set_header(boost::beast::http::field::content_type, content_type);
 			} else {
 				std::cerr << "Opening file '" << filename << "' failed: " << strerror(errno) << std::endl;
 				resp.result(boost::beast::http::status::not_found);
 			}
 		};
 
+		const auto handle_get_file = [&](const beauty::request & req, beauty::response & resp) {
+			std::string request_path { req.target().data(), req.target().size() };
+			if (const auto query_pos = request_path.find('?'); query_pos != std::string::npos)
+				request_path.resize(query_pos);
+
+			const std::filesystem::path relative_path = request_path.empty()
+				? std::filesystem::path {}
+				: std::filesystem::path { request_path.substr(1) };
+
+			const bool contains_parent_reference = std::any_of(
+				relative_path.begin(), relative_path.end(),
+				[](const std::filesystem::path & component) { return component == ".."; });
+			if (relative_path.is_absolute() || contains_parent_reference) {
+				resp.result(boost::beast::http::status::bad_request);
+				return;
+			}
+
+			std::error_code ec;
+			const auto web_root = std::filesystem::weakly_canonical(parsed["web-root"].as<std::string>(), ec);
+			if (ec) {
+				std::cerr << "Resolving web root failed: " << ec.message() << std::endl;
+				resp.result(boost::beast::http::status::internal_server_error);
+				return;
+			}
+
+			auto filename = (web_root / relative_path).lexically_normal();
+
+			auto root_it = web_root.begin();
+			auto file_it = filename.begin();
+
+			for (; root_it != web_root.end() && file_it != filename.end(); ++root_it, ++file_it) {
+				if (*root_it != *file_it) {
+					resp.result(boost::beast::http::status::bad_request);
+					return;
+				}
+			}
+
+			if (root_it != web_root.end()) {
+				resp.result(boost::beast::http::status::bad_request);
+				return;
+			}
+
+			const bool is_directory = std::filesystem::is_directory(filename, ec);
+			if (ec == std::errc::no_such_file_or_directory)
+				ec.clear();
+
+			if (ec) {
+				std::cerr << "Inspecting web path '" << request_path << "' failed: " << ec.message() << std::endl;
+				resp.result(boost::beast::http::status::internal_server_error);
+				return;
+			}
+
+			if (is_directory)
+				filename /= "index.html";
+
+			const bool is_regular_file = std::filesystem::is_regular_file(filename, ec);
+			if (ec == std::errc::no_such_file_or_directory)
+				ec.clear();
+
+			if (ec) {
+				std::cerr << "Inspecting web file '" << filename.string() << "' failed: " << ec.message() << std::endl;
+				resp.result(boost::beast::http::status::internal_server_error);
+				return;
+			}
+
+			if (!is_regular_file) {
+				if (std::filesystem::path { request_path }.has_extension()) {
+					resp.result(boost::beast::http::status::not_found);
+					return;
+				}
+
+				filename = web_root / "index.html";
+			}
+
+			serve_file(filename.string(), resp);
+		};
+
+		server.add_route("/").get(handle_get_file);
 		server.add_route("/:file").get(handle_get_file);
 		server.add_route("/:dir2/:file").get(handle_get_file);
 		server.add_route("/:dir1/:dir2/:file").get(handle_get_file);
