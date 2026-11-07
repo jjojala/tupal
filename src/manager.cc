@@ -63,6 +63,9 @@ namespace {
         "   primary key (id, comp_id),"
         "   foreign key (comp_class_id, comp_id) references competition_class"
         ")";
+    static const char * const INDEX_COMPETITOR_COMPETITION_BIB =
+        "create unique index competitor_competition_bib "
+        "on competitor(comp_id, bib) where bib > 0";
 
     const static std::error_code ok = std::error_code {};
 
@@ -552,6 +555,9 @@ namespace {
                 const auto error_msg { str(boost::format("%1%: competition '%2%'") % e.what() % competition_id) };
 
                 const auto ec = handle_soci_error(backend_name, e);
+                if (ec == tupal::make_error_condition(tupal::error_code::duplicate_key))
+                    return { ec, to_json("Bib number or competitor ID is already assigned in this competition", new_data) };
+
                 if (ec == tupal::make_error_condition(tupal::error_code::constraint_violation))
                     return { tupal::make_error_code(tupal::error_code::unknown_key), to_json(
                         str(boost::format("New competitor refers likely to non-existent competition '%1%") % competition_id),
@@ -591,15 +597,19 @@ namespace {
                     default: return { tupal::make_error_code(tupal::error_code::constraint_violation),
                         to_json(str(boost::format("Multiple match: competition '%1%'") % competition_id), new_data) };
                 }
+
                 trx.commit();
 
                 return { ok, tupal::to_json(ctor) };
             }
 
             catch (const soci::soci_error & e) {
-                TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
-                return { tupal::make_error_code(tupal::error_code::system_error),
-                    to_json(str(boost::format("%1%: competition '%2%'") % e.what() % competition_id), new_data) };
+                const auto backend_name = soci_session->get_backend_name();
+                TUPAL_MESSAGE(std::cerr) << "SOCI exception (" << backend_name << "): " << e.what() << std::endl;
+                const auto ec = handle_soci_error(backend_name, e);
+                if (ec == tupal::make_error_condition(tupal::error_code::duplicate_key))
+                    return { ec, to_json("Bib number is already assigned in this competition", new_data) };
+                return { ec, to_json(str(boost::format("%1%: competition '%2%'") % e.what() % competition_id), new_data) };
             }
         }
 
@@ -630,6 +640,7 @@ namespace {
 
         static void init_database(soci::session & session) {
             session.once << SCHEMA_COMPETITOR;
+            session.once << INDEX_COMPETITOR_COMPETITION_BIB;
         }
 
     private:
