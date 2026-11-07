@@ -17,6 +17,9 @@ endif()
 find_package(Boost REQUIRED COMPONENTS date_time json url filesystem)
 find_package(PostgreSQL)
 
+set(TUPAL_WEB_OUTPUT_DIR "${CMAKE_BINARY_DIR}/src/web")
+add_subdirectory(web)
+
 #set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 FetchContent_Declare(

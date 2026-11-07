@@ -24,6 +24,7 @@ target_link_libraries(tupal_core
 
 add_executable(tupald tupald.cc)
 target_link_libraries(tupald PRIVATE tupal_core beauty::beauty)
+add_dependencies(tupald web_frontend)
 
 if(WIN32)
     set_target_properties(tupald
