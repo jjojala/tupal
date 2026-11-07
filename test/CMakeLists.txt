@@ -19,7 +19,8 @@ target_include_directories(rest_tests PRIVATE ${doctest_SOURCE_DIR})
 target_link_libraries(rest_tests PRIVATE ${Boost_FILESYSTEM_LIBRARY} beauty::beauty)
 add_test(NAME rest_tests COMMAND $<TARGET_FILE:rest_tests>)
 set_tests_properties(rest_tests PROPERTIES LABELS "tupal,rest" TIMEOUT 10
-	ENVIRONMENT "PATH=${CMAKE_BINARY_DIR}/src:$ENV{PATH}")
+	ENVIRONMENT "PATH=${CMAKE_BINARY_DIR}/src:$ENV{PATH}"
+	WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src")
 
 add_executable(model_tests test_main.cc model_test.cc)
 target_include_directories(model_tests PRIVATE ${CMAKE_SOURCE_DIR}/src ${doctest_SOURCE_DIR})

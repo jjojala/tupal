@@ -243,6 +243,24 @@ TEST_CASE_FIXTURE(daemon_fixture, "WS connect response") {
     CHECK(contains(boost::json::parse(competitor_data), msg.at("competitors").as_array().front()));
 }
 
+TEST_CASE_FIXTURE(daemon_fixture, "Generic static server serves SPA deep links") {
+    const auto [ec, response] = client.get(base_url + "/registration/comp-1?source=link");
+    CHECK(ec == std::error_code {});
+    CHECK(response.status() == boost::beast::http::status::ok);
+    CHECK(response[boost::beast::http::field::content_type] == "text/html; charset=utf-8");
+    CHECK(response.body().find("<div id=\"app\"></div>") != std::string::npos);
+
+    const auto [other_app_ec, other_app_response] = client.get(base_url + "/start/comp-2");
+    CHECK(other_app_ec == std::error_code {});
+    CHECK(other_app_response.status() == boost::beast::http::status::ok);
+    CHECK(other_app_response.body().find("<div id=\"app\"></div>") != std::string::npos);
+
+    const auto [missing_asset_ec, missing_asset_response] =
+        client.get(base_url + "/assets/missing.js");
+    CHECK(missing_asset_ec == std::error_code {});
+    CHECK(missing_asset_response.status() == boost::beast::http::status::not_found);
+}
+
 TEST_CASE_FIXTURE(ws_daemon_fixture, "Create, read, update and delete a competition") {
     TUPAL_TEST_GET([&]() { return client.get(base_url + "/rest/competition/"); }, "[]");
 

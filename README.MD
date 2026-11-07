@@ -11,6 +11,11 @@ Trying to get rid of pre-installed packages (striving toward self-standing build
 > cmake --build build --parallel
 ```
 
+The frontend is built by the default CMake build. Install Node.js `22.15.0` and npm
+first; the expected Node.js version is recorded in `web/.nvmrc`. CMake installs
+the locked frontend dependencies with `npm ci` and writes the production assets
+to the build directory.
+
 # Run tests
 
 ```
@@ -36,13 +41,26 @@ that information it is possible to debug tests, e.g.
 *Help:*
 
 ```
-> build/src/tupald --help
+> cd build/src
+> ./tupald --help
 ```
 
 *Start with embedded sqlite3 database*
 ```
-> build/src/tupald --db sqlite3://tupal.db
+> cd build/src
+> ./tupald --db sqlite3://tupal.db
 ```
+
+The default static web root is `./web` relative to the current working
+directory. The CMake build puts the executable and generated web assets under
+`build/src/`. Use `--web-root <path>` to override the default.
+
+*Open competitor registration*
+```
+> http://localhost:8085/registration/my-comp-id
+```
+Replace `my-comp-id` with the competition id. The competition must already have
+at least one class configured.
 
 *Testing:*
 ```
