@@ -432,7 +432,7 @@ namespace tupal {
     competitor to_competitor(const boost::json::object & obj) {
         return competitor {
             .id {
-                .id = make_unique_id( obj.at("id").as_string() ),
+                .id = make_unique_id( obj.at("id") ),
                 .comp_id = at<std::string>(obj, "comp_id").or_else("")
             },
             .bib = static_cast<uint16_t>(at<int64_t>(obj, "bib").or_else(0)),

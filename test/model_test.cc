@@ -3,6 +3,20 @@
 #include "doctest/doctest.h"
 #include "model.hh"
 
+TEST_CASE("competitor model generates an id when none is provided") {
+    const auto competitor = tupal::to_competitor(boost::json::object {
+        { "id", nullptr },
+        { "comp_class_id", "class-1" },
+        { "bib", 1 },
+        { "start_time_offset", "PT0.000S" },
+        { "finish_time", "" },
+        { "status", 0 },
+        { "name", "Taylor, Alex" }
+    });
+
+    CHECK(!competitor.id.id.empty());
+}
+
 TEST_CASE("iso8601 date --> date_time") {
     const std::string date_str = "2026-02-27";
     const std::tm tm = {
