@@ -95,6 +95,23 @@ TEST_CASE("competitor manager list (with data)") {
         });
     CHECK(!cc_create_ec);
 
+    auto [sg2_create_ec, created_start_group2] = start_group_manager->create("comp-001",
+        boost::json::object {
+            { "id", "sg-002" },
+            { "title", "Start Group 2" },
+            { "first_start_time", "2024-01-01T11:00:00Z" },
+            { "first_bib", 200 }
+        });
+    CHECK(!sg2_create_ec);
+
+    auto [cc2_create_ec, created_competition_class2] = competition_class_manager->create("comp-001",
+        boost::json::object {
+            { "id", "class-002" },
+            { "title", "P11" },
+            { "start_group_id", "sg-002" }
+        });
+    CHECK(!cc2_create_ec);
+
     boost::json::object new_competitor1 = {
         { "id", "competitor-001" },
         { "comp_class_id", "class-001" },
@@ -117,10 +134,33 @@ TEST_CASE("competitor manager list (with data)") {
     CHECK(!create_ec1);
     auto [create_ec2, created_competitor2] = competitor_manager->create("comp-001", new_competitor2);
     CHECK(!create_ec2); 
+
+    auto duplicate_bib = new_competitor2;
+    duplicate_bib["id"] = "competitor-003";
+    duplicate_bib["comp_class_id"] = "class-002";
+    duplicate_bib["bib"] = 101;
+    auto [duplicate_ec, duplicate_result] = competitor_manager->create("comp-001", duplicate_bib);
+    CHECK(duplicate_ec == tupal::make_error_code(tupal::error_code::duplicate_key));
+    CHECK(duplicate_result != boost::json::value {});
+
+    auto unassigned_competitor = new_competitor2;
+    unassigned_competitor["id"] = "competitor-003";
+    unassigned_competitor["comp_class_id"] = "class-002";
+    unassigned_competitor["bib"] = 0;
+    auto [unassigned_ec, unassigned_result] = competitor_manager->create("comp-001", unassigned_competitor);
+    CHECK(!unassigned_ec);
+    CHECK(unassigned_result.is_object());
+
+    unassigned_competitor["id"] = "competitor-004";
+    auto [second_unassigned_ec, second_unassigned_result] =
+        competitor_manager->create("comp-001", unassigned_competitor);
+    CHECK(!second_unassigned_ec);
+    CHECK(second_unassigned_result.is_object());
+
     auto [list_ec, competitors]  = competitor_manager->list("comp-001");
     CHECK(!list_ec);
     CHECK(competitors.is_array());
-    CHECK(competitors.as_array().size() == 2);
+    CHECK(competitors.as_array().size() == 4);
 }
 
 TEST_CASE("competitor manager create (no comp)") {
@@ -335,10 +375,23 @@ TEST_CASE("competitor manager update (existing)") {
     CHECK(created_competitor.is_object());
     CHECK(created_competitor.as_object().at("id").as_string() == "competitor-001");
 
+    auto other_competitor = new_competitor;
+    other_competitor["id"] = "competitor-002";
+    other_competitor["bib"] = 102;
+    auto [other_create_ec, other_result] = competitor_manager->create("comp-001", other_competitor);
+    CHECK(!other_create_ec);
+
+    auto duplicate_bib_update = new_competitor;
+    duplicate_bib_update["bib"] = 102;
+    auto [duplicate_update_ec, duplicate_update_result] =
+        competitor_manager->update("comp-001", duplicate_bib_update);
+    CHECK(duplicate_update_ec == tupal::make_error_code(tupal::error_code::duplicate_key));
+    CHECK(duplicate_update_result != boost::json::value {});
+
     boost::json::object updated_competitor = {
         { "id", "competitor-001" },
         { "comp_class_id", "class-001" },
-        { "bib", 102 },
+        { "bib", 103 },
         { "start_time_offset", "PT720.000S" },
         { "finish_time", "2025-12-13T22:35:29.000Z" },
         { "status", 1 },
@@ -347,7 +400,7 @@ TEST_CASE("competitor manager update (existing)") {
     auto [update_ec, updated_result] = competitor_manager->update("comp-001", updated_competitor);
     CHECK(!update_ec);
     CHECK(updated_result.is_object());
-    CHECK(updated_result.as_object().at("bib").as_int64() == 102);
+    CHECK(updated_result.as_object().at("bib").as_int64() == 103);
     CHECK(updated_result.as_object().at("start_time_offset").as_string() == "PT720.000S");
     CHECK(updated_result.as_object().at("finish_time").as_string() == "2025-12-13T22:35:29.000Z");
     CHECK(updated_result.as_object().at("status").as_int64() == 1);
@@ -356,7 +409,7 @@ TEST_CASE("competitor manager update (existing)") {
     auto [get_ec, fetched_competitor] = competitor_manager->get("comp-001", "competitor-001");
     CHECK(!get_ec);
     CHECK(fetched_competitor.is_object());
-    CHECK(fetched_competitor.as_object().at("bib").as_int64() == 102);
+    CHECK(fetched_competitor.as_object().at("bib").as_int64() == 103);
     CHECK(fetched_competitor.as_object().at("start_time_offset").as_string() == "PT720.000S");
     CHECK(fetched_competitor.as_object().at("finish_time").as_string() == "2025-12-13T22:35:29.000Z");
     CHECK(fetched_competitor.as_object().at("status").as_int64() == 1);
