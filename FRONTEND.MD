@@ -74,6 +74,12 @@ The frontend functionality can be briefly divided into the following categories:
 1. Assign a unique bib number for the competitor
 1. Optimized for mobile device with a keyboard, such as a light laptop or a tablet with a keyboard
 
+### REG-3 - Bib number assignment
+
+1. Typically the registration official has literally on his/hers reach a pile of physical bib numbers, that are given for the registrees as they are registering on-site.
+1. The bib number are can be pre-arranged to a ascending order in the start-group specific piles.
+1. The registration app should suggest in ascending order available bib numbers when entering competitor's date to the registration app. Ideally, the bib suggested by app matches with the top most physical pile of bibs, therefore greatly helping the registration official.
+
 ## Epic: Start
 
 ### START-1 — Open a Start task from a link
