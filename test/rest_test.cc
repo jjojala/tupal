@@ -102,6 +102,13 @@ namespace {
             MESSAGE("Daemon is up and running");
         }
 
+        ~daemon_fixture() {
+            if (daemon.running()) {
+                daemon.terminate();
+                daemon.wait();
+            }
+        }
+
         void init_ws(const std::string & comp_id, ws_messages_type & ws_messages) {
             client.ws(base_url + "/ws/" + comp_id, beauty::ws_handler {
                 .on_receive = [&ws_messages](const beauty::ws_context &, const char * data, std::size_t size, bool) {
