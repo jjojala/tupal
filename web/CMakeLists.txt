@@ -12,6 +12,9 @@ set(FRONTEND_OUTPUT_DIR "${TUPAL_WEB_OUTPUT_DIR}")
 
 file(GLOB_RECURSE FRONTEND_SOURCE_FILES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
+file(GLOB_RECURSE WEB_DOCUMENTATION_FILES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.js"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.ts")
 
 set(FRONTEND_PACKAGE_FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/package.json"
@@ -58,3 +61,14 @@ add_custom_command(
 
 add_custom_target(web_frontend ALL
     DEPENDS "${FRONTEND_OUTPUT_DIR}/index.html")
+
+find_package(Doxygen QUIET)
+if(DOXYGEN_FOUND)
+    add_custom_target(web_docs
+        COMMAND "${DOXYGEN_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile"
+        DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile"
+                ${WEB_DOCUMENTATION_FILES}
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMENT "Generating web API documentation with Doxygen"
+        VERBATIM)
+endif()

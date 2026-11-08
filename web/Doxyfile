@@ -1,0 +1,16 @@
+PROJECT_NAME           = "Tupal Web API"
+OUTPUT_DIRECTORY       = docs
+INPUT                  = src
+FILE_PATTERNS          = *.js *.ts
+RECURSIVE              = YES
+EXTENSION_MAPPING      = ts=JavaScript
+OPTIMIZE_OUTPUT_JAVA   = YES
+EXTRACT_ALL            = YES
+JAVADOC_AUTOBRIEF      = YES
+MARKDOWN_SUPPORT       = YES
+WARN_IF_UNDOCUMENTED   = NO
+QUIET                  = YES
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+GENERATE_LATEX         = NO
+HAVE_DOT               = NO
