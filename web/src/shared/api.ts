@@ -1,3 +1,4 @@
+/* Copyright (C) 2026 Jari Ojala  */
 import type {
   Competition,
   CompetitionClass,
@@ -8,6 +9,7 @@ import type {
 const competitionUrl = (competitionId: string) =>
   `/rest/competition/${encodeURIComponent(competitionId)}`;
 
+/** Sends a JSON REST request and returns its decoded response. */
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   headers.set("Accept", "application/json");
@@ -45,22 +47,26 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
   return payload as T;
 }
 
+/** Fetches the competition identified by `competitionId`. */
 export function getCompetition(competitionId: string) {
   return request<Competition>(competitionUrl(competitionId));
 }
 
+/** Fetches the classes configured for a competition. */
 export function getClasses(competitionId: string) {
   return request<CompetitionClass[]>(
     `${competitionUrl(competitionId)}/competition_class/`
   );
 }
 
+/** Fetches the competitors registered for a competition. */
 export function getCompetitors(competitionId: string) {
   return request<Competitor[]>(
     `${competitionUrl(competitionId)}/competitor/`
   );
 }
 
+/** Creates a competitor in a competition. */
 export function createCompetitor(
   competitionId: string,
   competitor: CompetitorInput
@@ -71,6 +77,7 @@ export function createCompetitor(
   });
 }
 
+/** Updates an existing competitor in a competition. */
 export function updateCompetitor(
   competitionId: string,
   competitor: CompetitorInput
@@ -88,6 +95,7 @@ export function updateCompetitor(
   );
 }
 
+/** Deletes a competitor from a competition. */
 export function deleteCompetitor(competitionId: string, competitorId: string) {
   return request<unknown>(
     `${competitionUrl(competitionId)}/competitor/${encodeURIComponent(competitorId)}`,
@@ -95,6 +103,10 @@ export function deleteCompetitor(competitionId: string, competitorId: string) {
   );
 }
 
+/**
+ * Subscribes to competition updates and connection-state changes.
+ * @returns A function that closes the subscription and stops reconnect attempts.
+ */
 export function subscribeToCompetition(
   competitionId: string,
   onUpdate: () => void,
