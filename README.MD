@@ -11,10 +11,27 @@ Trying to get rid of pre-installed packages (striving toward self-standing build
 > cmake --build build --parallel
 ```
 
-The frontend is built by the default CMake build. Install Node.js `22.15.0` and npm
-first; the expected Node.js version is recorded in `web/.nvmrc`. CMake installs
-the locked frontend dependencies with `npm ci` and writes the production assets
-to the build directory.
+The default CMake build also builds the frontend. This requires Node.js and npm;
+the expected Node.js version (`22.15.0`) is recorded in `web/.nvmrc`. CMake
+installs the locked frontend dependencies and writes the production assets to
+the build directory.
+
+# Web code documentation
+
+The TypeScript and JavaScript modules under `web/src` are documented with
+Doxygen, using the same tool as the C++ API. Install Doxygen if it is not already
+available, then generate the web reference from the repository root:
+
+```
+sudo apt-get install doxygen
+cd web
+doxygen Doxyfile
+```
+
+Open `web/docs/html/index.html` to browse the generated documentation. The output
+is generated locally and is not included in the application build. If Doxygen
+was installed when CMake was configured, the same documentation can be generated
+with `cmake --build build --target web_docs`.
 
 # Run tests
 
