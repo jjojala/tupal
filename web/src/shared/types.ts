@@ -20,6 +20,16 @@ export interface CompetitionClass {
   start_group_id: string;
 }
 
+/** A start group and its bib-number sequence configuration. */
+export interface StartGroup {
+  /** Unique start-group identifier within the competition. */
+  id: string;
+  /** First scheduled start time. */
+  first_start_time: string;
+  /** First bib number in this start group, or zero when bibs are not assigned. */
+  first_bib: number;
+}
+
 /** Competitor data returned by the REST API. */
 export interface Competitor {
   /** Unique competitor identifier. */

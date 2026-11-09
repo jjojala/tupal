@@ -6,29 +6,34 @@
     getClasses,
     getCompetition,
     getCompetitors,
+    getStartGroups,
     subscribeToCompetition,
     updateCompetitor
   } from "../../shared/api";
   import {
     durationToSeconds,
     hasDuplicateBib,
+    nextAvailableBib,
     secondsToDuration
   } from "../../shared/competitors";
   import type {
     Competition,
     CompetitionClass,
     Competitor,
-    CompetitorInput
+    CompetitorInput,
+    StartGroup
   } from "../../shared/types";
 
   export let competitionId: string;
 
   let competition: Competition | undefined;
   let classes: CompetitionClass[] = [];
+  let startGroups: StartGroup[] = [];
   let competitors: Competitor[] = [];
   let selectedClassId = "";
   let name = "";
   let bib = "";
+  let bibWasEdited = false;
   let startOffsetSeconds = "0";
   let editingId: string | undefined;
   let search = "";
@@ -64,17 +69,20 @@
     loading = true;
     pageError = "";
     try {
-      const [competitionData, classData, competitorData] = await Promise.all([
+      const [competitionData, classData, startGroupData, competitorData] = await Promise.all([
         getCompetition(competitionId),
         getClasses(competitionId),
+        getStartGroups(competitionId),
         getCompetitors(competitionId)
       ]);
       competition = competitionData;
       classes = classData;
+      startGroups = startGroupData;
       competitors = competitorData;
       if (!selectedClassId && classData.length > 0) {
         selectedClassId = classData[0].id;
       }
+      if (!editingId && !bibWasEdited) suggestBib();
     } catch (error) {
       pageError = errorMessage(error);
     } finally {
@@ -90,8 +98,23 @@
     editingId = undefined;
     name = "";
     bib = "";
+    bibWasEdited = false;
     startOffsetSeconds = "0";
     formError = "";
+  }
+
+  function suggestBib() {
+    const suggestedBib = nextAvailableBib(competitors, classes, startGroups, selectedClassId);
+    bib = suggestedBib === undefined ? "" : String(suggestedBib);
+  }
+
+  function selectClass(event: Event) {
+    if (!(event.currentTarget instanceof HTMLSelectElement)) return;
+    selectedClassId = event.currentTarget.value;
+    if (!editingId) {
+      bibWasEdited = false;
+      suggestBib();
+    }
   }
 
   function editCompetitor(competitor: Competitor) {
@@ -99,6 +122,7 @@
     selectedClassId = competitor.comp_class_id;
     name = competitor.name;
     bib = String(competitor.bib);
+    bibWasEdited = true;
     startOffsetSeconds = String(durationToSeconds(competitor.start_time_offset));
     formError = "";
     notice = "";
@@ -273,7 +297,7 @@
               />
 
               <label for="competitor-class">Class</label>
-              <select id="competitor-class" bind:value={selectedClassId} required>
+              <select id="competitor-class" value={selectedClassId} onchange={selectClass} required>
                 <option value="" disabled>Choose a class</option>
                 {#each classes as competitionClass (competitionClass.id)}
                   <option value={competitionClass.id}>{competitionClass.title}</option>
@@ -286,6 +310,7 @@
                   <input
                     id="competitor-bib"
                     bind:value={bib}
+                    oninput={() => (bibWasEdited = true)}
                     type="number"
                     inputmode="numeric"
                     min="1"

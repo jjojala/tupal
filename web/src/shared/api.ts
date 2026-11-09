@@ -3,7 +3,8 @@ import type {
   Competition,
   CompetitionClass,
   Competitor,
-  CompetitorInput
+  CompetitorInput,
+  StartGroup
 } from "./types";
 
 const competitionUrl = (competitionId: string) =>
@@ -56,6 +57,13 @@ export function getCompetition(competitionId: string) {
 export function getClasses(competitionId: string) {
   return request<CompetitionClass[]>(
     `${competitionUrl(competitionId)}/competition_class/`
+  );
+}
+
+/** Fetches the start groups configured for a competition. */
+export function getStartGroups(competitionId: string) {
+  return request<StartGroup[]>(
+    `${competitionUrl(competitionId)}/start_group/`
   );
 }
 
