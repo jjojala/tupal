@@ -11,11 +11,12 @@
     updateCompetitor
   } from "../../shared/api";
   import {
-    durationToSeconds,
     hasDuplicateBib,
     nextAvailableBib,
     secondsToDuration,
-    startOffsetForBib
+    startOffsetForBib,
+    startOffsetForStartClock,
+    startClockForOffset
   } from "../../shared/competitors";
   import type {
     Competition,
@@ -35,7 +36,7 @@
   let name = "";
   let bib = "";
   let bibWasEdited = false;
-  let startOffsetSeconds = "0";
+  let startTime = "";
   let editingId: string | undefined;
   let search = "";
   let loading = true;
@@ -100,7 +101,7 @@
     name = "";
     bib = "";
     bibWasEdited = false;
-    startOffsetSeconds = "0";
+    startTime = "";
     formError = "";
   }
 
@@ -114,11 +115,16 @@
     try {
       const offset = startOffsetForBib(classes, startGroups, selectedClassId, value);
       if (offset !== undefined) {
-        startOffsetSeconds = String(offset);
+        startTime = startClockForOffset(
+          classes,
+          startGroups,
+          selectedClassId,
+          secondsToDuration(offset)
+        ) ?? "";
         formError = "";
       }
     } catch (error) {
-      startOffsetSeconds = "";
+      startTime = "";
       formError = errorMessage(error);
     }
   }
@@ -147,8 +153,20 @@
     name = competitor.name;
     bib = String(competitor.bib);
     bibWasEdited = true;
-    startOffsetSeconds = String(durationToSeconds(competitor.start_time_offset));
-    formError = "";
+    try {
+      startTime = startClockForOffset(
+        classes,
+        startGroups,
+        selectedClassId,
+        competitor.start_time_offset
+      ) ?? "";
+      formError = startTime
+        ? ""
+        : "The selected class has no start group configured.";
+    } catch (error) {
+      startTime = "";
+      formError = errorMessage(error);
+    }
     notice = "";
     document.getElementById("competitor-name")?.focus();
   }
@@ -159,7 +177,7 @@
     notice = "";
 
     const parsedBib = Number(bib);
-    const parsedOffset = Number(startOffsetSeconds);
+    let parsedOffset: number | undefined;
     if (!selectedClassId || !name.trim()) {
       formError = "Enter a name and choose a class.";
       return;
@@ -168,8 +186,23 @@
       formError = "Bib number must be a whole number between 1 and 65535.";
       return;
     }
-    if (!Number.isFinite(parsedOffset) || parsedOffset < 0) {
-      formError = "Start offset must be zero or more seconds.";
+    try {
+      parsedOffset = startOffsetForStartClock(
+        classes,
+        startGroups,
+        selectedClassId,
+        startTime
+      );
+    } catch (error) {
+      formError = errorMessage(error);
+      return;
+    }
+    if (parsedOffset === undefined) {
+      formError = "The selected class has no start group configured.";
+      return;
+    }
+    if (parsedOffset < 0) {
+      formError = "Start time must not be before the start group's first start.";
       return;
     }
     if (hasDuplicateBib(competitors, classes, parsedBib, selectedClassId, editingId)) {
@@ -345,14 +378,12 @@
                   />
                 </div>
                 <div>
-                  <label for="competitor-offset">Start offset (seconds)</label>
+                  <label for="competitor-start-time">Start time</label>
                   <input
-                    id="competitor-offset"
-                    bind:value={startOffsetSeconds}
-                    type="number"
-                    inputmode="decimal"
-                    min="0"
-                    step="0.001"
+                    id="competitor-start-time"
+                    bind:value={startTime}
+                    type="time"
+                    step="1"
                     required
                   />
                 </div>

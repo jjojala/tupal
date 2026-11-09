@@ -16,13 +16,13 @@ test("registration UI creates and updates a competitor through the real API", as
   await page.locator("#competitor-name").fill("Casey Smoke");
   await page.locator("#competitor-class").selectOption("system-smoke-class");
   await expect(page.locator("#competitor-bib")).toHaveValue("500");
-  await page.locator("#competitor-offset").fill("0");
+  await expect(page.locator("#competitor-start-time")).toHaveValue("10:00:00");
   await page.locator("#competitor-submit").click();
 
   await expect(page.getByRole("status")).toContainText("Casey Smoke registered.");
   await expect(page.getByText("Casey Smoke", { exact: true })).toBeVisible();
   await expect(page.locator("#competitor-bib")).toHaveValue("501");
-  await expect(page.locator("#competitor-offset")).toHaveValue("30");
+  await expect(page.locator("#competitor-start-time")).toHaveValue("10:00:30");
 
   const competitorUrl =
     `/rest/competition/${encodeURIComponent(competitionId)}/competitor/`;
@@ -47,8 +47,10 @@ test("registration UI creates and updates a competitor through the real API", as
     .locator(`[id="edit-competitor-${encodeURIComponent(createdCompetitorId)}"]`)
     .click();
   await expect(page.locator("#competitor-bib")).toHaveValue("500");
+  await expect(page.locator("#competitor-start-time")).toHaveValue("10:00:00");
   await page.locator("#competitor-bib").fill("502");
-  await expect(page.locator("#competitor-offset")).toHaveValue("60");
+  await expect(page.locator("#competitor-start-time")).toHaveValue("10:01:00");
+  await page.locator("#competitor-start-time").fill("10:02:30");
   await page.locator("#competitor-name").fill("Casey Updated");
   await page.locator("#competitor-submit").click();
 
@@ -62,7 +64,7 @@ test("registration UI creates and updates a competitor through the real API", as
       expect.objectContaining({
         name: "Casey Updated",
         bib: 502,
-        start_time_offset: "PT60.000S",
+        start_time_offset: "PT150.000S",
         comp_class_id: "system-smoke-class"
       })
     ])
