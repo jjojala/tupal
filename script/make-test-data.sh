@@ -1,123 +1,71 @@
 #!/bin/sh
 
-# usage: make_competition_data <comp-id> <date> <title>
-# stdout: competition json
-make_competition_data() {
-cat -<< EOF
-    {
-        "id": "$1",
-        "date": "$2",
-        "title": "$3"
-    }
-EOF
-}
+set -eu
 
-# usage: make_start_group_data <sg-id> <title> <1st start> <1st bib in sg> <start interval>
-# stdout: start group json
-make_start_group_data() {
-cat -<<EOF
-    {
-        "id": "$1",
-        "title": "$2",
-        "first_start_time": "$3",
-        "first_bib": $4,
-        "start_interval": "$5"
-    }
-EOF
-}
-
-# usage: make_competition_class_data <cc-id> <title> <sg-id>
-# stdout: competition class json
-make_competition_class_data() {
-cat -<<EOF
-    {
-        "id": "$1",
-        "title": "$2",
-        "start_group_id": "$3"
-    }
-EOF
-}
-
-# usage: make_competitor_data <ctor-id> <cc-id> <bib> <start-time-offset> <name>
-make_competitor_data() {
-cat -<<EOF
-    {
-        "id": "$1",
-        "comp_class_id": "$2",
-        "bib": $3,
-        "start_time_offset": "$4",
-        "finish_time": "",
-        "status": 0,
-        "name": "$5"
-    }
-EOF
-}
-
-endpoint="http://127.0.0.1:8085/rest"
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+tupal="$script_dir/tupal"
 
 # Competition "Pirkkalan Hölkkä" on 4.8.2024
-curl -X POST -d "$(make_competition_data comp-1 "2024-08-04" "Pirkkalan Hölkkä")" \
-    ${endpoint}/competition/
+"$tupal" create competition --id comp-1 \
+    --date 2024-08-04 --title "Pirkkalan Hölkkä" >/dev/null
 
 # Start group "Children, under 16y" with first bib 401 and a 30-second start interval
-curl -X POST -d "$(make_start_group_data sg-1 "Children, under 16y" "2024-08-04T17:30:00.000Z" 401 "PT30S")" \
-    ${endpoint}/competition/comp-1/start_group/
+"$tupal" create start-group --id sg-1 --competition comp-1 \
+    --title "Children, under 16y" \
+    --first-start-time 2024-08-04T17:30:00.000Z \
+    --first-bib 401 --start-interval PT30S >/dev/null
 
 # Start group "Adults, 16y and older" with a mass start
-curl -X POST -d "$(make_start_group_data sg-2 "Adults, 16y and older" "2024-08-04T18:00:00.000Z" 1 "PT0S")" \
-    ${endpoint}/competition/comp-1/start_group/
+"$tupal" create start-group --id sg-2 --competition comp-1 \
+    --title "Adults, 16y and older" \
+    --first-start-time 2024-08-04T18:00:00.000Z \
+    --first-bib 1 --start-interval PT0S >/dev/null
 
-# Boys, under 10y
-curl -X POST -d "$(make_competition_class_data cc-1 P10 sg-1)" \
-    ${endpoint}/competition/comp-1/competition_class/
+# Create classes for the later start group first; live clients may refresh the
+# joined class list after every create.
+"$tupal" create class --id cc-3 --competition comp-1 \
+    --title MYL --start-group sg-2 >/dev/null
+"$tupal" create class --id cc-4 --competition comp-1 \
+    --title N40 --start-group sg-2 >/dev/null
 
-curl -X POST -d "$(make_competitor_data ctor-1 cc-1 401 PT0.000S "McLeod Archie")" \
-    ${endpoint}/competition/comp-1/competitor/
+# Then create classes for the first group so the start-group join has no gaps.
+"$tupal" create class --id cc-1 --competition comp-1 \
+    --title P10 --start-group sg-1 >/dev/null
+"$tupal" create class --id cc-2 --competition comp-1 \
+    --title T14 --start-group sg-1 >/dev/null
 
-curl -X POST -d "$(make_competitor_data ctor-2 cc-1 402 PT0.000S "Jones Benjamin")" \
-    ${endpoint}/competition/comp-1/competitor/
-
-curl -X POST -d "$(make_competitor_data ctor-3 cc-1 403 PT0.000S "Williamson George")" \
-    ${endpoint}/competition/comp-1/competitor/
-
-# Girls, under 14y
-curl -X POST -d "$(make_competition_class_data cc-2 T14 sg-1)" \
-    ${endpoint}/competition/comp-1/competition_class/
-
-curl -X POST -d "$(make_competitor_data ctor-4 cc-2 404 PT0.000S "Brown Charlotte")" \
-    ${endpoint}/competition/comp-1/competitor/
-
-curl -X POST -d "$(make_competitor_data ctor-5 cc-2 405 PT0.000S "Taylor Amelia")" \
-    ${endpoint}/competition/comp-1/competitor/
-
-curl -X POST -d "$(make_competitor_data ctor-6 cc-2 406 PT0.000S "Wilson Mia")" \
-    ${endpoint}/competition/comp-1/competitor/
+# Populate competitors in reverse class order so live roster refreshes don't
+# encounter unpopulated classes after populated ones.
+# Woman, above 40y
+"$tupal" create competitor --id ctor-11 --competition comp-1 --class cc-4 \
+    --bib 5 --start-time-offset PT0.000S --name "Smith Emily" >/dev/null
+"$tupal" create competitor --id ctor-12 --competition comp-1 --class cc-4 \
+    --bib 6 --start-time-offset PT0.000S --name "Johnson Olivia" >/dev/null
+"$tupal" create competitor --id ctor-13 --competition comp-1 --class cc-4 \
+    --bib 7 --start-time-offset PT0.000S --name "Davis Ava" >/dev/null
 
 # Men, main class
-curl -X POST -d "$(make_competition_class_data cc-3 MYL sg-2)" \
-    ${endpoint}/competition/comp-1/competition_class/
+"$tupal" create competitor --id ctor-7 --competition comp-1 --class cc-3 \
+    --bib 1 --start-time-offset PT0.000S --name "Shaw Oscar" >/dev/null
+"$tupal" create competitor --id ctor-8 --competition comp-1 --class cc-3 \
+    --bib 2 --start-time-offset PT0.000S --name "Graig Ethan" >/dev/null
+"$tupal" create competitor --id ctor-9 --competition comp-1 --class cc-3 \
+    --bib 3 --start-time-offset PT0.000S --name "Murray Sebastian" >/dev/null
+"$tupal" create competitor --id ctor-10 --competition comp-1 --class cc-3 \
+    --bib 4 --start-time-offset PT0.000S --name "Robertson Musa" >/dev/null
 
-curl -X POST -d "$(make_competitor_data ctor-7 cc-3 1 PT0.000S "Shaw Oscar")" \
-    ${endpoint}/competition/comp-1/competitor/
+# Girls, under 14y
+"$tupal" create competitor --id ctor-4 --competition comp-1 --class cc-2 \
+    --bib 404 --start-time-offset PT0.000S --name "Brown Charlotte" >/dev/null
+"$tupal" create competitor --id ctor-5 --competition comp-1 --class cc-2 \
+    --bib 405 --start-time-offset PT0.000S --name "Taylor Amelia" >/dev/null
+"$tupal" create competitor --id ctor-6 --competition comp-1 --class cc-2 \
+    --bib 406 --start-time-offset PT0.000S --name "Wilson Mia" >/dev/null
 
-curl -X POST -d "$(make_competitor_data ctor-8 cc-3 2 PT0.000S "Graig Ethan")" \
-    ${endpoint}/competition/comp-1/competitor/
-
-curl -X POST -d "$(make_competitor_data ctor-9 cc-3 3 PT0.000S "Murray Sebastian")" \
-    ${endpoint}/competition/comp-1/competitor/
-
-curl -X POST -d "$(make_competitor_data ctor-10 cc-3 4 PT0.000S "Robertson Musa")" \
-    ${endpoint}/competition/comp-1/competitor/
-
-# Woman, above 40y
-curl -X POST -d "$(make_competition_class_data cc-4 N40 sg-2)" \
-    ${endpoint}/competition/comp-1/competition_class/
-
-curl -X POST -d "$(make_competitor_data ctor-11 cc-4 5 PT0.000S "Smith Emily")" \
-    ${endpoint}/competition/comp-1/competitor/
-
-curl -X POST -d "$(make_competitor_data ctor-12 cc-4 6 PT0.000S "Johnson Olivia")" \
-    ${endpoint}/competition/comp-1/competitor/
-
-curl -X POST -d "$(make_competitor_data ctor-13 cc-4 7 PT0.000S "Davis Ava")" \
-    ${endpoint}/competition/comp-1/competitor/
+# Boys, under 10y
+"$tupal" create competitor --id ctor-1 --competition comp-1 --class cc-1 \
+    --bib 401 --start-time-offset PT0.000S --name "McLeod Archie" >/dev/null
+"$tupal" create competitor --id ctor-2 --competition comp-1 --class cc-1 \
+    --bib 402 --start-time-offset PT0.000S --name "Jones Benjamin" >/dev/null
+"$tupal" create competitor --id ctor-3 --competition comp-1 --class cc-1 \
+    --bib 403 --start-time-offset PT0.000S --name "Williamson George" >/dev/null
