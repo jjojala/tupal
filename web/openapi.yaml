@@ -397,6 +397,10 @@ components:
           type: integer
           minimum: 0
           example: 501
+        start_interval:
+          type: string
+          description: ISO 8601 duration between consecutive bib start times; zero means a mass start, and omitted values default to zero
+          example: 'PT30S'
 
     CompetitionClass:
       type: object
@@ -471,4 +475,3 @@ components:
           type: string
           description: Identity of embedding Competition
           example: 'comp-1'
-

@@ -1,8 +1,10 @@
+/* Copyright (C) 2026 Jari Ojala (jari.ojala@iki.fi) */
 #ifndef TUPAL_MODEL_HH
 #define TUPAL_MODEL_HH
 
 #include <string>
 #include <ctime>
+#include <cstdint>
 #include "boost/json.hpp"
 #include "boost/date_time.hpp"
 
@@ -92,6 +94,9 @@ namespace tupal {
 
         /** @brief first bib within this start group. 0-not used */
         uint16_t first_bib;
+
+        /** @brief duration between consecutive bib start times; zero means all bibs start together */
+        duration start_interval;
     };
 
     /** @brief competition class (within the competition) */

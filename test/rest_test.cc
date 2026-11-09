@@ -220,7 +220,7 @@ TEST_CASE_FIXTURE(daemon_fixture, "WS connect response") {
     const auto comp_url = base_url + "/rest/competition/" + comp_id;
 
     const auto start_group_data { R"({ "id": "sg-1", "title": "Start group 1", "first_start_time": "2025-11-11T18:00:00.000Z",
-            "first_bib": 1 })" };
+            "first_bib": 1, "start_interval": "PT0.000S" })" };
     const auto comp_class_data { R"({ "id": "cc-1", "title": "Competition class 1", "start_group_id": "sg-1" })" };
     const auto competitor_data { R"({ "id": "c-1", "comp_class_id": "cc-1", "bib": 101,
             "start_time_offset": "PT600.000S", "finish_time": "2024-01-01T10:59:11.231Z", "status": 0, "name": "Alice" })" };
@@ -314,7 +314,7 @@ TEST_CASE_FIXTURE(ws_daemon_fixture, "Create, read, update and delete a start gr
 
     TUPAL_CHECK_STATUS([&]() { return client.get(sg_url + "sg-1"); }, boost::beast::http::status::not_found);
 
-    const auto data = R"({ "id": "sg-1", "title": "Start Group 1", "first_start_time": "2025-11-11T18:00:00.000Z", "first_bib": 1 })";
+    const auto data = R"({ "id": "sg-1", "title": "Start Group 1", "first_start_time": "2025-11-11T18:00:00.000Z", "first_bib": 1, "start_interval": "PT0.000S" })";
     TUPAL_TEST_CREATE_WITH_NOTIFICATIONS([&]() { return client.post(sg_url, data); }, "start_group", data, ws_messages);
     TUPAL_TEST_GET([&]() { return client.get(sg_url); }, to_list(data) );
     TUPAL_TEST_GET([&]() { return client.get(sg_url + "sg-1"); }, std::string { data });
@@ -334,7 +334,7 @@ TEST_CASE_FIXTURE(ws_daemon_fixture, "Create, read, update and delete a start gr
     // Updating non-existent competition (--> not_found)
     TUPAL_CHECK_STATUS([&]() { return client.put(sg_url + "sg-not-found",
             R"({ "id": "sg-not-found", "title": "New Start Group 1",
-                    "first_start_time": "2025-11-11T18:00:00.000Z", "first_bib": 1 })"); },
+                    "first_start_time": "2025-11-11T18:00:00.000Z", "first_bib": 1, "start_interval": "PT0.000S" })"); },
         boost::beast::http::status::not_found);
 
     // Removing existing competition
@@ -351,7 +351,7 @@ TEST_CASE_FIXTURE(ws_daemon_fixture, "Create, read, update and delete a competit
     const auto comp_data = R"({ "id": "comp-1", "title": "Competition 1", "date": "2025-11-11T00:00:00.000Z" })";
     TUPAL_TEST_CREATE_NO_NOTIFICATION([&]() { return client.post(base_url + "/rest/competition/", comp_data); }, comp_data);
 
-    const auto sg_data = R"({ "id": "sg-1", "title": "Start Group 1", "first_start_time": "2025-11-11T18:00:00.000Z", "first_bib": 1 })";
+    const auto sg_data = R"({ "id": "sg-1", "title": "Start Group 1", "first_start_time": "2025-11-11T18:00:00.000Z", "first_bib": 1, "start_interval": "PT0.000S" })";
     TUPAL_TEST_CREATE_WITH_NOTIFICATIONS([&]() { return client.post(base_url + "/rest/competition/comp-1/start_group/", sg_data); },
             "start_group", sg_data, ws_messages);
 
@@ -397,7 +397,7 @@ TEST_CASE_FIXTURE(ws_daemon_fixture, "Create, read, update and delete a competit
     const auto comp_data = R"({ "id": "comp-1", "title": "Competition 1", "date": "2025-11-11T00:00:00.000Z" })";
     TUPAL_TEST_CREATE_NO_NOTIFICATION([&]() { return client.post(base_url + "/rest/competition/", comp_data); }, comp_data);
 
-    const auto sg_data = R"({ "id": "sg-1", "title": "Start Group 1", "first_start_time": "2025-11-11T18:00:00.000Z", "first_bib": 1 })";
+    const auto sg_data = R"({ "id": "sg-1", "title": "Start Group 1", "first_start_time": "2025-11-11T18:00:00.000Z", "first_bib": 1, "start_interval": "PT0.000S" })";
     TUPAL_TEST_CREATE_WITH_NOTIFICATIONS([&]() { return client.post(base_url + "/rest/competition/comp-1/start_group/", sg_data); },
             "start_group", sg_data, ws_messages);
 

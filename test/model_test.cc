@@ -235,7 +235,8 @@ TEST_CASE("start_group JSON serialization/deserialization") {
         .id = { .id = "sg1", .comp_id = "comp1" },
         .title = "Morning Group",
         .first_start_time = tupal::from_date_string("2025-12-31T09:00:00.000Z"),
-        .first_bib = 101
+        .first_bib = 101,
+        .start_interval = tupal::from_duration_string("PT30S")
     };
 
     const auto json_val = tupal::to_json(sg);
@@ -246,6 +247,7 @@ TEST_CASE("start_group JSON serialization/deserialization") {
     CHECK(sg.title == sg_deserialized.title);
     CHECK(sg.first_start_time == sg_deserialized.first_start_time);
     CHECK(sg.first_bib == sg_deserialized.first_bib);
+    CHECK(sg.start_interval == sg_deserialized.start_interval);
 }
 
 TEST_CASE("competition_class JSON serialization/deserialization") {
