@@ -70,15 +70,37 @@ The frontend functionality can be briefly divided into the following categories:
 
 ### REG-2 - Register competitors
 
-1. Add, edit or delete a competitor to a specific class.
+1. Add, edit or delete a competitor to a specific class. Classes are pre-defined with other tools. They're not modifiable with registration app.
 1. Assign a unique bib number for the competitor
 1. Optimized for mobile device with a keyboard, such as a light laptop or a tablet with a keyboard
 
 ### REG-3 - Bib number assignment
 
 1. Typically the registration official has literally on his/hers reach a pile of physical bib numbers, that are given for the registrees as they are registering on-site.
-1. The bib number are can be pre-arranged to a ascending order in the start-group specific piles.
-1. The registration app should suggest in ascending order available bib numbers when entering competitor's date to the registration app. Ideally, the bib suggested by app matches with the top most physical pile of bibs, therefore greatly helping the registration official.
+1. The bib number are typically be pre-arranged to a ascending order in the start-group specific piles. Note, that the bib number shall be unique in scope of the whole competition - each start-group uses a pre-allocated range of bib's.
+1. The registration app should suggests in ascending order available bib numbers when entering competitor's data to the registration app. Ideally, the bib suggested by app matches with the top most physical pile of bibs, therefore greatly helping the registration official. In practice the official pick the physical bib from the pile, then fix - if needed - the bib in the registration form, and accepts it before actually handing the bib to the registree.
+
+### REG-4 - Automatic start time assigment
+
+1. The start time will be automatically picked by the registration app, in accordance of the chosen bib, and the start stime interval defined by the start-group. For example, if start time interval is 30seconds, the competitor's start time offset for bib 1 is 0, bib 2 is 30secs, 3 - 60secs, etc. Start time interval 0, refers to a mass start, i.e. all competitors within that start group will get the same start time.
+
+### REG-4 - List of registrations
+
+1. The registration app shall show a searchable list of registrations
+1. The list shall show competitor's name, class and start time
+1. By default the list shows the registrations in the reversed registration order, i.e. the most recently added registration is at the top of the list. This function applies to current registration-app usage session, i.e. it is done locally within the client. The registrations done before the session, are shown in reversed bib order below latest registrations.
+1. Additionally the list can be filtered by start-group or class
+
+### REG-5 - Shortcut for class assignment
+
+1. Small competition will have 6-8 classes, and even a big one will have less than 30 classes
+1. For selecting a class, a e.g. toggle button or some other "one-click" shortcut shall be provided, for the most common classes. The "most common" can be bound to current registration app usage session, i.e. without support from the backend.
+1. Less common classes, if unfeasible to have fitted to the registration app as shortcuts, can be selected e.g. by typing or picking from the list.
+
+### REG-6 - Auto-completion for competitor's name fragments
+
+1. It is common, that registration takes place by families, i.e. e.g. one person of family "Smith" registers all familiy members at once.
+1. The registration app should assist such scenario by auto-completing the name fragments (such as "Sm" --> "Smith", "Jo" --> "John") as entered before. The auto-completion shall emphasize on the recent fragments, i.e. if previous registration was "Smith", but before that was three times "Smyth", suggest "Smith", because it is more recent.
 
 ## Epic: Start
 
