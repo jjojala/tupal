@@ -1,11 +1,12 @@
 /* Copyright (C) 2026 Jari Ojala (jari.ojala@iki.fi) */
 import type { CompetitionClass, Competitor, StartGroup } from "./types";
 
-/** Converts the supported ISO 8601 start-time offset format to seconds. */
+/** Converts an ISO 8601 duration in seconds, with optional millisecond precision. */
 export function durationToSeconds(duration: string) {
-  const match = duration.match(/^PT(\d+)\.(\d{3})S$/);
+  const match = duration.match(/^PT(\d+)(?:\.(\d{1,3}))?S$/);
   if (!match) throw new Error(`Unsupported start-time offset: ${duration}`);
-  return Number(match[1]) + Number(match[2]) / 1000;
+  const fractionalSeconds = match[2] ? Number(`0.${match[2]}`) : 0;
+  return Number(match[1]) + fractionalSeconds;
 }
 
 /** Converts seconds to the ISO 8601 duration format used by the API. */
@@ -28,7 +29,11 @@ export function nextAvailableBib(
   const startGroup = startGroups.find(
     (item) => item.id === targetClass?.start_group_id
   );
-  if (!startGroup || !Number.isInteger(startGroup.first_bib) || startGroup.first_bib < 1) {
+  if (
+    !startGroup ||
+    !Number.isInteger(startGroup.first_bib) ||
+    startGroup.first_bib < 1
+  ) {
     return undefined;
   }
 
@@ -39,6 +44,24 @@ export function nextAvailableBib(
     if (!usedBibs.has(bib)) return bib;
   }
   return undefined;
+}
+
+/** Calculates the start offset assigned to a bib by its start group. */
+export function startOffsetForBib(
+  classes: CompetitionClass[],
+  startGroups: StartGroup[],
+  classId: string,
+  bib: number
+) {
+  const targetClass = classes.find((item) => item.id === classId);
+  const startGroup = startGroups.find(
+    (item) => item.id === targetClass?.start_group_id
+  );
+  if (!startGroup || !Number.isInteger(startGroup.first_bib) || startGroup.first_bib < 1) {
+    return undefined;
+  }
+
+  return (bib - startGroup.first_bib) * durationToSeconds(startGroup.start_interval);
 }
 
 /** Checks whether another competitor in the target start group has this bib. */

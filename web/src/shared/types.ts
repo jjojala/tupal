@@ -28,6 +28,8 @@ export interface StartGroup {
   first_start_time: string;
   /** First bib number in this start group, or zero when bibs are not assigned. */
   first_bib: number;
+  /** Time between consecutive bibs, as an ISO 8601 duration. */
+  start_interval: string;
 }
 
 /** Competitor data returned by the REST API. */

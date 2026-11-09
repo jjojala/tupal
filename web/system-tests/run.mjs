@@ -110,7 +110,8 @@ try {
     id: "system-smoke-start",
     title: "Smoke Test Start",
     first_start_time: "2026-11-09T10:00:00.000Z",
-    first_bib: 500
+    first_bib: 500,
+    start_interval: "PT30S"
   });
   await requestJson(
     baseUrl,

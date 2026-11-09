@@ -14,7 +14,8 @@
     durationToSeconds,
     hasDuplicateBib,
     nextAvailableBib,
-    secondsToDuration
+    secondsToDuration,
+    startOffsetForBib
   } from "../../shared/competitors";
   import type {
     Competition,
@@ -106,6 +107,26 @@
   function suggestBib() {
     const suggestedBib = nextAvailableBib(competitors, classes, startGroups, selectedClassId);
     bib = suggestedBib === undefined ? "" : String(suggestedBib);
+    if (suggestedBib !== undefined) updateStartOffsetForBib(suggestedBib);
+  }
+
+  function updateStartOffsetForBib(value: number) {
+    try {
+      const offset = startOffsetForBib(classes, startGroups, selectedClassId, value);
+      if (offset !== undefined) {
+        startOffsetSeconds = String(offset);
+        formError = "";
+      }
+    } catch (error) {
+      startOffsetSeconds = "";
+      formError = errorMessage(error);
+    }
+  }
+
+  function changeBib() {
+    bibWasEdited = true;
+    const parsedBib = Number(bib);
+    if (Number.isInteger(parsedBib)) updateStartOffsetForBib(parsedBib);
   }
 
   function selectClass(event: Event) {
@@ -114,6 +135,9 @@
     if (!editingId) {
       bibWasEdited = false;
       suggestBib();
+    } else {
+      const parsedBib = Number(bib);
+      if (Number.isInteger(parsedBib)) updateStartOffsetForBib(parsedBib);
     }
   }
 
@@ -310,7 +334,7 @@
                   <input
                     id="competitor-bib"
                     bind:value={bib}
-                    oninput={() => (bibWasEdited = true)}
+                    oninput={changeBib}
                     type="number"
                     inputmode="numeric"
                     min="1"
