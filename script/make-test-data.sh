@@ -12,7 +12,7 @@ cat -<< EOF
 EOF
 }
 
-# usage:make_start_group_data <sg-id> <title> <1st start> <1st bib in sg>
+# usage: make_start_group_data <sg-id> <title> <1st start> <1st bib in sg> <start interval>
 # stdout: start group json
 make_start_group_data() {
 cat -<<EOF
@@ -20,7 +20,8 @@ cat -<<EOF
         "id": "$1",
         "title": "$2",
         "first_start_time": "$3",
-        "first_bib": $4
+        "first_bib": $4,
+        "start_interval": "$5"
     }
 EOF
 }
@@ -58,12 +59,12 @@ endpoint="http://127.0.0.1:8085/rest"
 curl -X POST -d "$(make_competition_data comp-1 "2024-08-04" "Pirkkalan Hölkkä")" \
     ${endpoint}/competition/
 
-# Start group "Children, under 16y" with first bib 300
-curl -X POST -d "$(make_start_group_data sg-1 "Children, under 16y" "2024-08-04T17:30:00.000Z" 401)" \
+# Start group "Children, under 16y" with first bib 401 and a 30-second start interval
+curl -X POST -d "$(make_start_group_data sg-1 "Children, under 16y" "2024-08-04T17:30:00.000Z" 401 "PT30S")" \
     ${endpoint}/competition/comp-1/start_group/
 
-# Start group "Adults, 16y and oler" with first bib 300
-curl -X POST -d "$(make_start_group_data sg-2 "Adults, 16y and older" "2024-08-04T18:00:00.000Z" 1)" \
+# Start group "Adults, 16y and older" with a mass start
+curl -X POST -d "$(make_start_group_data sg-2 "Adults, 16y and older" "2024-08-04T18:00:00.000Z" 1 "PT0S")" \
     ${endpoint}/competition/comp-1/start_group/
 
 # Boys, under 10y
