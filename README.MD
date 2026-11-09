@@ -1,8 +1,14 @@
 # Tupal
 
-Tupal is a competition management and results system. It provides a C++ daemon
-with a REST API and web interface for managing competitions, start groups,
-classes, competitor registration, and race results.
+Tupal is a competition management and results system. The name "TUPAL" stands for finish word "tulospalvelu", meaning boringly "result service". Tupal consists of centralized backend service "tupald" and (will eventually) the following web-based interfaces:
+* Competition Management - Results and the founding competition information
+* Competitor's Registration - Adding new competitors
+* Start - For officials at start line
+* Times - For timekeeper
+* Numbers - For typing bib numbers as they reach the finish line
+* Finishline - Combines Times & Numbers plus for handling DSQ's
+
+Tupal backend is a C++ daemon with a REST API, while the apps are web apps, written with TypeScript and Svelte. The database is defaulted to SQLite, but utilizes the SOCI that enables switching to centralized DMBS such as PostgreSQL.
 
 ## Quick start
 
