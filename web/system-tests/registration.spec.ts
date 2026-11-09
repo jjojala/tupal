@@ -13,11 +13,11 @@ test("registration UI creates and updates a competitor through the real API", as
   ).toBeVisible();
   await expect(page.getByText("No competitors yet")).toBeVisible();
 
-  await page.getByLabel("Competitor name").fill("Casey Smoke");
-  await page.getByLabel("Class").selectOption("system-smoke-class");
-  await page.getByLabel("Bib number").fill("501");
-  await page.getByLabel("Start offset (seconds)").fill("0");
-  await page.getByRole("button", { name: "Add competitor" }).click();
+  await page.locator("#competitor-name").fill("Casey Smoke");
+  await page.locator("#competitor-class").selectOption("system-smoke-class");
+  await page.locator("#competitor-bib").fill("501");
+  await page.locator("#competitor-offset").fill("0");
+  await page.locator("#competitor-submit").click();
 
   await expect(page.getByRole("status")).toContainText("Casey Smoke registered.");
   await expect(page.getByText("Casey Smoke", { exact: true })).toBeVisible();
@@ -26,7 +26,8 @@ test("registration UI creates and updates a competitor through the real API", as
     `/rest/competition/${encodeURIComponent(competitionId)}/competitor/`;
   const createdResponse = await request.get(competitorUrl);
   expect(createdResponse.ok()).toBeTruthy();
-  expect(await createdResponse.json()).toEqual(
+  const createdCompetitors = await createdResponse.json();
+  expect(createdCompetitors).toEqual(
     expect.arrayContaining([
       expect.objectContaining({
         name: "Casey Smoke",
@@ -36,9 +37,14 @@ test("registration UI creates and updates a competitor through the real API", as
     ])
   );
 
-  await page.getByRole("button", { name: "Edit Casey Smoke" }).click();
-  await page.getByLabel("Competitor name").fill("Casey Updated");
-  await page.getByRole("button", { name: "Save changes" }).click();
+  const createdCompetitorId = createdCompetitors.find(
+    (competitor: { id: string; name: string }) => competitor.name === "Casey Smoke"
+  ).id;
+  await page
+    .locator(`[id="edit-competitor-${encodeURIComponent(createdCompetitorId)}"]`)
+    .click();
+  await page.locator("#competitor-name").fill("Casey Updated");
+  await page.locator("#competitor-submit").click();
 
   await expect(page.getByRole("status")).toContainText("Casey Updated updated.");
   await expect(page.getByText("Casey Updated", { exact: true })).toBeVisible();
