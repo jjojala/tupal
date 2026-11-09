@@ -7,6 +7,7 @@ export default defineConfig({
   reporter: "list",
   use: {
     baseURL: process.env.TUPAL_BASE_URL,
+    timezoneId: "UTC",
     ...devices["Desktop Chrome"]
   }
 });

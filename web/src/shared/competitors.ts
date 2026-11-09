@@ -64,6 +64,67 @@ export function startOffsetForBib(
   return (bib - startGroup.first_bib) * durationToSeconds(startGroup.start_interval);
 }
 
+/** Calculates the local clock time for a competitor offset, to whole seconds. */
+export function startClockForOffset(
+  classes: CompetitionClass[],
+  startGroups: StartGroup[],
+  classId: string,
+  offset: string
+) {
+  const targetClass = classes.find((item) => item.id === classId);
+  const startGroup = startGroups.find(
+    (item) => item.id === targetClass?.start_group_id
+  );
+  if (!startGroup) return undefined;
+
+  const firstStartTime = Date.parse(startGroup.first_start_time);
+  if (!Number.isFinite(firstStartTime)) {
+    throw new Error("The start group has an invalid first start time.");
+  }
+  const timestamp = Math.round(
+    (firstStartTime + durationToSeconds(offset) * 1000) / 1000
+  ) * 1000;
+  const date = new Date(timestamp);
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+/** Calculates the stored start offset from a local clock time. */
+export function startOffsetForStartClock(
+  classes: CompetitionClass[],
+  startGroups: StartGroup[],
+  classId: string,
+  startClock: string
+) {
+  const targetClass = classes.find((item) => item.id === classId);
+  const startGroup = startGroups.find(
+    (item) => item.id === targetClass?.start_group_id
+  );
+  if (!startGroup) return undefined;
+
+  const firstStartTime = Date.parse(startGroup.first_start_time);
+  const clockMatch = startClock.match(/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/);
+  if (!Number.isFinite(firstStartTime) || !clockMatch) {
+    throw new Error("Enter a valid start time.");
+  }
+  const firstStart = new Date(firstStartTime);
+  const absoluteStart = new Date(
+    firstStart.getFullYear(),
+    firstStart.getMonth(),
+    firstStart.getDate(),
+    Number(clockMatch[1]),
+    Number(clockMatch[2]),
+    Number(clockMatch[3])
+  );
+  if (absoluteStart.getTime() < firstStartTime) {
+    absoluteStart.setDate(absoluteStart.getDate() + 1);
+  }
+  return (absoluteStart.getTime() - firstStartTime) / 1000;
+}
+
+function pad(value: number) {
+  return String(value).padStart(2, "0");
+}
+
 /** Checks whether another competitor in the target start group has this bib. */
 export function hasDuplicateBib(
   competitors: Competitor[],
