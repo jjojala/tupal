@@ -194,7 +194,12 @@
 
 <div class="app-shell">
   <header class="topbar">
-    <a class="brand" href={`/registration/${encodeURIComponent(competitionId)}`} aria-label="Tupal registration home">
+    <a
+      id="registration-home"
+      class="brand"
+      href={`/registration/${encodeURIComponent(competitionId)}`}
+      aria-label="Tupal registration home"
+    >
       <span class="brand-mark" aria-hidden="true">T</span>
       <span>Tupal</span>
     </a>
@@ -215,7 +220,7 @@
       <section class="message-card error-banner" role="alert">
         <strong>Could not open this competition</strong>
         <p>{pageError}</p>
-        <button class="button button-secondary" onclick={() => void reload()}>Try again</button>
+        <button id="retry-load" class="button button-secondary" onclick={() => void reload()}>Try again</button>
       </section>
     {:else if competition}
       <div class="page-heading">
@@ -246,7 +251,7 @@
               <h2 id="form-title">{editingId ? "Edit competitor" : "Register competitor"}</h2>
             </div>
             {#if editingId}
-              <button class="text-button" type="button" onclick={resetForm}>Cancel</button>
+              <button id="cancel-edit" class="text-button" type="button" onclick={resetForm}>Cancel</button>
             {/if}
           </div>
 
@@ -256,7 +261,7 @@
               <p>Ask the competition manager to add classes before registration.</p>
             </div>
           {:else}
-            <form onsubmit={saveCompetitor}>
+            <form id="competitor-form" onsubmit={saveCompetitor}>
               <label for="competitor-name">Competitor name</label>
               <input
                 id="competitor-name"
@@ -308,7 +313,12 @@
                 <p class="field-error" role="alert">{formError}</p>
               {/if}
 
-              <button class="button button-primary submit-button" type="submit" disabled={saving}>
+              <button
+                id="competitor-submit"
+                class="button button-primary submit-button"
+                type="submit"
+                disabled={saving}
+              >
                 {saving ? "Saving…" : editingId ? "Save changes" : "Add competitor"}
               </button>
             </form>
@@ -351,12 +361,14 @@
                   </div>
                   <div class="row-actions">
                     <button
+                      id={`edit-competitor-${encodeURIComponent(competitor.id)}`}
                       class="icon-button"
                       type="button"
                       aria-label={`Edit ${competitor.name}`}
                       onclick={() => editCompetitor(competitor)}
                     >Edit</button>
                     <button
+                      id={`remove-competitor-${encodeURIComponent(competitor.id)}`}
                       class="icon-button danger-action"
                       type="button"
                       aria-label={`Remove ${competitor.name}`}
