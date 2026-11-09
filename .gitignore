@@ -3,3 +3,5 @@ build-release/
 web/node_modules/
 web/dist/
 web/docs/
+web/test-results/
+web/playwright-report/

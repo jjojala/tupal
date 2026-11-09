@@ -27,3 +27,13 @@ target_include_directories(model_tests PRIVATE ${CMAKE_SOURCE_DIR}/src ${doctest
 target_link_libraries(model_tests PRIVATE tupal_core ${Boost_JSON_LIBRARY} ${Boost_URL_LIBRARY} ${Boost_DATE_TIME_LIBRARY})
 add_test(NAME model_tests COMMAND $<TARGET_FILE:model_tests>)
 set_tests_properties(model_tests PROPERTIES LABELS "tupal,model" TIMEOUT 10)
+
+find_program(NPM_EXECUTABLE NAMES npm REQUIRED)
+add_test(NAME web_system_smoke
+    COMMAND "${NPM_EXECUTABLE}" run test:system)
+set_tests_properties(web_system_smoke PROPERTIES
+    LABELS "tupal,web,system"
+    TIMEOUT 120
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/web"
+    ENVIRONMENT
+        "TUPAL_SERVER_EXECUTABLE=$<TARGET_FILE:tupald>;TUPAL_WEB_ROOT=${TUPAL_WEB_OUTPUT_DIR}")
