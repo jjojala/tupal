@@ -38,6 +38,7 @@ namespace {
         "   title text not null,"
         "   start_time text not null," // ISO-8601 datetime, e.g. '2025-07-26T18:30:00.000+03:00'
         "   first_bib integer not null,"
+        "   start_interval text not null,"
         "   primary key (id, comp_id),"
         "   foreign key (comp_id) references competition(id)"
         ")";
@@ -114,7 +115,7 @@ namespace {
         virtual tupal::result_type list(const std::string & competition_id) const {
             try {
                 soci::rowset<> rows = (soci_session->prepare 
-                    << "select s.id, c.id, s.title, s.start_time, first_bib from competition c "
+                    << "select s.id, c.id, s.title, s.start_time, first_bib, start_interval from competition c "
                             "left join start_group s on c.id = s.comp_id where c.id=:comp_id",
                         soci::use(competition_id));
     
@@ -134,7 +135,8 @@ namespace {
                             },
                             .title = row.get<std::string>(2),
                             .first_start_time = tupal::from_date_string(row.get<std::string>(3)),
-                            .first_bib = static_cast<uint16_t>(row.get<int>(4))
+                            .first_bib = static_cast<uint16_t>(row.get<int>(4)),
+                            .start_interval = tupal::from_duration_string(row.get<std::string>(5))
                         });
                     });
                 }
@@ -153,14 +155,16 @@ namespace {
             try {
                 tupal::start_group sg;
                 std::string first_start_time_str;
-                *soci_session << "select id, comp_id, title, start_time, first_bib "
+                std::string start_interval_str;
+                *soci_session << "select id, comp_id, title, start_time, first_bib, start_interval "
                         "from start_group "
                         "where id = :id and comp_id=:comp_id",
                     soci::into(sg.id.id), soci::into(sg.id.comp_id), soci::into(sg.title), soci::into(first_start_time_str),
-                    soci::into(sg.first_bib), soci::use(id), soci::use(competition_id);
+                    soci::into(sg.first_bib), soci::into(start_interval_str), soci::use(id), soci::use(competition_id);
                     
                 if (soci_session->got_data()) {
                     sg.first_start_time = tupal::from_date_string(first_start_time_str);
+                    sg.start_interval = tupal::from_duration_string(start_interval_str);
                     return { ok, tupal::to_json(sg) };
                 }
 
@@ -180,12 +184,14 @@ namespace {
                 auto new_sg = tupal::to_start_group(new_data);
                 new_sg.id.comp_id = std::string { competition_id };
                 const auto first_start_time_str = to_date_string(new_sg.first_start_time);
+                const auto start_interval_str = to_duration_string(new_sg.start_interval);
 
                 soci::transaction trx(*soci_session);
-                *soci_session << "insert into start_group(id, comp_id, title, start_time, first_bib) "
-                        "values (:id, :comp_id, :title, :start_time, :first_bib)",
+                *soci_session << "insert into start_group(id, comp_id, title, start_time, first_bib, start_interval) "
+                        "values (:id, :comp_id, :title, :start_time, :first_bib, :start_interval)",
                     soci::use(new_sg.id.id), soci::use(new_sg.id.comp_id), soci::use(new_sg.title),
-                    soci::use(first_start_time_str), soci::use(new_sg.first_bib);
+                    soci::use(first_start_time_str), soci::use(new_sg.first_bib),
+                    soci::use(start_interval_str);
                 trx.commit();
 
                 return { ok, tupal::to_json(new_sg) };
@@ -204,19 +210,36 @@ namespace {
 
                 return { ec, to_json(error_msg, new_data) };
             }
+            catch (const std::invalid_argument & e) {
+                return { tupal::make_error_code(tupal::error_code::invalid_arguments),
+                    to_json(e.what(), new_data) };
+            }
         }
 
         virtual tupal::result_type update(const std::string & competition_id, const boost::json::object & new_data) {
             try {
                 auto new_sg = tupal::to_start_group(new_data);
                 new_sg.id.comp_id = std::string { competition_id };
-                const auto first_start_time_str = to_date_string(new_sg.first_start_time);
-
                 soci::transaction trx(*soci_session);
+                if (new_data.find("start_interval") == new_data.end()) {
+                    std::string existing_interval;
+                    *soci_session << "select start_interval from start_group "
+                            "where id=:id and comp_id=:comp_id",
+                        soci::into(existing_interval), soci::use(new_sg.id.id),
+                        soci::use(new_sg.id.comp_id);
+                    if (soci_session->got_data()) {
+                        new_sg.start_interval = tupal::from_duration_string(existing_interval);
+                    }
+                }
+                const auto first_start_time_str = to_date_string(new_sg.first_start_time);
+                const auto start_interval_str = to_duration_string(new_sg.start_interval);
+
                 soci::statement stmt = (soci_session->prepare 
-                    << "update start_group set title=:title, start_time=:start_time, first_bib=:first_bib "
+                    << "update start_group set title=:title, start_time=:start_time, first_bib=:first_bib, "
+                        "start_interval=:start_interval "
                         "where id=:id and comp_id=:comp_id",
                     soci::use(new_sg.title), soci::use(first_start_time_str), soci::use(new_sg.first_bib),
+                    soci::use(start_interval_str),
                     soci::use(new_sg.id.id), soci::use(new_sg.id.comp_id));
                 stmt.execute(true);
                 switch (stmt.get_affected_rows()) {
@@ -235,6 +258,10 @@ namespace {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
                 return { tupal::make_error_code(tupal::error_code::system_error),
                     to_json(str(boost::format("%1%: competition '%2%'") % e.what() % competition_id), new_data) };
+            }
+            catch (const std::invalid_argument & e) {
+                return { tupal::make_error_code(tupal::error_code::invalid_arguments),
+                    to_json(e.what(), new_data) };
             }
         }
 

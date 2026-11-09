@@ -43,14 +43,16 @@ TEST_CASE("start group manager list with entries") {
         { "id", "sg-001" },
         { "title", "Start Group 1" },
         { "first_start_time", "2024-01-01T10:00:00.000Z" },
-        { "first_bib", 100 }
+        { "first_bib", 100 },
+        { "start_interval", "PT30S" }
     };
 
     auto new_start_group2 = boost::json::object {
         { "id", "sg-002" },
         { "title", "Start Group 2" },
         { "first_start_time", "2024-01-01T11:00:00.000Z" },
-        { "first_bib", 200 }
+        { "first_bib", 200 },
+        { "start_interval", "PT120S" }
     };
 
     auto [create_ec1, created_start_group1] = start_group_manager->create("comp-001", new_start_group1);
@@ -62,6 +64,8 @@ TEST_CASE("start group manager list with entries") {
     CHECK(!list_ec);
     CHECK(start_groups.is_array());
     CHECK(start_groups.as_array().size() == 2);
+    CHECK(start_groups.as_array()[0].as_object().at("start_interval").as_string() == "PT30.000S");
+    CHECK(start_groups.as_array()[1].as_object().at("start_interval").as_string() == "PT120.000S");
 }
 
 TEST_CASE("start group manager create (comp not found)") {
@@ -79,6 +83,29 @@ TEST_CASE("start group manager create (comp not found)") {
     CHECK(create_ec == tupal::make_error_code(tupal::error_code::unknown_key));
     CHECK(created_start_group != boost::json::value {});
 
+}
+
+TEST_CASE("start group manager rejects negative interval") {
+    auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
+    auto start_group_manager = competition_manager->getStartGroupManager();
+    auto [comp_create_ec, created_competition] = competition_manager->create(
+        boost::json::object {
+            { "id", "comp-001" },
+            { "date", "2024-01-01" },
+            { "title", "New Year Competition" }
+        });
+    CHECK(!comp_create_ec);
+
+    auto new_start_group = boost::json::object {
+        { "id", "sg-001" },
+        { "title", "Start Group 1" },
+        { "first_start_time", "2024-01-01T10:00:00.000Z" },
+        { "first_bib", 100 },
+        { "start_interval", "P-1S" }
+    };
+
+    auto [create_ec, created_start_group] = start_group_manager->create("comp-001", new_start_group);
+    CHECK(create_ec == tupal::make_error_code(tupal::error_code::invalid_arguments));
 }
 
 TEST_CASE("start group manager create and get") {
@@ -109,6 +136,7 @@ TEST_CASE("start group manager create and get") {
     CHECK(!get_ec);
     CHECK(fetched_start_group.is_object());
     CHECK(fetched_start_group.as_object().at("title").as_string() == "Start Group 1");
+    CHECK(fetched_start_group.as_object().at("start_interval").as_string() == "PT0.000S");
 }
 
 TEST_CASE("start group manager get (unknown)") {
@@ -179,7 +207,8 @@ TEST_CASE("start group manager create and update") {
         { "id", "sg-001" },
         { "title", "Start Group 1" },
         { "first_start_time", "2024-01-01T10:00:00.000Z" },
-        { "first_bib", 100 }
+        { "first_bib", 100 },
+        { "start_interval", "PT30S" }
     };
 
     auto [create_ec, created_start_group] = start_group_manager->create("comp-001", new_start_group);
@@ -189,7 +218,8 @@ TEST_CASE("start group manager create and update") {
         { "id", "sg-001" },
         { "title", "Updated Start Group" },
         { "first_start_time", "2024-01-01T12:00:00.000Z" },
-        { "first_bib", 150 }
+        { "first_bib", 150 },
+        { "start_interval", "PT120S" }
     };
 
     auto [update_ec, updated_result] = start_group_manager->update("comp-001", updated_start_group);
@@ -198,11 +228,23 @@ TEST_CASE("start group manager create and update") {
     CHECK(updated_result.is_object());
     CHECK(updated_result.as_object().at("title").as_string() == "Updated Start Group");
 
+    auto legacy_update = boost::json::object {
+        { "id", "sg-001" },
+        { "title", "Updated Start Group" },
+        { "first_start_time", "2024-01-01T12:00:00.000Z" },
+        { "first_bib", 150 }
+    };
+    auto [legacy_update_ec, legacy_updated_result] =
+        start_group_manager->update("comp-001", legacy_update);
+    CHECK(!legacy_update_ec);
+    CHECK(legacy_updated_result.as_object().at("start_interval").as_string() == "PT120.000S");
+
     auto [get_ec, fetched_start_group] = start_group_manager->get("comp-001", "sg-001");
     CHECK(!get_ec);
     CHECK(fetched_start_group.is_object());
     CHECK(fetched_start_group.as_object().at("first_start_time").as_string() == "2024-01-01T12:00:00.000Z");
     CHECK(fetched_start_group.as_object().at("first_bib").as_int64() == 150);
+    CHECK(fetched_start_group.as_object().at("start_interval").as_string() == "PT120.000S");
 }
 
 TEST_CASE("start group manager remove (unknown)") {

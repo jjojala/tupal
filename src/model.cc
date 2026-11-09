@@ -1,3 +1,5 @@
+/* Copyright (C) 2026 Jari Ojala (jari.ojala@iki.fi) */
+
 #include <stdexcept>
 #include "boost/uuid/uuid.hpp"
 #include "boost/uuid/uuid_generators.hpp"
@@ -369,11 +371,15 @@ namespace tupal {
             { "comp_id", sg.id.comp_id },
             { "title", sg.title },
             { "first_start_time", to_date_string(sg.first_start_time) },
-            { "first_bib", static_cast<int64_t>(sg.first_bib) }
+            { "first_bib", static_cast<int64_t>(sg.first_bib) },
+            { "start_interval", to_duration_string(sg.start_interval) }
         };
     }
 
     start_group to_start_group(const boost::json::object & obj) {
+        const auto start_interval = from_duration_string(
+            at<std::string>(obj, "start_interval").or_else(std::string { "PT0.000S" }));
+
         auto sg = start_group {
             .id {
                 .id = make_unique_id( obj.at("id") ),
@@ -381,7 +387,8 @@ namespace tupal {
             },
             .title = std::string { obj.at("title").as_string() },
             .first_start_time = from_date_string( std::string { obj.at("first_start_time").as_string() } ),
-            .first_bib = static_cast<uint16_t>(at<int64_t>(obj, "first_bib").or_else(0))
+            .first_bib = static_cast<uint16_t>(at<int64_t>(obj, "first_bib").or_else(0)),
+            .start_interval = start_interval
         };
         return sg;
     }
