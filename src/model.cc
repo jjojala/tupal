@@ -57,8 +57,10 @@ namespace {
     }
 
     inline uint16_t parse_milliseconds(char *& p) {
-        const char ch = get_char(p);
-        return ch == '.' ? parse3(p) : 0;
+        if (*p != '.')
+            return 0;
+        ++p;
+        return parse3(p);
     }
 
     inline std::time_t parse_seconds(char *& p) {
@@ -74,8 +76,10 @@ namespace {
         expect_separator(p, 'P');
         expect_separator(p, 'T');
         dur.seconds = parse_seconds(p);
-        expect_separator(p, '.');
-        dur.milliseconds = parse3(p);
+        dur.milliseconds = parse_milliseconds(p);
+        expect_separator(p, 'S');
+        if (*p != '\0')
+            throw std::invalid_argument("unexpected characters after duration");
         return dur;
     }
 
