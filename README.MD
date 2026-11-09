@@ -35,6 +35,13 @@ with `cmake --build build --target web_docs`.
 
 # Run tests
 
+The system smoke test starts a temporary in-memory daemon, seeds competition
+data through the REST API, and uses Chromium to register and update a competitor
+through the real UI. Install the browser once with
+`cd web && npx playwright install --with-deps chromium` on Linux; then run it with
+`ctest --test-dir build -L system --output-on-failure`. GitHub Actions installs
+Chromium and runs this test as part of CI.
+
 ```
 # tupal -tests:
 > ctest --test-dir build -L tupal --output-on-failure   # MESSAGE's printed on failure
