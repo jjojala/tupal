@@ -139,6 +139,8 @@ namespace {
 			competition_data["start_groups"] = to_array(manager.getStartGroupManager()->list(competition_id));
 			competition_data["competition_classes"] = to_array(manager.getCompetitionClassManager()->list(competition_id));
 			competition_data["competitors"] = to_array(manager.getCompetitorManager()->list(competition_id));
+			competition_data["finish_time_entries"] = to_array(manager.getFinishTimeEntryManager()->list(competition_id));
+			competition_data["finish_bib_entries"] = to_array(manager.getFinishBibEntryManager()->list(competition_id));
 			return competition_data;
 		}
 
@@ -213,6 +215,50 @@ int main(int argc, char** argv) {
 				and_then(handle_create(manager->getCompetitorManager()->create(
 						param(req, "competition_id"), boost::json::parse(req.body()).as_object()), res),
 					make_notifier(sessions, param(req, "competition_id"), "created", "competitor")); });
+
+		server.add_route("/rest/competition/:competition_id/finish_time_entry/")
+			.get([&](const auto & req, auto & res) {
+				handle_list(manager->getFinishTimeEntryManager()->list(param(req, "competition_id")), res); })
+			.post([&](const auto & req, auto & res) {
+				and_then(handle_create(manager->getFinishTimeEntryManager()->create(
+						param(req, "competition_id"), boost::json::parse(req.body()).as_object()), res),
+					make_notifier(sessions, param(req, "competition_id"), "created", "finish_time_entry")); });
+
+		server.add_route("/rest/competition/:competition_id/finish_time_entry/:finish_time_entry_id")
+			.get([&](const auto & req, auto & res) {
+				handle_get(manager->getFinishTimeEntryManager()->get(
+					param(req, "competition_id"), param(req, "finish_time_entry_id")), res); })
+			.put([&](const auto & req, auto & res) {
+				and_then(handle_update(manager->getFinishTimeEntryManager()->update(
+						param(req, "competition_id"), boost::json::parse(req.body()).as_object()), res),
+					make_notifier(sessions, param(req, "competition_id"), "updated", "finish_time_entry")); })
+			.del([&](const auto & req, auto & res) {
+				and_then(handle_remove(manager->getFinishTimeEntryManager()->remove(
+						param(req, "competition_id"), param(req, "finish_time_entry_id")), res),
+					make_notifier(sessions, param(req, "competition_id"), "removed", "finish_time_entry"));
+				});
+
+		server.add_route("/rest/competition/:competition_id/finish_bib_entry/")
+			.get([&](const auto & req, auto & res) {
+				handle_list(manager->getFinishBibEntryManager()->list(param(req, "competition_id")), res); })
+			.post([&](const auto & req, auto & res) {
+				and_then(handle_create(manager->getFinishBibEntryManager()->create(
+						param(req, "competition_id"), boost::json::parse(req.body()).as_object()), res),
+					make_notifier(sessions, param(req, "competition_id"), "created", "finish_bib_entry")); });
+
+		server.add_route("/rest/competition/:competition_id/finish_bib_entry/:finish_bib_entry_id")
+			.get([&](const auto & req, auto & res) {
+				handle_get(manager->getFinishBibEntryManager()->get(
+					param(req, "competition_id"), param(req, "finish_bib_entry_id")), res); })
+			.put([&](const auto & req, auto & res) {
+				and_then(handle_update(manager->getFinishBibEntryManager()->update(
+						param(req, "competition_id"), boost::json::parse(req.body()).as_object()), res),
+					make_notifier(sessions, param(req, "competition_id"), "updated", "finish_bib_entry")); })
+			.del([&](const auto & req, auto & res) {
+				and_then(handle_remove(manager->getFinishBibEntryManager()->remove(
+						param(req, "competition_id"), param(req, "finish_bib_entry_id")), res),
+					make_notifier(sessions, param(req, "competition_id"), "removed", "finish_bib_entry"));
+				});
 
 		server.add_route("/rest/competition/:competition_id/competitor/:competitor_id")
 			.get([&](const auto & req, auto & res) {
