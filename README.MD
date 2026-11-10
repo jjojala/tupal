@@ -70,6 +70,18 @@ In another terminal, from the repository root, populate that running daemon:
 Open the sample competition at <http://localhost:8085/registration/comp-1>.
 The server defaults to port 8085; use `./tupald --help` to see its options.
 
+Create finish-line observations with the CLI. The first command prints the
+generated time-entry ID, which can be linked to a bib entry:
+
+```sh
+time_id=$(./script/tupal create finish-time-entry --competition comp-1 \
+  --finish-time 2024-08-04T18:40:00.000Z)
+./script/tupal create finish-bib-entry --competition comp-1 \
+  --sequence-no 14 --bib 8 --confirmed-time-entry-id "$time_id"
+```
+
+Use `./script/tupal --help` for the full list of create commands and options.
+
 ## Build reference
 
 Configure the project with:
