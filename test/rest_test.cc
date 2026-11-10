@@ -241,6 +241,8 @@ TEST_CASE_FIXTURE(daemon_fixture, "WS connect response") {
     CHECK(contains(boost::json::parse(start_group_data), msg.at("start_groups").as_array().front()));
     CHECK(contains(boost::json::parse(comp_class_data), msg.at("competition_classes").as_array().front()));
     CHECK(contains(boost::json::parse(competitor_data), msg.at("competitors").as_array().front()));
+    CHECK(msg.at("finish_time_entries").as_array().empty());
+    CHECK(msg.at("finish_bib_entries").as_array().empty());
 }
 
 TEST_CASE_FIXTURE(daemon_fixture, "Generic static server serves SPA deep links") {
@@ -448,4 +450,72 @@ TEST_CASE_FIXTURE(ws_daemon_fixture, "Create, read, update and delete a competit
     // Removing non-existent competition (--> not_found)
     TUPAL_CHECK_STATUS([&]() { return client.del(ctor_url + "ctor-not_found"); },
                 boost::beast::http::status::not_found);
+}
+
+TEST_CASE_FIXTURE(ws_daemon_fixture, "Create, read, update and delete a finish time entry") {
+    const auto comp_data = R"({ "id": "comp-1", "title": "Competition 1", "date": "2025-11-11T00:00:00.000Z" })";
+    TUPAL_TEST_CREATE_NO_NOTIFICATION([&]() { return client.post(base_url + "/rest/competition/", comp_data); }, comp_data);
+
+    const auto entry_url = base_url + "/rest/competition/comp-1/finish_time_entry/";
+    TUPAL_TEST_GET([&]() { return client.get(entry_url); }, "[]");
+    TUPAL_CHECK_STATUS([&]() { return client.get(entry_url + "time-1"); },
+        boost::beast::http::status::not_found);
+
+    const auto data = R"({ "id": "time-1", "finish_time": "2025-11-11T18:00:01.250Z", "status": 0 })";
+    TUPAL_TEST_CREATE_WITH_NOTIFICATIONS(
+        [&]() { return client.post(entry_url, data); }, "finish_time_entry", data, ws_messages);
+    TUPAL_TEST_GET([&]() { return client.get(entry_url); }, to_list(data));
+    TUPAL_TEST_GET([&]() { return client.get(entry_url + "time-1"); }, std::string { data });
+
+    const auto updated_data = update_json(data, [](boost::json::object & val) {
+        val["finish_time"] = "2025-11-11T18:00:02.500Z";
+        val["status"] = 1;
+    });
+    TUPAL_TEST_UPDATE_WITH_NOTIFICATION(
+        [&]() { return client.put(entry_url + "time-1", updated_data.c_str()); },
+        "finish_time_entry", updated_data.c_str(), ws_messages);
+
+    TUPAL_TEST_REMOVE_WITH_NOTIFICATION(
+        [&]() { return client.del(entry_url + "time-1"); },
+        "finish_time_entry", "time-1", ws_messages);
+    TUPAL_TEST_GET([&]() { return client.get(entry_url); }, "[]");
+    TUPAL_CHECK_STATUS([&]() { return client.del(entry_url + "time-1"); },
+        boost::beast::http::status::not_found);
+}
+
+TEST_CASE_FIXTURE(ws_daemon_fixture, "Create, read, update and delete a finish bib entry") {
+    const auto comp_data = R"({ "id": "comp-1", "title": "Competition 1", "date": "2025-11-11T00:00:00.000Z" })";
+    TUPAL_TEST_CREATE_NO_NOTIFICATION([&]() { return client.post(base_url + "/rest/competition/", comp_data); }, comp_data);
+
+    const auto time_url = base_url + "/rest/competition/comp-1/finish_time_entry/";
+    const auto time_data = R"({ "id": "time-1", "finish_time": "2025-11-11T18:00:01.250Z", "status": 0 })";
+    TUPAL_TEST_CREATE_NO_NOTIFICATION([&]() { return client.post(time_url, time_data); }, time_data);
+
+    const auto entry_url = base_url + "/rest/competition/comp-1/finish_bib_entry/";
+    TUPAL_TEST_GET([&]() { return client.get(entry_url); }, "[]");
+    TUPAL_CHECK_STATUS([&]() { return client.get(entry_url + "bib-1"); },
+        boost::beast::http::status::not_found);
+
+    const auto data = R"({ "id": "bib-1", "sequence_no": 1, "bib": 42, "status": 0, "confirmed_time_entry_id": "time-1" })";
+    TUPAL_TEST_CREATE_WITH_NOTIFICATIONS(
+        [&]() { return client.post(entry_url, data); }, "finish_bib_entry", data, ws_messages);
+    TUPAL_TEST_GET([&]() { return client.get(entry_url); }, to_list(data));
+    TUPAL_TEST_GET([&]() { return client.get(entry_url + "bib-1"); }, std::string { data });
+
+    const auto updated_data = update_json(data, [](boost::json::object & val) {
+        val["sequence_no"] = 2;
+        val["bib"] = 43;
+    });
+    TUPAL_TEST_UPDATE_WITH_NOTIFICATION(
+        [&]() { return client.put(entry_url + "bib-1", updated_data.c_str()); },
+        "finish_bib_entry", updated_data.c_str(), ws_messages);
+
+    TUPAL_TEST_REMOVE_WITH_NOTIFICATION(
+        [&]() { return client.del(entry_url + "bib-1"); },
+        "finish_bib_entry", "bib-1", ws_messages);
+    TUPAL_TEST_GET([&]() { return client.get(entry_url); }, "[]");
+    TUPAL_CHECK_STATUS([&]() { return client.del(entry_url + "bib-1"); },
+        boost::beast::http::status::not_found);
+
+    TUPAL_TEST_REMOVE_NO_NOTIFICATION([&]() { return client.del(time_url + "time-1"); }, "time-1");
 }

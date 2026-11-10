@@ -358,6 +358,190 @@ paths:
               schema:
                 $ref: '#/components/schemas/EmbeddedEntityId'
 
+  /rest/competition/{compId}/finish_time_entry/:
+    parameters:
+      - name: compId
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Unique identifier of the Competition
+          example: 'comp-1'
+
+    get:
+      summary: List finish-line time entries for a Competition
+      responses:
+        '200':
+          description: Finish-time entries ordered by finish time
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FinishTimeEntry'
+
+    post:
+      summary: Record a finish-line time entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinishTimeEntryCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinishTimeEntry'
+
+  /rest/competition/{compId}/finish_time_entry/{entryId}:
+    parameters:
+      - name: compId
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Unique identifier of the Competition
+          example: 'comp-1'
+      - name: entryId
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Unique identifier of the finish-time entry
+          example: 'time-1'
+
+    get:
+      summary: Get a finish-time entry
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinishTimeEntry'
+
+    put:
+      summary: Update a finish-time entry
+      description: Requires id. Omitted finish_time and status fields retain their current values.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinishTimeEntryUpdate'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinishTimeEntry'
+
+    delete:
+      summary: Remove a finish-time entry
+      responses:
+        '200':
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmbeddedEntityId'
+
+  /rest/competition/{compId}/finish_bib_entry/:
+    parameters:
+      - name: compId
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Unique identifier of the Competition
+          example: 'comp-1'
+
+    get:
+      summary: List finish-line bib entries for a Competition
+      responses:
+        '200':
+          description: Finish-bib entries ordered by sequence number
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FinishBibEntry'
+
+    post:
+      summary: Record a finish-line bib entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinishBibEntryCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinishBibEntry'
+
+  /rest/competition/{compId}/finish_bib_entry/{entryId}:
+    parameters:
+      - name: compId
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Unique identifier of the Competition
+          example: 'comp-1'
+      - name: entryId
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Unique identifier of the finish-bib entry
+          example: 'bib-1'
+
+    get:
+      summary: Get a finish-bib entry
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinishBibEntry'
+
+    put:
+      summary: Update a finish-bib entry
+      description: Requires id. Omitted fields retain their current values; bib and confirmed_time_entry_id may be set to null.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinishBibEntryUpdate'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinishBibEntry'
+
+    delete:
+      summary: Remove a finish-bib entry
+      responses:
+        '200':
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmbeddedEntityId'
+
 components:
   schemas:
     Competition:
@@ -455,6 +639,163 @@ components:
           type: string
           description: Competitor's name, preferrable family name first, and then given name
           example: 'Edison Thomas'
+
+    FinishTimeEntry:
+      type: object
+      required:
+        - id
+        - comp_id
+        - finish_time
+        - status
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the finish-time entry
+          example: 'time-1'
+        comp_id:
+          type: string
+          description: Identifier of the Competition
+          example: 'comp-1'
+        finish_time:
+          type: string
+          format: date-time
+          description: Recorded finish-line time
+          example: '2025-12-31T18:30:00.000Z'
+        status:
+          $ref: '#/components/schemas/FinishEntryStatus'
+
+    FinishTimeEntryCreate:
+      type: object
+      required:
+        - finish_time
+      properties:
+        id:
+          type: string
+          nullable: true
+          description: Optional client-generated identifier; omitted or null generates an identifier
+          example: 'time-1'
+        finish_time:
+          type: string
+          format: date-time
+          description: Recorded finish-line time
+          example: '2025-12-31T18:30:00.000Z'
+        status:
+          $ref: '#/components/schemas/FinishEntryStatus'
+
+    FinishTimeEntryUpdate:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: Identifier of the finish-time entry to update
+          example: 'time-1'
+        finish_time:
+          type: string
+          format: date-time
+          description: Replacement finish-line time
+          example: '2025-12-31T18:30:00.000Z'
+        status:
+          $ref: '#/components/schemas/FinishEntryStatus'
+
+    FinishBibEntry:
+      type: object
+      required:
+        - id
+        - comp_id
+        - sequence_no
+        - bib
+        - status
+        - confirmed_time_entry_id
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the finish-bib entry
+          example: 'bib-1'
+        comp_id:
+          type: string
+          description: Identifier of the Competition
+          example: 'comp-1'
+        sequence_no:
+          type: integer
+          minimum: 0
+          description: Order in which this bib was recorded
+          example: 1
+        bib:
+          type: integer
+          nullable: true
+          description: Read bib number, or null if not identified
+          example: 42
+        status:
+          $ref: '#/components/schemas/FinishEntryStatus'
+        confirmed_time_entry_id:
+          type: string
+          nullable: true
+          description: Linked finish-time entry, or null if not confirmed
+          example: 'time-1'
+
+    FinishBibEntryCreate:
+      type: object
+      required:
+        - sequence_no
+      properties:
+        id:
+          type: string
+          nullable: true
+          description: Optional client-generated identifier; omitted or null generates an identifier
+          example: 'bib-1'
+        sequence_no:
+          type: integer
+          minimum: 0
+          description: Order in which this bib was recorded
+          example: 1
+        bib:
+          type: integer
+          nullable: true
+          description: Read bib number, or null if not identified
+          example: 42
+        status:
+          $ref: '#/components/schemas/FinishEntryStatus'
+        confirmed_time_entry_id:
+          type: string
+          nullable: true
+          description: Linked finish-time entry, or null if not confirmed
+          example: 'time-1'
+
+    FinishBibEntryUpdate:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: Identifier of the finish-bib entry to update
+          example: 'bib-1'
+        sequence_no:
+          type: integer
+          minimum: 0
+          description: Replacement order number
+          example: 2
+        bib:
+          type: integer
+          nullable: true
+          description: Replacement read bib number, or null to clear it
+          example: 43
+        status:
+          $ref: '#/components/schemas/FinishEntryStatus'
+        confirmed_time_entry_id:
+          type: string
+          nullable: true
+          description: Linked finish-time entry, or null to clear the link
+          example: 'time-1'
+
+    FinishEntryStatus:
+      type: integer
+      minimum: 0
+      maximum: 3
+      description: 'Finish observation status: 0-confirmed, 1-uncertain, 2-incorrect, 3-missing'
+      example: 0
 
     CompetitionId:
       type: object
