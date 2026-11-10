@@ -4,6 +4,9 @@ import type {
   CompetitionClass,
   Competitor,
   CompetitorInput,
+  FinishBibEntry,
+  FinishTimeEntry,
+  FinishTimeEntryInput,
   StartGroup
 } from "./types";
 
@@ -108,6 +111,34 @@ export function deleteCompetitor(competitionId: string, competitorId: string) {
   return request<unknown>(
     `${competitionUrl(competitionId)}/competitor/${encodeURIComponent(competitorId)}`,
     { method: "DELETE" }
+  );
+}
+
+/** Fetches the finish-time queue for a competition. */
+export function getFinishTimeEntries(competitionId: string) {
+  return request<FinishTimeEntry[]>(
+    `${competitionUrl(competitionId)}/finish_time_entry/`
+  );
+}
+
+/** Fetches the finish-bib queue for a competition. */
+export function getFinishBibEntries(competitionId: string) {
+  return request<FinishBibEntry[]>(
+    `${competitionUrl(competitionId)}/finish_bib_entry/`
+  );
+}
+
+/** Records a finish time in the competition's time queue. */
+export function createFinishTimeEntry(
+  competitionId: string,
+  entry: FinishTimeEntryInput
+) {
+  return request<FinishTimeEntry>(
+    `${competitionUrl(competitionId)}/finish_time_entry/`,
+    {
+      method: "POST",
+      body: JSON.stringify(entry)
+    }
   );
 }
 

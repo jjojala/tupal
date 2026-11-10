@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { createServer } from "node:net";
 import path from "node:path";
 import { once } from "node:events";
@@ -122,6 +122,31 @@ try {
       start_group_id: "system-smoke-start"
     }
   );
+
+  const tupalCliPath = path.resolve(webDirectory, "../script/tupal");
+  for (const [sequenceNo, bib] of [
+    [1, 500],
+    [2, 501]
+  ]) {
+    execFileSync(
+      tupalCliPath,
+      [
+        "create",
+        "finish-bib-entry",
+        "--competition",
+        competitionId,
+        "--sequence-no",
+        String(sequenceNo),
+        "--bib",
+        String(bib)
+      ],
+      {
+        cwd: webDirectory,
+        env: { ...process.env, TUPAL_URL: baseUrl },
+        stdio: "pipe"
+      }
+    );
+  }
 
   const initialCompetition = await requestJson(
     baseUrl,
