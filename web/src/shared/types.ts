@@ -69,3 +69,41 @@ export interface CompetitorInput {
   /** Competition status code. */
   status: number;
 }
+
+/** A time recorded by a finish-line timekeeper. */
+export interface FinishTimeEntry {
+  /** Unique finish-time entry identifier. */
+  id: string;
+  /** Competition containing the entry. */
+  comp_id: string;
+  /** Recorded finish time as an ISO date-time string. */
+  finish_time: string;
+  /** Finish observation status: 0-confirmed, 1-uncertain, 2-incorrect, 3-missing. */
+  status: number;
+}
+
+/** A bib observation recorded by the numbers official. */
+export interface FinishBibEntry {
+  /** Unique finish-bib entry identifier. */
+  id: string;
+  /** Competition containing the entry. */
+  comp_id: string;
+  /** Position in the bib-entry queue. */
+  sequence_no: number;
+  /** Read bib number, or null if not identified. */
+  bib: number | null;
+  /** Finish observation status. */
+  status: number;
+  /** Linked finish-time entry, or null if not paired. */
+  confirmed_time_entry_id: string | null;
+}
+
+/** Fields accepted when recording a finish time. */
+export interface FinishTimeEntryInput {
+  /** Optional client-generated identifier, or null to request a generated identifier. */
+  id: string | null;
+  /** Recorded finish time as an ISO date-time string. */
+  finish_time: string;
+  /** Finish observation status. */
+  status: number;
+}

@@ -52,6 +52,12 @@ ctest --test-dir build -L system --output-on-failure
 
 ### Run Tupal with sample data
 
+Build or refresh the generated frontend assets from the repository root:
+
+```sh
+cmake --build build --target web_frontend
+```
+
 Start the daemon from its build directory so its default `./web` root resolves
 to the generated frontend assets. Start with a fresh database; the sample script
 uses fixed IDs. This example stores data in `test.db`:
@@ -67,7 +73,9 @@ In another terminal, from the repository root, populate that running daemon:
 ./script/make-test-data.sh
 ```
 
-Open the sample competition at <http://localhost:8085/registration/comp-1>.
+Open the sample competition in the registration app at
+<http://localhost:8085/registration/comp-1> or in the Times app at
+<http://localhost:8085/times/comp-1>. Both apps use the test data for `comp-1`.
 The server defaults to port 8085; use `./tupald --help` to see its options.
 
 Create finish-line observations with the CLI. The first command prints the
