@@ -69,3 +69,32 @@ tupal="$script_dir/tupal"
     --bib 402 --start-time-offset PT0.000S --name "Jones Benjamin" >/dev/null
 "$tupal" create competitor --id ctor-3 --competition comp-1 --class cc-1 \
     --bib 403 --start-time-offset PT0.000S --name "Williamson George" >/dev/null
+
+# Populate the finish line in arrival order, linking each read bib to the
+# corresponding time observation.
+create_finish_entries() {
+    sequence_no=$1
+    bib=$2
+    finish_time=$3
+    time_entry_id="time-$sequence_no"
+
+    "$tupal" create finish-time-entry --id "$time_entry_id" --competition comp-1 \
+        --finish-time "$finish_time" >/dev/null
+    "$tupal" create finish-bib-entry --id "finish-bib-$sequence_no" \
+        --competition comp-1 --sequence-no "$sequence_no" --bib "$bib" \
+        --confirmed-time-entry-id "$time_entry_id" >/dev/null
+}
+
+create_finish_entries 1 401 2024-08-04T17:42:11.250Z
+create_finish_entries 2 402 2024-08-04T17:44:23.500Z
+create_finish_entries 3 403 2024-08-04T17:46:35.750Z
+create_finish_entries 4 404 2024-08-04T17:52:18.000Z
+create_finish_entries 5 405 2024-08-04T17:54:41.250Z
+create_finish_entries 6 406 2024-08-04T17:56:59.500Z
+create_finish_entries 7 1 2024-08-04T18:31:12.250Z
+create_finish_entries 8 2 2024-08-04T18:32:03.500Z
+create_finish_entries 9 3 2024-08-04T18:33:44.750Z
+create_finish_entries 10 4 2024-08-04T18:35:10.000Z
+create_finish_entries 11 5 2024-08-04T18:36:28.125Z
+create_finish_entries 12 6 2024-08-04T18:37:51.375Z
+create_finish_entries 13 7 2024-08-04T18:39:05.625Z
