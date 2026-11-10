@@ -36,6 +36,8 @@ namespace tupal {
     class StartGroupManager;
     class CompetitionClassManager;
     class CompetitorManager;
+    class FinishTimeEntryManager;
+    class FinishBibEntryManager;
     class CompetitionManager;
 
     typedef std::tuple<std::error_code, boost::json::value> result_type;
@@ -56,6 +58,8 @@ namespace tupal {
         virtual std::shared_ptr<StartGroupManager> getStartGroupManager() = 0;
         virtual std::shared_ptr<CompetitionClassManager> getCompetitionClassManager() = 0;
         virtual std::shared_ptr<CompetitorManager> getCompetitorManager() = 0;
+        virtual std::shared_ptr<FinishTimeEntryManager> getFinishTimeEntryManager() = 0;
+        virtual std::shared_ptr<FinishBibEntryManager> getFinishBibEntryManager() = 0;
     };
 
     class StartGroupManager
@@ -79,6 +83,26 @@ namespace tupal {
     };
 
     class CompetitorManager
+    {
+    public:
+        virtual result_type list(const std::string & competition_id) const = 0;
+        virtual result_type get(const std::string & competition_id, const std::string & id) const = 0;
+        virtual result_type create(const std::string & competition_id, const boost::json::object & new_data) = 0;
+        virtual result_type update(const std::string & competition_id, const boost::json::object & new_data) = 0;
+        virtual result_type remove(const std::string & competition_id, const std::string & id) = 0;
+    };
+
+    class FinishTimeEntryManager
+    {
+    public:
+        virtual result_type list(const std::string & competition_id) const = 0;
+        virtual result_type get(const std::string & competition_id, const std::string & id) const = 0;
+        virtual result_type create(const std::string & competition_id, const boost::json::object & new_data) = 0;
+        virtual result_type update(const std::string & competition_id, const boost::json::object & new_data) = 0;
+        virtual result_type remove(const std::string & competition_id, const std::string & id) = 0;
+    };
+
+    class FinishBibEntryManager
     {
     public:
         virtual result_type list(const std::string & competition_id) const = 0;
