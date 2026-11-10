@@ -299,6 +299,68 @@ TEST_CASE("competitor_status JSON serialization/deserialization") {
     CHECK(status == status_deserialized);
 }
 
+TEST_CASE("finish_time_entry JSON serialization/deserialization") {
+    const tupal::finish_time_entry entry {
+        .id = { .id = "time-1", .comp_id = "comp-1" },
+        .finish_time = tupal::from_date_string("2025-12-31T10:00:00.500Z"),
+        .status = tupal::finish_entry_status::uncertain
+    };
+
+    const auto json_val = tupal::to_json(entry);
+    const auto deserialized = tupal::to_finish_time_entry(json_val);
+
+    CHECK(entry.id.id == deserialized.id.id);
+    CHECK(entry.id.comp_id == deserialized.id.comp_id);
+    CHECK(entry.finish_time == deserialized.finish_time);
+    CHECK(entry.status == deserialized.status);
+}
+
+TEST_CASE("finish_bib_entry JSON serialization/deserialization preserves nullable fields") {
+    const tupal::finish_bib_entry entry {
+        .id = { .id = "bib-1", .comp_id = "comp-1" },
+        .sequence_no = 3,
+        .bib = 42,
+        .status = tupal::finish_entry_status::confirmed,
+        .confirmed_time_entry_id = "time-1"
+    };
+
+    const auto json_val = tupal::to_json(entry);
+    const auto deserialized = tupal::to_finish_bib_entry(json_val);
+
+    CHECK(entry.id.id == deserialized.id.id);
+    CHECK(entry.id.comp_id == deserialized.id.comp_id);
+    CHECK(entry.sequence_no == deserialized.sequence_no);
+    REQUIRE(deserialized.bib.has_value());
+    CHECK(*entry.bib == *deserialized.bib);
+    CHECK(entry.status == deserialized.status);
+    REQUIRE(deserialized.confirmed_time_entry_id.has_value());
+    CHECK(*entry.confirmed_time_entry_id == *deserialized.confirmed_time_entry_id);
+
+    const tupal::finish_bib_entry empty_entry {
+        .id = { .id = "bib-2", .comp_id = "comp-1" },
+        .sequence_no = 4,
+        .bib = std::nullopt,
+        .status = tupal::finish_entry_status::missing,
+        .confirmed_time_entry_id = std::nullopt
+    };
+    const auto empty_json = tupal::to_json(empty_entry);
+    CHECK(empty_json.at("bib").is_null());
+    CHECK(empty_json.at("confirmed_time_entry_id").is_null());
+
+    const auto empty_deserialized = tupal::to_finish_bib_entry(empty_json);
+    CHECK(!empty_deserialized.bib.has_value());
+    CHECK(!empty_deserialized.confirmed_time_entry_id.has_value());
+    CHECK(empty_entry.status == empty_deserialized.status);
+}
+
+TEST_CASE("finish entry status rejects values outside its defined range") {
+    CHECK(tupal::to_finish_entry_status(0) == tupal::finish_entry_status::confirmed);
+    CHECK(tupal::to_finish_entry_status(1) == tupal::finish_entry_status::uncertain);
+    CHECK(tupal::to_finish_entry_status(2) == tupal::finish_entry_status::incorrect);
+    CHECK(tupal::to_finish_entry_status(3) == tupal::finish_entry_status::missing);
+    CHECK_THROWS_AS(tupal::to_finish_entry_status(4), std::invalid_argument);
+}
+
 TEST_CASE("key JSON serialization/deserialization") {
     tupal::key k {
         .id = "comp1",
