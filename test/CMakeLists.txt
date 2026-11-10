@@ -8,7 +8,8 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(doctest)
 
 add_executable(manager_tests test_main.cc test_competition_manager.cc test_start_group_manager.cc
-    test_competition_class_manager.cc test_competitor_manager.cc)
+    test_competition_class_manager.cc test_competitor_manager.cc
+    test_finish_time_entry_manager.cc test_finish_bib_entry_manager.cc)
 target_include_directories(manager_tests PRIVATE ${CMAKE_SOURCE_DIR}/src ${doctest_SOURCE_DIR})
 target_link_libraries(manager_tests PRIVATE tupal_core ${Boost_JSON_LIBRARY} ${Boost_URL_LIBRARY} ${Boost_DATE_TIME_LIBRARY} soci_core)
 add_test(NAME manager_tests COMMAND $<TARGET_FILE:manager_tests>)
