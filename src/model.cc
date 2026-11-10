@@ -1,6 +1,7 @@
 /* Copyright (C) 2026 Jari Ojala (jari.ojala@iki.fi) */
 
 #include <stdexcept>
+#include <limits>
 #include "boost/uuid/uuid.hpp"
 #include "boost/uuid/uuid_generators.hpp"
 #include "boost/uuid/uuid_io.hpp"
@@ -455,6 +456,122 @@ namespace tupal {
             .status = to_competitor_status( obj.at("status").as_int64() ),
             .comp_class_id = std::string { obj.at("comp_class_id").as_string() }
         };
+    }
+
+    finish_entry_status to_finish_entry_status(int64_t val) {
+        switch (val) {
+            case 0: return finish_entry_status::confirmed;
+            case 1: return finish_entry_status::uncertain;
+            case 2: return finish_entry_status::incorrect;
+            case 3: return finish_entry_status::missing;
+            default:
+                throw std::invalid_argument("invalid finish entry status value");
+        }
+    }
+
+    const boost::json::value to_json(const finish_entry_status & status) {
+        return boost::json::value(static_cast<int64_t>(status));
+    }
+
+    finish_time_entry to_finish_time_entry(const boost::json::object & obj) {
+        const auto id = obj.find("id");
+        const auto status_value = obj.find("status");
+        const auto finish_time = obj.find("finish_time");
+        if (id != obj.end() && !id->value().is_null() && !id->value().is_string())
+            throw std::invalid_argument("'id' must be a string or null");
+        if (id != obj.end() && id->value().is_string() && id->value().as_string().empty())
+            throw std::invalid_argument("'id' must be a non-empty string or null");
+        if (finish_time == obj.end() || !finish_time->value().is_string() ||
+                finish_time->value().as_string().empty())
+            throw std::invalid_argument("'finish_time' must be a non-empty string");
+        if (status_value != obj.end() && !status_value->value().is_int64())
+            throw std::invalid_argument("'status' must be an integer from 0 to 3");
+
+        return finish_time_entry {
+            .id = {
+                .id = make_unique_id(id == obj.end() ? boost::json::value {} : id->value()),
+                .comp_id = at<std::string>(obj, "comp_id").or_else("")
+            },
+            .finish_time = from_date_string(std::string { finish_time->value().as_string() }),
+            .status = to_finish_entry_status(status_value == obj.end() ? 0 : status_value->value().as_int64())
+        };
+    }
+
+    const boost::json::object to_json(const finish_time_entry & entry) {
+        return boost::json::object {
+            { "id", entry.id.id },
+            { "comp_id", entry.id.comp_id },
+            { "finish_time", to_date_string(entry.finish_time) },
+            { "status", to_json(entry.status) }
+        };
+    }
+
+    const char * type(const finish_time_entry &) {
+        return "finish_time_entry";
+    }
+
+    finish_bib_entry to_finish_bib_entry(const boost::json::object & obj) {
+        const auto id = obj.find("id");
+        const auto sequence_no = obj.find("sequence_no");
+        if (id != obj.end() && !id->value().is_null() && !id->value().is_string())
+            throw std::invalid_argument("'id' must be a string or null");
+        if (id != obj.end() && id->value().is_string() && id->value().as_string().empty())
+            throw std::invalid_argument("'id' must be a non-empty string or null");
+        if (sequence_no == obj.end() || !sequence_no->value().is_int64() ||
+                sequence_no->value().as_int64() < 0 ||
+                sequence_no->value().as_int64() > std::numeric_limits<int>::max())
+            throw std::invalid_argument("'sequence_no' must be a non-negative integer");
+
+        std::optional<int> bib;
+        const auto bib_value = obj.find("bib");
+        if (bib_value != obj.end() && !bib_value->value().is_null()) {
+            if (!bib_value->value().is_int64() ||
+                    bib_value->value().as_int64() < std::numeric_limits<int>::min() ||
+                    bib_value->value().as_int64() > std::numeric_limits<int>::max())
+                throw std::invalid_argument("'bib' must be an integer or null");
+            bib = static_cast<int>(bib_value->value().as_int64());
+        }
+
+        std::optional<std::string> confirmed_time_entry_id;
+        const auto confirmed_value = obj.find("confirmed_time_entry_id");
+        if (confirmed_value != obj.end() && !confirmed_value->value().is_null()) {
+            if (!confirmed_value->value().is_string() || confirmed_value->value().as_string().empty())
+                throw std::invalid_argument("'confirmed_time_entry_id' must be a non-empty string or null");
+            confirmed_time_entry_id = std::string { confirmed_value->value().as_string() };
+        }
+
+        const auto status_value = obj.find("status");
+        if (status_value != obj.end() && !status_value->value().is_int64())
+            throw std::invalid_argument("'status' must be an integer from 0 to 3");
+
+        return finish_bib_entry {
+            .id = {
+                .id = make_unique_id(id == obj.end() ? boost::json::value {} : id->value()),
+                .comp_id = at<std::string>(obj, "comp_id").or_else("")
+            },
+            .sequence_no = static_cast<int>(sequence_no->value().as_int64()),
+            .bib = bib,
+            .status = to_finish_entry_status(status_value == obj.end() ? 0 : status_value->value().as_int64()),
+            .confirmed_time_entry_id = confirmed_time_entry_id
+        };
+    }
+
+    const boost::json::object to_json(const finish_bib_entry & entry) {
+        boost::json::object result {
+            { "id", entry.id.id },
+            { "comp_id", entry.id.comp_id },
+            { "sequence_no", entry.sequence_no },
+            { "status", to_json(entry.status) }
+        };
+        result["bib"] = entry.bib ? boost::json::value(*entry.bib) : boost::json::value {};
+        result["confirmed_time_entry_id"] = entry.confirmed_time_entry_id
+            ? boost::json::value(*entry.confirmed_time_entry_id)
+            : boost::json::value {};
+        return result;
+    }
+
+    const char * type(const finish_bib_entry &) {
+        return "finish_bib_entry";
     }
 
     const boost::json::object to_json(const competitor & competitor) {

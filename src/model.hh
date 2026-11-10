@@ -5,6 +5,7 @@
 #include <string>
 #include <ctime>
 #include <cstdint>
+#include <optional>
 #include "boost/json.hpp"
 #include "boost/date_time.hpp"
 
@@ -148,6 +149,30 @@ namespace tupal {
         std::string comp_class_id;
     };
 
+    /** @brief status of a finish-line observation */
+    enum class finish_entry_status : uint8_t {
+        confirmed = 0,
+        uncertain = 1,
+        incorrect = 2,
+        missing = 3
+    };
+
+    /** @brief time recorded by the finish-line timekeeper */
+    struct finish_time_entry {
+        key id;
+        date_time finish_time;
+        finish_entry_status status;
+    };
+
+    /** @brief bib recorded by the finish-line bib reader */
+    struct finish_bib_entry {
+        key id;
+        int sequence_no;
+        std::optional<int> bib;
+        finish_entry_status status;
+        std::optional<std::string> confirmed_time_entry_id;
+    };
+
     date_time from_date_string(const std::string & iso8601_str);
     std::string to_date_string(const date_time & dt);
 
@@ -159,6 +184,9 @@ namespace tupal {
     const boost::json::object to_json(const competition_class &);
     const boost::json::value to_json(const competitor_status &);
     const boost::json::object to_json(const competitor &);
+    const boost::json::value to_json(const finish_entry_status &);
+    const boost::json::object to_json(const finish_time_entry &);
+    const boost::json::object to_json(const finish_bib_entry &);
     const boost::json::object to_json(const key &);
     const boost::json::object to_json(const std::string &);
 
@@ -167,12 +195,17 @@ namespace tupal {
     competition_class to_competition_class(const boost::json::object &);
     competitor_status to_competitor_status(int64_t);
     competitor to_competitor(const boost::json::object &);
+    finish_entry_status to_finish_entry_status(int64_t);
+    finish_time_entry to_finish_time_entry(const boost::json::object &);
+    finish_bib_entry to_finish_bib_entry(const boost::json::object &);
     key to_key(const boost::json::object &);
 
     const char * type(const competition &);
     const char * type(const start_group &);
     const char * type(const competition_class &);
     const char * type(const competitor &);
+    const char * type(const finish_time_entry &);
+    const char * type(const finish_bib_entry &);
 };
 
 #endif
