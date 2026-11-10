@@ -64,6 +64,29 @@ namespace {
         "   primary key (id, comp_id),"
         "   foreign key (comp_class_id, comp_id) references competition_class"
         ")";
+    static const char * const SCHEMA_FINISH_TIME_ENTRY =
+        "create table finish_time_entry ("
+        "   id text not null, "
+        "   comp_id text not null, "
+        "   finish_time text not null," // ISO-8601 datetime; also determines queue order
+        "   status integer not null," // confirmed, uncertain, incorrect, or missing
+        "   primary key (id, comp_id),"
+        "   foreign key (comp_id) references competition(id)"
+        ")";
+    static const char * const SCHEMA_FINISH_BIB_ENTRY =
+        "create table finish_bib_entry ("
+        "   id text not null, "
+        "   comp_id text not null, "
+        "   sequence_no integer not null,"
+        "   bib integer,"
+        "   status integer not null," // confirmed, uncertain, incorrect, or missing
+        "   confirmed_time_entry_id text,"
+        "   primary key (id, comp_id),"
+        "   unique (comp_id, sequence_no),"
+        "   foreign key (comp_id) references competition(id),"
+        "   foreign key (confirmed_time_entry_id, comp_id) references finish_time_entry(id, comp_id),"
+        "   unique (comp_id, confirmed_time_entry_id)"
+        ")";
     static const char * const INDEX_COMPETITOR_COMPETITION_BIB =
         "create unique index competitor_competition_bib "
         "on competitor(comp_id, bib) where bib > 0";
