@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import ManagementPageHeading from "./ManagementPageHeading.svelte";
+  import Setup from "./Setup.svelte";
   import {
     getClasses,
     getCompetition,
@@ -101,16 +102,6 @@
           year: "numeric",
           month: "long",
           day: "numeric"
-        }).format(date);
-  }
-
-  function formatStartTime(value: string) {
-    const date = new Date(value);
-    return Number.isNaN(date.getTime())
-      ? value
-      : new Intl.DateTimeFormat(undefined, {
-          hour: "2-digit",
-          minute: "2-digit"
         }).format(date);
   }
 
@@ -238,75 +229,15 @@
             </div>
           </section>
         {:else if view === "setup"}
-          <ManagementPageHeading
-            eyebrow="CONFIGURATION"
-            title="Competition setup"
-            description="Configure the event structure and core competition details."
+          <Setup
+            {competitionId}
+            competitionTitle={competition.title}
+            competitionDate={competition.date}
+            {classes}
+            {competitors}
+            {startGroups}
+            onChange={reload}
           />
-          <div class="setup-sections">
-            <section class="management-panel">
-              <div class="section-title-row">
-                <div>
-                  <h2>Competition details</h2>
-                  <p>Identity and date shown across competition tools.</p>
-                </div>
-                <span class="planned-tag">Next step</span>
-              </div>
-              <dl class="detail-list">
-                <div><dt>Name</dt><dd>{competition.title}</dd></div>
-                <div><dt>Date</dt><dd>{formattedDate}</dd></div>
-                <div><dt>Competition ID</dt><dd><code>{competition.id}</code></dd></div>
-              </dl>
-            </section>
-            <section class="management-panel">
-              <div class="section-title-row">
-                <div>
-                  <h2>Start groups</h2>
-                  <p>Start schedule, bib sequence, and interval.</p>
-                </div>
-                <span class="item-count">{startGroups.length}</span>
-              </div>
-              {#if startGroups.length}
-                <ul class="compact-list">
-                  {#each startGroups as group (group.id)}
-                    <li>
-                      <strong>{group.id}</strong>
-                      <span>
-                        {formatStartTime(group.first_start_time)}
-                        · {group.first_bib ? `First bib ${group.first_bib}` : "No bib sequence"}
-                        · {group.start_interval}
-                      </span>
-                    </li>
-                  {/each}
-                </ul>
-              {:else}
-                <p class="empty-note">No start groups yet.</p>
-              {/if}
-            </section>
-            <section class="management-panel">
-              <div class="section-title-row">
-                <div>
-                  <h2>Classes</h2>
-                  <p>Classes are assigned to a start group.</p>
-                </div>
-                <span class="item-count">{classes.length}</span>
-              </div>
-              {#if classes.length}
-                <ul class="compact-list">
-                  {#each classes as classItem (classItem.id)}
-                    <li>
-                      <strong>{classItem.title}</strong>
-                      <span>
-                        {classItem.start_group_id}
-                      </span>
-                    </li>
-                  {/each}
-                </ul>
-              {:else}
-                <p class="empty-note">No classes yet.</p>
-              {/if}
-            </section>
-          </div>
         {:else if view === "competitors"}
           <ManagementPageHeading
             eyebrow="ENTRY MANAGEMENT"
@@ -791,16 +722,6 @@
     padding: 22px;
   }
 
-  .setup-sections {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-  }
-
-  .setup-sections > section:first-child {
-    grid-column: 1 / -1;
-  }
-
   .section-title-row {
     display: flex;
     align-items: flex-start;
@@ -817,8 +738,7 @@
     line-height: 1.5;
   }
 
-  .planned-tag,
-  .item-count {
+  .planned-tag {
     flex: 0 0 auto;
     padding: 5px 8px;
     border-radius: 20px;
@@ -826,44 +746,6 @@
     color: #718076;
     font-size: 10px;
     font-weight: 700;
-  }
-
-  .item-count {
-    min-width: 28px;
-    text-align: center;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .detail-list {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 18px;
-    margin: 0;
-    padding-top: 16px;
-    border-top: 1px solid #edf0ed;
-  }
-
-  .detail-list > div {
-    display: grid;
-    gap: 6px;
-  }
-
-  .detail-list dt {
-    color: #78847b;
-    font-size: 11px;
-  }
-
-  .detail-list dd {
-    overflow-wrap: anywhere;
-    margin: 0;
-    color: #304237;
-    font-size: 13px;
-    font-weight: 650;
-  }
-
-  code {
-    color: #496552;
-    font-size: 12px;
   }
 
   .compact-list {
@@ -1132,18 +1014,8 @@
     }
 
     .workspace-grid,
-    .setup-sections,
     .finish-summary {
       grid-template-columns: 1fr;
-    }
-
-    .setup-sections > section:first-child {
-      grid-column: auto;
-    }
-
-    .detail-list {
-      grid-template-columns: 1fr;
-      gap: 13px;
     }
 
     .overview-facts {

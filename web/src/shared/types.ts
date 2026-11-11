@@ -24,12 +24,38 @@ export interface CompetitionClass {
 export interface StartGroup {
   /** Unique start-group identifier within the competition. */
   id: string;
+  /** Name displayed for the start group. */
+  title: string;
   /** First scheduled start time. */
   first_start_time: string;
   /** First bib number in this start group, or zero when bibs are not assigned. */
   first_bib: number;
   /** Time between consecutive bibs, as an ISO 8601 duration. */
   start_interval: string;
+}
+
+/** Fields accepted when creating or updating a start group. */
+export interface StartGroupInput {
+  /** Existing identifier, or null to request a generated identifier. */
+  id: string | null;
+  /** Start-group display name. */
+  title: string;
+  /** First scheduled start time in local ISO date-time format. */
+  first_start_time: string;
+  /** First bib number, or zero when bib numbers are not sequenced. */
+  first_bib: number;
+  /** Interval between consecutive starts as an ISO 8601 duration. */
+  start_interval: string;
+}
+
+/** Fields accepted when creating or updating a competition class. */
+export interface CompetitionClassInput {
+  /** Existing identifier, or null to request a generated identifier. */
+  id: string | null;
+  /** Class display name. */
+  title: string;
+  /** Start group assigned to this class. */
+  start_group_id: string;
 }
 
 /** Competitor data returned by the REST API. */
