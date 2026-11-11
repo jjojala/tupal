@@ -5,6 +5,7 @@ import type {
   Competitor,
   CompetitorInput,
   FinishBibEntry,
+  FinishBibEntryInput,
   FinishTimeEntry,
   FinishTimeEntryInput,
   StartGroup
@@ -125,6 +126,20 @@ export function getFinishTimeEntries(competitionId: string) {
 export function getFinishBibEntries(competitionId: string) {
   return request<FinishBibEntry[]>(
     `${competitionUrl(competitionId)}/finish_bib_entry/`
+  );
+}
+
+/** Records a bib in the competition's finish-order queue. */
+export function createFinishBibEntry(
+  competitionId: string,
+  entry: FinishBibEntryInput
+) {
+  return request<FinishBibEntry>(
+    `${competitionUrl(competitionId)}/finish_bib_entry/`,
+    {
+      method: "POST",
+      body: JSON.stringify(entry)
+    }
   );
 }
 

@@ -107,3 +107,17 @@ export interface FinishTimeEntryInput {
   /** Finish observation status. */
   status: number;
 }
+
+/** Fields accepted when recording a bib in the finish-order queue. */
+export interface FinishBibEntryInput {
+  /** Optional client-generated identifier, or null to request a generated identifier. */
+  id: string | null;
+  /** Position in the bib-entry queue. */
+  sequence_no: number;
+  /** Read bib number, or null if not identified. */
+  bib: number | null;
+  /** Finish observation status. */
+  status: number;
+  /** Linked finish-time entry, or null if not paired. */
+  confirmed_time_entry_id: string | null;
+}
