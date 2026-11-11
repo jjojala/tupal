@@ -43,6 +43,7 @@ async function requestJson(baseUrl, route, body) {
 const port = await findAvailablePort();
 const baseUrl = `http://127.0.0.1:${port}`;
 const competitionId = "system-smoke-comp";
+const numbersCompetitionId = "system-numbers-comp";
 let daemonOutput = "";
 const daemon = spawn(
   daemonPath,
@@ -148,6 +149,79 @@ try {
     );
   }
 
+  const numbersStartTime = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  await requestJson(baseUrl, "/rest/competition/", {
+    id: numbersCompetitionId,
+    title: "Numbers System Competition",
+    date: numbersStartTime
+  });
+  await requestJson(
+    baseUrl,
+    `/rest/competition/${numbersCompetitionId}/start_group/`,
+    {
+      id: "system-numbers-start",
+      title: "Numbers Test Start",
+      first_start_time: numbersStartTime,
+      first_bib: 500,
+      start_interval: "PT30S"
+    }
+  );
+  await requestJson(
+    baseUrl,
+    `/rest/competition/${numbersCompetitionId}/competition_class/`,
+    {
+      id: "system-numbers-class",
+      title: "Numbers Open",
+      start_group_id: "system-numbers-start"
+    }
+  );
+  for (const [bib, name, offset, status] of [
+    [500, "Already entered A", "PT0.000S", 0],
+    [501, "Already entered B", "PT30.000S", 0],
+    [502, "Likely finisher", "PT60.000S", 0],
+    [503, "Not started yet", "PT86400.000S", 0],
+    [504, "Did not start", "PT90.000S", 1],
+    [505, "Did not finish", "PT120.000S", 2],
+    [506, "Disqualified", "PT150.000S", 3]
+  ]) {
+    await requestJson(
+      baseUrl,
+      `/rest/competition/${numbersCompetitionId}/competitor/`,
+      {
+        id: `numbers-competitor-${bib}`,
+        comp_class_id: "system-numbers-class",
+        bib,
+        name,
+        start_time_offset: offset,
+        finish_time: "",
+        status
+      }
+    );
+  }
+  for (const [sequenceNo, bib] of [
+    [1, 500],
+    [2, 501]
+  ]) {
+    execFileSync(
+      tupalCliPath,
+      [
+        "create",
+        "finish-bib-entry",
+        "--competition",
+        numbersCompetitionId,
+        "--sequence-no",
+        String(sequenceNo),
+        "--bib",
+        String(bib)
+      ],
+      {
+        cwd: webDirectory,
+        env: { ...process.env, TUPAL_URL: baseUrl },
+        stdio: "pipe"
+      }
+    );
+  }
+
   const initialCompetition = await requestJson(
     baseUrl,
     `/rest/competition/${competitionId}`
@@ -170,7 +244,8 @@ try {
       env: {
         ...process.env,
         TUPAL_BASE_URL: baseUrl,
-        TUPAL_COMPETITION_ID: competitionId
+        TUPAL_COMPETITION_ID: competitionId,
+        TUPAL_NUMBERS_COMPETITION_ID: numbersCompetitionId
       }
     }
   );
