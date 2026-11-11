@@ -2,12 +2,32 @@
   import Registration from "./apps/registration/Registration.svelte";
   import Times from "./apps/times/Times.svelte";
   import Numbers from "./apps/numbers/Numbers.svelte";
+  import Management from "./apps/management/Management.svelte";
+
+  type ManagementView =
+    | "overview"
+    | "setup"
+    | "competitors"
+    | "finish"
+    | "results";
+
+  function isManagementView(value: string | undefined): value is ManagementView {
+    return (
+      value === "setup" ||
+      value === "competitors" ||
+      value === "finish" ||
+      value === "results"
+    );
+  }
 
   const registrationMatch = window.location.pathname.match(
     /^\/registration\/([^/]+)\/?$/
   );
   const timesMatch = window.location.pathname.match(/^\/times\/([^/]+)\/?$/);
   const numbersMatch = window.location.pathname.match(/^\/numbers\/([^/]+)\/?$/);
+  const managementMatch = window.location.pathname.match(
+    /^\/management\/([^/]+)(?:\/(setup|competitors|finish|results))?\/?$/
+  );
   const registrationCompetitionId = registrationMatch
     ? decodeURIComponent(registrationMatch[1])
     : null;
@@ -17,6 +37,12 @@
   const numbersCompetitionId = numbersMatch
     ? decodeURIComponent(numbersMatch[1])
     : null;
+  const managementCompetitionId = managementMatch
+    ? decodeURIComponent(managementMatch[1])
+    : null;
+  const managementView = isManagementView(managementMatch?.[2])
+    ? managementMatch[2]
+    : "overview";
 </script>
 
 {#if registrationCompetitionId}
@@ -25,6 +51,11 @@
   <Times competitionId={timesCompetitionId} />
 {:else if numbersCompetitionId}
   <Numbers competitionId={numbersCompetitionId} />
+{:else if managementCompetitionId}
+  <Management
+    competitionId={managementCompetitionId}
+    view={managementView}
+  />
 {:else}
   <main class="route-message">
     <div class="brand-mark" aria-hidden="true">T</div>
