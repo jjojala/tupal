@@ -2,13 +2,15 @@
 import type {
   Competition,
   CompetitionClass,
+  CompetitionClassInput,
   Competitor,
   CompetitorInput,
   FinishBibEntry,
   FinishBibEntryInput,
   FinishTimeEntry,
   FinishTimeEntryInput,
-  StartGroup
+  StartGroup,
+  StartGroupInput
 } from "./types";
 
 const competitionUrl = (competitionId: string) =>
@@ -68,6 +70,85 @@ export function getClasses(competitionId: string) {
 export function getStartGroups(competitionId: string) {
   return request<StartGroup[]>(
     `${competitionUrl(competitionId)}/start_group/`
+  );
+}
+
+/** Creates a start group in a competition. */
+export function createStartGroup(
+  competitionId: string,
+  startGroup: StartGroupInput
+) {
+  return request<StartGroup>(
+    `${competitionUrl(competitionId)}/start_group/`,
+    {
+      method: "POST",
+      body: JSON.stringify(startGroup)
+    }
+  );
+}
+
+/** Updates a start group in a competition. */
+export function updateStartGroup(
+  competitionId: string,
+  startGroup: StartGroupInput
+) {
+  if (!startGroup.id) throw new Error("Cannot update a start group without an id");
+  return request<StartGroup>(
+    `${competitionUrl(competitionId)}/start_group/${encodeURIComponent(startGroup.id)}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(startGroup)
+    }
+  );
+}
+
+/** Deletes a start group from a competition. */
+export function deleteStartGroup(competitionId: string, startGroupId: string) {
+  return request<unknown>(
+    `${competitionUrl(competitionId)}/start_group/${encodeURIComponent(startGroupId)}`,
+    { method: "DELETE" }
+  );
+}
+
+/** Creates a class in a competition. */
+export function createCompetitionClass(
+  competitionId: string,
+  competitionClass: CompetitionClassInput
+) {
+  return request<CompetitionClass>(
+    `${competitionUrl(competitionId)}/competition_class/`,
+    {
+      method: "POST",
+      body: JSON.stringify(competitionClass)
+    }
+  );
+}
+
+/** Updates a class in a competition. */
+export function updateCompetitionClass(
+  competitionId: string,
+  competitionClass: CompetitionClassInput
+) {
+  if (!competitionClass.id) {
+    throw new Error("Cannot update a class without an id");
+  }
+  return request<CompetitionClass>(
+    `${competitionUrl(competitionId)}/competition_class/${encodeURIComponent(competitionClass.id)}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(competitionClass)
+    }
+  );
+}
+
+/** Deletes a class from a competition. */
+export function deleteCompetitionClass(
+  competitionId: string,
+  classId: string
+) {
+  return request<unknown>(
+    `${competitionUrl(competitionId)}/competition_class/${encodeURIComponent(classId)}`,
+    { method: "DELETE" }
   );
 }
 
