@@ -1,18 +1,55 @@
 # Tupal
 
-Tupal is a competition management and results system. The name "TUPAL" stands for finish word "tulospalvelu", meaning boringly "result service". Tupal consists of centralized backend service "tupald" and (will eventually) the following web-based interfaces:
-* Competition Management - Results and the founding competition information
-* Competitor's Registration - Adding new competitors
-* Start - For officials at start line
-* Times - For timekeeper
-* Numbers - For typing bib numbers as they reach the finish line
-* Finishline - Combines Times & Numbers plus for handling DSQ's
+Tupal is a competition management and results system. The name "Tupal" comes from the Finish word "tulospalvelu", meaning literally "result service".
 
-Tupal backend is a C++ daemon with a REST API, while the apps are web apps, written with TypeScript and Svelte. The database is defaulted to SQLite, but utilizes the SOCI that enables switching to centralized DMBS such as PostgreSQL.
+The key concepts of Tupal are of course self-evident _competition_, _competitor_ and _class_, added with a _start group_. A _start group_ contain collection of _classes_ that share the same bib range, the same first start time, and the starting interval.
+
+```mermaid
+classDiagram
+  class Competition {
+    +date
+    +title
+  }
+
+  class StartGroup {
+    +title
+    +first_start_time
+    +first_bib
+    +start_interval
+  }
+
+  class Class {
+    +title
+  }
+
+  class Competitor {
+    +bib
+    +name
+    +start_time_offset
+    +finish_time
+    +status
+  }
+
+  Competition "1" --> "0..*" StartGroup : contains
+  StartGroup "1" --> "0..*" Class : contains
+  Class "1" --> "0..*" Competitor : contains
+```
+
+Tupal consists of centralized backend service "tupald" and the following web-apps for different purposes:
+* Competition Management App - This is fundamentally for establishing competition: competition, start groups, and classes; and for event time management: publishing results, making required corrections etc. This work is mainly done in an office-like conditions, near the competition venua, with a laptop and mice.
+* Competitor Registration App - Adding new competitors at the competition venua. This is typically done on the field, perhaps under a canopy, with a ligth laptop or tablet with keyboard.
+* Start App - For officials at start line. This can be used to to supervise starting and mark missing competitors as DNS (did not start). Used at the field, with e.g. smartphone.
+* Times App - For timekeeper, to take times. This is used at the field, e.g. with smartphone.
+* Numbers App - For typing bib numbers as they reach the finish line. Used at the field, with e.g. smartphone.
+* Finishline App - Combines Times & Numbers for small events, or can be used in larger events by a supervising finish official for helping in rush situations, or to make immediate corrections to times and numbers.
+
+For a very small events, rehersal competions or trainings the system can be used with one laptop (runnign Competition Management App, and the tupald) and one mobile device, tablet or smartphone running the Finishline App.
+
+From a technical viewpoint Tupal backend is a C++ daemon with a REST API, while the apps are web apps, written with TypeScript and Svelte. The database is defaulted to SQLite, but utilizes the SOCI that enables switching to centralized DBMS such as PostgreSQL.
 
 ## Quick start
 
-### Build
+### Build & test
 
 Requirements: CMake, a C++17 compiler, Boost, and Node.js/npm for the web
 frontend. The expected Node.js version is recorded in `web/.nvmrc`.
@@ -20,77 +57,47 @@ frontend. The expected Node.js version is recorded in `web/.nvmrc`.
 ```sh
 cmake -S . -B build
 cmake --build build --parallel
-```
-
-### Run all tests
-
-The full CTest suite includes the Chromium-based system smoke test. On Linux,
-install Chromium and its system dependencies once before running the suite:
-
-```sh
-cd web
-npx playwright install --with-deps chromium
-cd ..
-```
-
-```sh
+(cd web; npx playwright install --with-deps chromium)
 ctest --test-dir build --output-on-failure
-```
-
-### Run the system smoke test
-
-The smoke test starts a temporary daemon, seeds data through the REST API, and
-checks competitor registration and editing in Chromium. Install Chromium and its
-Linux dependencies once:
-
-```sh
-cd web
-npx playwright install --with-deps chromium
-cd ..
-ctest --test-dir build -L system --output-on-failure
 ```
 
 ### Run Tupal with sample data
 
-Build or refresh the generated frontend assets from the repository root:
+Start tupald with defaults on port 8085 with in-memory database:
 
 ```sh
-cmake --build build --target web_frontend
+build/src/tupald &
 ```
 
-Start the daemon from its build directory so its default `./web` root resolves
-to the generated frontend assets. Start with a fresh database; the sample script
-uses fixed IDs. This example stores data in `test.db`:
-
-```sh
-cd build/src
-./tupald --db sqlite3://test.db
-```
-
-In another terminal, from the repository root, populate that running daemon:
+Populate system with test data:
 
 ```sh
 ./script/make-test-data.sh
 ```
 
-Open the sample competition in the registration app at
-<http://localhost:8085/registration/comp-1> or in the Times app at
-<http://localhost:8085/times/comp-1> or the Numbers app at
-<http://localhost:8085/numbers/comp-1>. Management is at
-<http://localhost:8085/management/comp-1>. All apps use the test data for `comp-1`.
-The server defaults to port 8085; use `./tupald --help` to see its options.
+The different apps can be opened with your favourite web browser by opening the following url's:
 
-Create finish-line observations with the CLI. The first command prints the
-generated time-entry ID, which can be linked to a bib entry:
+| Application | Default URL |
+| Competition Management App | <http://localhost:8085/management/> |
+| Registration App | <http://localhost:8085/registration/comp-1> |
+| Start App | <http://localhost:8085/start/comp-1> |
+| Times App | <http://localhost:8085/times/comp-1> |
+| Numbers App | <http://localhost:8085/numbers/comp-1> |
+| Finishline App | <http://localhost:8085/finishline/comp-1> |
+
+Additionally, on linux environment a command line tool tupal-cli is provided. For example,
+a competition can be created by:
 
 ```sh
-time_id=$(./script/tupal create finish-time-entry --competition comp-1 \
-  --finish-time 2024-08-04T18:40:00.000Z)
-./script/tupal create finish-bib-entry --competition comp-1 \
-  --sequence-no 14 --bib 8 --confirmed-time-entry-id "$time_id"
+script/tupal-cli create competition --id my-comp --title "My competition" --date 2026-11-12
 ```
 
-Use `./script/tupal --help` for the full list of create commands and options.
+Backend process tupald and command line client tupal-cli, both support --help -option, e.g.
+
+```sh
+script/tupal-cli --help
+build/src/tupald --help
+```
 
 ## Build reference
 
