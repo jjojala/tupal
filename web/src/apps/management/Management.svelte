@@ -11,6 +11,7 @@
     getStartGroups,
     subscribeToCompetition
   } from "../../shared/api";
+  import { durationToSeconds } from "../../shared/competitors";
   import type {
     Competition,
     CompetitionClass,
@@ -46,6 +47,7 @@
   let loading = true;
   let pageError = "";
   let connected = false;
+  let now = Date.now();
 
   $: currentNavigation = navigation.find((item) => item.id === view)!;
   $: viewUrl = (target: ManagementView) =>
@@ -53,14 +55,25 @@
       ? `/management/${encodeURIComponent(competitionId)}`
       : `/management/${encodeURIComponent(competitionId)}/${target}`;
   $: formattedDate = competition ? formatCompetitionDate(competition.date) : "";
+  $: competitorTotals = calculateCompetitorTotals(
+    competitors,
+    classes,
+    startGroups,
+    now
+  );
 
   onMount(() => {
     void reload();
-    return subscribeToCompetition(
+    const unsubscribe = subscribeToCompetition(
       competitionId,
       () => void reload(),
       (state) => (connected = state)
     );
+    const timer = window.setInterval(() => (now = Date.now()), 1000);
+    return () => {
+      unsubscribe();
+      window.clearInterval(timer);
+    };
   });
 
   async function reload() {
@@ -103,6 +116,67 @@
           month: "long",
           day: "numeric"
         }).format(date);
+  }
+
+  function calculateCompetitorTotals(
+    allCompetitors: Competitor[],
+    allClasses: CompetitionClass[],
+    allStartGroups: StartGroup[],
+    currentTime: number
+  ) {
+    let notStarted = 0;
+    let started = 0;
+    let dns = 0;
+    let finished = 0;
+
+    for (const competitor of allCompetitors) {
+      if (competitor.status === 1) {
+        dns += 1;
+        continue;
+      }
+
+      const finishTime = Date.parse(competitor.finish_time);
+      const hasFinish = Number.isFinite(finishTime) && finishTime > 0;
+      if (competitor.status === 3 || (hasFinish && competitor.status !== 2)) {
+        finished += 1;
+        continue;
+      }
+
+      if (competitor.status === 2) {
+        started += 1;
+        continue;
+      }
+
+      const classInfo = allClasses.find(
+        (item) => item.id === competitor.comp_class_id
+      );
+      const startGroup = allStartGroups.find(
+        (item) => item.id === classInfo?.start_group_id
+      );
+      let startTimestamp = Number.POSITIVE_INFINITY;
+      if (startGroup) {
+        try {
+          const firstStart = Date.parse(startGroup.first_start_time);
+          const offset = durationToSeconds(competitor.start_time_offset);
+          if (Number.isFinite(firstStart)) {
+            startTimestamp = firstStart + offset * 1000;
+          }
+        } catch {
+          startTimestamp = Number.POSITIVE_INFINITY;
+        }
+      }
+
+      if (startTimestamp <= currentTime) started += 1;
+      else notStarted += 1;
+    }
+
+    return {
+      notStarted,
+      started,
+      dns,
+      finished,
+      open: allCompetitors.length - dns - finished
+    };
   }
 
   function errorMessage(error: unknown) {
@@ -339,16 +413,15 @@
               <section class="management-panel">
                 <h2>Competitor status</h2>
                 <p class="panel-description">
-                  Event totals belong alongside generated results.
+                  Started is inferred from scheduled start time unless DNS is confirmed.
                 </p>
                 <div class="status-placeholder">
-                  <span>Not started</span><strong>—</strong>
-                  <span>Started</span><strong>—</strong>
-                  <span>DNS</span><strong>—</strong>
-                  <span>Finished / resulted</span><strong>—</strong>
-                  <span>Open</span><strong>—</strong>
+                  <span>Not started</span><strong data-testid="total-not-started">{competitorTotals.notStarted}</strong>
+                  <span>Started</span><strong data-testid="total-started">{competitorTotals.started}</strong>
+                  <span>DNS</span><strong data-testid="total-dns">{competitorTotals.dns}</strong>
+                  <span>Finished / resulted</span><strong data-testid="total-finished">{competitorTotals.finished}</strong>
+                  <span>Open</span><strong data-testid="total-open">{competitorTotals.open}</strong>
                 </div>
-                <span class="planned-tag">Totals not available yet</span>
               </section>
               <section class="management-panel publish-panel">
                 <h2>Print or export</h2>

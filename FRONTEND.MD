@@ -115,21 +115,19 @@ The frontend functionality can be briefly divided into the following categories:
 
 ### START-3 — Mark competitors as started
 
-1. Let the official mark an individual competitor as started ("on-route")
-1. The marking can be done in advance (i.e. the competitor is waiting at the start line to start)
-1. When competitor is marked as started, and the start time passes, the competitor's entry disappears from the list
+1. Started is implicit once a competitor's scheduled start time has passed and DNS has not been confirmed.
+1. There is no separate started state or advance-start control.
 
 ### START-4 — Create DNS suggestions automatically
 
-1. Automatically create a DNS suggestion when a competitor’s start time has passed, they have not been marked as started in advance.
+1. Automatically create a DNS suggestion when a competitor's start time has passed and DNS has not been confirmed.
 1. A DNS suggestion is not a confirmed DNS and is not shown outside the Start app.
-1. Keep the suggestion visible in Start until it is confirmed or the competitor is marked as started.
+1. Keep the suggestion visible in Start until DNS is confirmed.
 
 ### START-5 — Handle DNS suggestions
 1. Show DNS suggestions in a compact list or separate view so they do not obscure upcoming starters.
 1. Show at least the competitor’s bib number; the start time is not required.
 1. Let the official confirm a suggestion as DNS; a confirmed DNS disappears on the start list.
-1. Let the official mark the competitor as started, which cancels the suggestion; confirmed starts disappear from the list after start-time
 1. A confirmed DNS updates the DNS and Open totals in Management.
 
 ## Epic: Times
