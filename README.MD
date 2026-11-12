@@ -79,6 +79,7 @@ Populate system with test data:
 The different apps can be opened with your favourite web browser by opening the following url's:
 
 | Application | Default URL |
+|---|---|
 | Competition Management App | <http://localhost:8085/management/> |
 | Registration App | <http://localhost:8085/registration/comp-1> |
 | Start App | <http://localhost:8085/start/comp-1> |
