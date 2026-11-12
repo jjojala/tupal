@@ -5,7 +5,8 @@ Tupal is a competition management and results system. The name "Tupal" comes fro
 The key concepts of Tupal are of course self-evident _competition_, _competitor_ and _class_, added with a _start group_. A _start group_ contain collection of _classes_ that share the same bib range, the same first start time, and the starting interval.
 
 ```mermaid
-classDiagram LR
+classDiagram
+  direction LR
   class Competition {
     +date
     +title
