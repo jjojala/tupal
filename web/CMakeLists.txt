@@ -1,12 +1,11 @@
-find_program(NODE_EXECUTABLE NAMES node REQUIRED)
 find_program(NPM_EXECUTABLE NAMES npm REQUIRED)
 
-get_filename_component(NODE_BIN_DIR "${NODE_EXECUTABLE}" DIRECTORY)
 if(WIN32)
-    set(PATH_SEPARATOR "\\;")
+    set(NPM_COMMAND cmd /c call "${NPM_EXECUTABLE}")
 else()
-    set(PATH_SEPARATOR ":")
+    set(NPM_COMMAND "${NPM_EXECUTABLE}")
 endif()
+
 set(FRONTEND_DEPENDENCIES_STAMP "${CMAKE_BINARY_DIR}/frontend-dependencies.stamp")
 set(FRONTEND_OUTPUT_DIR "${TUPAL_WEB_OUTPUT_DIR}")
 
@@ -27,9 +26,7 @@ set(FRONTEND_PACKAGE_FILES
 
 add_custom_command(
     OUTPUT "${FRONTEND_DEPENDENCIES_STAMP}"
-    COMMAND "${CMAKE_COMMAND}" -E env
-        "PATH=${NODE_BIN_DIR}${PATH_SEPARATOR}$ENV{PATH}"
-        "${NPM_EXECUTABLE}" ci --no-audit --no-fund
+    COMMAND ${NPM_COMMAND} ci --no-audit --no-fund
     COMMAND "${CMAKE_COMMAND}" -E touch "${FRONTEND_DEPENDENCIES_STAMP}"
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/package.json"
@@ -40,10 +37,7 @@ add_custom_command(
 add_custom_command(
     OUTPUT "${FRONTEND_OUTPUT_DIR}/index.html"
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${FRONTEND_OUTPUT_DIR}"
-    COMMAND "${CMAKE_COMMAND}" -E env
-        "PATH=${NODE_BIN_DIR}${PATH_SEPARATOR}$ENV{PATH}"
-        "TUPAL_WEB_OUTPUT_DIR=${FRONTEND_OUTPUT_DIR}"
-        "${NPM_EXECUTABLE}" run build
+    COMMAND ${NPM_COMMAND} run build -- --outDir "${FRONTEND_OUTPUT_DIR}"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
         "${CMAKE_CURRENT_SOURCE_DIR}/openapi.yaml"
         "${FRONTEND_OUTPUT_DIR}/openapi.yaml"
