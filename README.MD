@@ -1,11 +1,11 @@
 # Tupal
 
-Tupal is a competition management and results system. The name "Tupal" comes from the Finish word "tulospalvelu", meaning literally "result service".
+Tupal is a competition management and results system. The name "Tupal" comes from the Finnish word "tulospalvelu", meaning literally "result service".
 
 The key concepts of Tupal are of course self-evident _competition_, _competitor_ and _class_, added with a _start group_. A _start group_ contain collection of _classes_ that share the same bib range, the same first start time, and the starting interval.
 
 ```mermaid
-classDiagram
+classDiagram LR
   class Competition {
     +date
     +title
