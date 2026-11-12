@@ -176,22 +176,21 @@ int main(int argc, char** argv) {
 
 		sessions sessions;
 
-		server.add_route("/ws/:competition_id")
-			.ws(beauty::ws_handler {
-				.on_connect = [&sessions, &manager](const beauty::ws_context & ctx) {
-					const auto competition_id = ctx.attributes.find("competition_id");
-					if (competition_id != ctx.attributes.end()) {
-						sessions.register_client(ctx.uuid, competition_id->second.as_string(), ctx.ws_session.lock());
+		beauty::ws_handler websocket_handler;
+		websocket_handler.on_connect = [&sessions, &manager](const beauty::ws_context & ctx) {
+			const auto competition_id = ctx.attributes.find("competition_id");
+			if (competition_id != ctx.attributes.end()) {
+				sessions.register_client(ctx.uuid, competition_id->second.as_string(), ctx.ws_session.lock());
 
-						ctx.ws_session.lock()->send(boost::json::serialize(
-							get_competition_data(*manager, competition_id->second.as_string())));
-					}
-				},
-				.on_disconnect = [&sessions](const beauty::ws_context & ctx) {
-					sessions.unregister_client(ctx.uuid);
-				},
-				.on_error =  [](const boost::system::error_code /* ec */, const char* /* what */) {}
-			});
+				ctx.ws_session.lock()->send(boost::json::serialize(
+					get_competition_data(*manager, competition_id->second.as_string())));
+			}
+		};
+		websocket_handler.on_disconnect = [&sessions](const beauty::ws_context & ctx) {
+			sessions.unregister_client(ctx.uuid);
+		};
+		websocket_handler.on_error = [](const boost::system::error_code /* ec */, const char* /* what */) {};
+		server.add_route("/ws/:competition_id").ws(std::move(websocket_handler));
 
 		server.add_route("/rest/competition/")
 			.get([&](const auto & req, beauty::response & res) { handle_list(manager->list(), res); })

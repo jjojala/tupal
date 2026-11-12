@@ -26,14 +26,29 @@ namespace {
     }
 
     inline uint16_t parse4(char *& p) {
-        return get_digit(p) * 1000 + get_digit(p) * 100 + get_digit(p) * 10 + get_digit(p); }
+        const auto thousands = get_digit(p);
+        const auto hundreds = get_digit(p);
+        const auto tens = get_digit(p);
+        const auto units = get_digit(p);
+        return thousands * 1000 + hundreds * 100 + tens * 10 + units;
+    }
 
-    inline uint16_t parse3(char *& p) { return get_digit(p) * 100 + get_digit(p) * 10 + get_digit(p); }
+    inline uint16_t parse3(char *& p) {
+        const auto hundreds = get_digit(p);
+        const auto tens = get_digit(p);
+        const auto units = get_digit(p);
+        return hundreds * 100 + tens * 10 + units;
+    }
 
-    inline uint16_t parse2(char *& p) { return get_digit(p) * 10 + get_digit(p); }
+    inline uint16_t parse2(char *& p) {
+        const auto tens = get_digit(p);
+        const auto units = get_digit(p);
+        return tens * 10 + units;
+    }
 
     std::time_t parse_time_t(char *& p) {
-        struct tm tm { .tm_isdst = -1 };
+        struct tm tm {};
+        tm.tm_isdst = -1;
         tm.tm_year = parse4(p) - 1900;            
         expect_separator(p, '-');
         tm.tm_mon = parse2(p) - 1;
@@ -270,23 +285,16 @@ namespace tupal {
         const int32_t msec_diff = static_cast<int32_t>(dt1.milliseconds)
                 - static_cast<int32_t>(dt2.milliseconds);
         return msec_diff < 0
-            ? duration {
-                .seconds = dt1.seconds_since_epoch - dt2.seconds_since_epoch - 1,
-                .milliseconds = static_cast<uint16_t>(msec_diff + 1000)
-            }
-            : duration {
-                .seconds = dt1.seconds_since_epoch - dt2.seconds_since_epoch,
-                .milliseconds = static_cast<uint16_t>(msec_diff)
-            };
+            ? duration { dt1.seconds_since_epoch - dt2.seconds_since_epoch - 1,
+                static_cast<uint16_t>(msec_diff + 1000) }
+            : duration { dt1.seconds_since_epoch - dt2.seconds_since_epoch,
+                static_cast<uint16_t>(msec_diff) };
     }
 
     date_time from_date_string(const std::string & iso8601_str) {
         try {
             char * p = const_cast<char*>(iso8601_str.c_str());
-            return {
-                .seconds_since_epoch = parse_time_t(p),
-                .milliseconds = parse_milliseconds(p)
-            };
+            return { parse_time_t(p), parse_milliseconds(p) };
         }
         catch (const std::invalid_argument & e) {
             throw std::invalid_argument("invalid date_time '" + iso8601_str + "': " + e.what());
@@ -331,8 +339,8 @@ namespace tupal {
 
     key to_key(const boost::json::object & obj) {
         return key {
-            .id = std::string { obj.at("id").as_string() },
-            .comp_id = std::string { obj.at("comp_id").as_string() }
+            std::string { obj.at("id").as_string() },
+            std::string { obj.at("comp_id").as_string() }
         };
     }
 
@@ -352,11 +360,11 @@ namespace tupal {
 
     competition to_competition(const boost::json::object & obj) {
         return competition {
-            .id = make_unique_id( obj.at("id") ),
-            .date = at<std::string>(obj, "date", non_empty)
+            make_unique_id( obj.at("id") ),
+            at<std::string>(obj, "date", non_empty)
                 .map<tupal::date_time>(tupal::from_date_string)
                 .or_else(date_time{0, 0}),
-            .title = std::string { obj.at("title").as_string() }
+            std::string { obj.at("title").as_string() }
         };
     }
 
@@ -382,14 +390,11 @@ namespace tupal {
             at<std::string>(obj, "start_interval").or_else(std::string { "PT0.000S" }));
 
         auto sg = start_group {
-            .id {
-                .id = make_unique_id( obj.at("id") ),
-                .comp_id = at<std::string>(obj, "comp_id").or_else("")
-            },
-            .title = std::string { obj.at("title").as_string() },
-            .first_start_time = from_date_string( std::string { obj.at("first_start_time").as_string() } ),
-            .first_bib = static_cast<uint16_t>(at<int64_t>(obj, "first_bib").or_else(0)),
-            .start_interval = start_interval
+            { make_unique_id( obj.at("id") ), at<std::string>(obj, "comp_id").or_else("") },
+            std::string { obj.at("title").as_string() },
+            from_date_string( std::string { obj.at("first_start_time").as_string() } ),
+            static_cast<uint16_t>(at<int64_t>(obj, "first_bib").or_else(0)),
+            start_interval
         };
         return sg;
     }
@@ -411,12 +416,9 @@ namespace tupal {
 
     competition_class to_competition_class(const boost::json::object & obj) {
         return competition_class {
-            .id {
-                .id = make_unique_id( obj.at("id") ),
-                .comp_id = at<std::string>(obj, "comp_id").or_else("")
-            },
-            .title = std::string { obj.at("title").as_string() },
-            .start_group_id = std::string { obj.at("start_group_id").as_string() }
+            { make_unique_id( obj.at("id") ), at<std::string>(obj, "comp_id").or_else("") },
+            std::string { obj.at("title").as_string() },
+            std::string { obj.at("start_group_id").as_string() }
         };
     }
 
@@ -443,18 +445,15 @@ namespace tupal {
 
     competitor to_competitor(const boost::json::object & obj) {
         return competitor {
-            .id {
-                .id = make_unique_id( obj.at("id") ),
-                .comp_id = at<std::string>(obj, "comp_id").or_else("")
-            },
-            .bib = static_cast<uint16_t>(at<int64_t>(obj, "bib").or_else(0)),
-            .name = std::string { obj.at("name").as_string() },
-            .start_time_offset = from_duration_string( std::string { obj.at("start_time_offset").as_string() } ),
-            .finish_time = at<std::string>(obj, "finish_time", non_empty)
+            { make_unique_id( obj.at("id") ), at<std::string>(obj, "comp_id").or_else("") },
+            static_cast<uint16_t>(at<int64_t>(obj, "bib").or_else(0)),
+            std::string { obj.at("name").as_string() },
+            from_duration_string( std::string { obj.at("start_time_offset").as_string() } ),
+            at<std::string>(obj, "finish_time", non_empty)
                 .map<tupal::date_time>(tupal::from_date_string)
                 .or_else(date_time{0, 0}),
-            .status = to_competitor_status( obj.at("status").as_int64() ),
-            .comp_class_id = std::string { obj.at("comp_class_id").as_string() }
+            to_competitor_status( obj.at("status").as_int64() ),
+            std::string { obj.at("comp_class_id").as_string() }
         };
     }
 
@@ -488,12 +487,10 @@ namespace tupal {
             throw std::invalid_argument("'status' must be an integer from 0 to 3");
 
         return finish_time_entry {
-            .id = {
-                .id = make_unique_id(id == obj.end() ? boost::json::value {} : id->value()),
-                .comp_id = at<std::string>(obj, "comp_id").or_else("")
-            },
-            .finish_time = from_date_string(std::string { finish_time->value().as_string() }),
-            .status = to_finish_entry_status(status_value == obj.end() ? 0 : status_value->value().as_int64())
+            { make_unique_id(id == obj.end() ? boost::json::value {} : id->value()),
+                at<std::string>(obj, "comp_id").or_else("") },
+            from_date_string(std::string { finish_time->value().as_string() }),
+            to_finish_entry_status(status_value == obj.end() ? 0 : status_value->value().as_int64())
         };
     }
 
@@ -545,14 +542,12 @@ namespace tupal {
             throw std::invalid_argument("'status' must be an integer from 0 to 3");
 
         return finish_bib_entry {
-            .id = {
-                .id = make_unique_id(id == obj.end() ? boost::json::value {} : id->value()),
-                .comp_id = at<std::string>(obj, "comp_id").or_else("")
-            },
-            .sequence_no = static_cast<int>(sequence_no->value().as_int64()),
-            .bib = bib,
-            .status = to_finish_entry_status(status_value == obj.end() ? 0 : status_value->value().as_int64()),
-            .confirmed_time_entry_id = confirmed_time_entry_id
+            { make_unique_id(id == obj.end() ? boost::json::value {} : id->value()),
+                at<std::string>(obj, "comp_id").or_else("") },
+            static_cast<int>(sequence_no->value().as_int64()),
+            bib,
+            to_finish_entry_status(status_value == obj.end() ? 0 : status_value->value().as_int64()),
+            confirmed_time_entry_id
         };
     }
 

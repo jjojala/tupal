@@ -7,15 +7,27 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(doctest)
 
+function(tupal_enable_strict_cxx17 target)
+    set_target_properties(${target} PROPERTIES
+        CXX_STANDARD 17
+        CXX_STANDARD_REQUIRED ON
+        CXX_EXTENSIONS OFF)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(${target} PRIVATE -pedantic-errors)
+    endif()
+endfunction()
+
 add_executable(manager_tests test_main.cc test_competition_manager.cc test_start_group_manager.cc
     test_competition_class_manager.cc test_competitor_manager.cc
     test_finish_time_entry_manager.cc test_finish_bib_entry_manager.cc)
+tupal_enable_strict_cxx17(manager_tests)
 target_include_directories(manager_tests PRIVATE ${CMAKE_SOURCE_DIR}/src ${doctest_SOURCE_DIR})
 target_link_libraries(manager_tests PRIVATE tupal_core Boost::json Boost::url Boost::date_time soci_core)
 add_test(NAME manager_tests COMMAND $<TARGET_FILE:manager_tests>)
 set_tests_properties(manager_tests PROPERTIES LABELS "tupal,manager" TIMEOUT 10)
 
 add_executable(rest_tests test_main.cc rest_test.cc)
+tupal_enable_strict_cxx17(rest_tests)
 target_include_directories(rest_tests PRIVATE ${doctest_SOURCE_DIR})
 target_link_libraries(rest_tests PRIVATE Boost::filesystem beauty::beauty)
 if(NOT WIN32)
@@ -26,6 +38,7 @@ if(NOT WIN32)
 endif()
 
 add_executable(model_tests test_main.cc model_test.cc)
+tupal_enable_strict_cxx17(model_tests)
 target_include_directories(model_tests PRIVATE ${CMAKE_SOURCE_DIR}/src ${doctest_SOURCE_DIR})
 target_link_libraries(model_tests PRIVATE tupal_core Boost::json Boost::url Boost::date_time)
 add_test(NAME model_tests COMMAND $<TARGET_FILE:model_tests>)
