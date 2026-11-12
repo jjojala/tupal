@@ -134,9 +134,9 @@ namespace {
     boost::json::object finish_time_entry_json(const std::string & id, const std::string & competition_id,
             const std::string & finish_time, int status) {
         return tupal::to_json(tupal::finish_time_entry {
-            .id = { .id = id, .comp_id = competition_id },
-            .finish_time = tupal::from_date_string(finish_time),
-            .status = tupal::to_finish_entry_status(status)
+            { id, competition_id },
+            tupal::from_date_string(finish_time),
+            tupal::to_finish_entry_status(status)
         });
     }
 
@@ -149,11 +149,11 @@ namespace {
         if (row.get_indicator("confirmed_time_entry_id") != soci::i_null)
             confirmed_time_entry_id = row.get<std::string>("confirmed_time_entry_id");
         return tupal::to_json(tupal::finish_bib_entry {
-            .id = { .id = id, .comp_id = competition_id },
-            .sequence_no = sequence_no,
-            .bib = bib,
-            .status = tupal::to_finish_entry_status(row.get<int>("status")),
-            .confirmed_time_entry_id = confirmed_time_entry_id
+            { id, competition_id },
+            sequence_no,
+            bib,
+            tupal::to_finish_entry_status(row.get<int>("status")),
+            confirmed_time_entry_id
         });
     }
 
@@ -216,14 +216,11 @@ namespace {
                 if (begin->get_indicator(0) != soci::i_null) {
                     std::transform(begin, rows.end(), std::back_insert_iterator(objects), [](const soci::row & row) -> boost::json::value { 
                         return tupal::to_json(tupal::start_group {
-                            .id = tupal::key {
-                                .id = row.get<std::string>(0),
-                                .comp_id = row.get<std::string>(1),
-                            },
-                            .title = row.get<std::string>(2),
-                            .first_start_time = tupal::from_date_string(row.get<std::string>(3)),
-                            .first_bib = static_cast<uint16_t>(row.get<int>(4)),
-                            .start_interval = tupal::from_duration_string(row.get<std::string>(5))
+                            { row.get<std::string>(0), row.get<std::string>(1) },
+                            row.get<std::string>(2),
+                            tupal::from_date_string(row.get<std::string>(3)),
+                            static_cast<uint16_t>(row.get<int>(4)),
+                            tupal::from_duration_string(row.get<std::string>(5))
                         });
                     });
                 }
@@ -368,7 +365,7 @@ namespace {
                 }
                 trx.commit();
 
-                return { ok, tupal::to_json( tupal::key { .id = id, .comp_id = competition_id } ) };
+                return { ok, tupal::to_json( tupal::key { id, competition_id } ) };
             }
 
             catch (const soci::soci_error & e) {
@@ -418,12 +415,9 @@ namespace {
                 if (begin->get_indicator(1) != soci::i_null) {
                     std::transform(begin, rows.end(), std::back_insert_iterator(objects), [](const soci::row & row) -> boost::json::value { 
                         return tupal::to_json( tupal::competition_class {
-                            .id = tupal::key {
-                                .id = row.get<std::string>(1),
-                                .comp_id = row.get<std::string>(0)
-                            },
-                            .title = row.get<std::string>(3),
-                            .start_group_id = row.get<std::string>(2)
+                            { row.get<std::string>(1), row.get<std::string>(0) },
+                            row.get<std::string>(3),
+                            row.get<std::string>(2)
                         });
                     });
                 }
@@ -539,7 +533,7 @@ namespace {
                 }
 
                 trx.commit();
-                return { ok, tupal::to_json( tupal::key { .id = id, .comp_id = competition_id } ) };
+                return { ok, tupal::to_json( tupal::key { id, competition_id } ) };
             }
 
             catch (const soci::soci_error & e) {
@@ -590,16 +584,13 @@ namespace {
                 if (begin->get_indicator(0) != soci::i_null) {
                     std::transform(begin, rows.end(), std::back_insert_iterator(objects), [&](const soci::row & row) {
                         return tupal::to_json( tupal::competitor {
-                            .id = tupal::key {
-                                .id = row.get<std::string>(0),
-                                .comp_id = row.get<std::string>(1)
-                            },
-                            .bib = static_cast<uint16_t>(row.get<int>(3)),
-                            .name = row.get<std::string>(7),
-                            .start_time_offset = tupal::from_duration_string(row.get<std::string>(4)),
-                            .finish_time = tupal::from_date_string(row.get<std::string>(5)),
-                            .status = tupal::to_competitor_status(static_cast<uint8_t>(row.get<int>(6))),
-                            .comp_class_id = row.get<std::string>(2)
+                            { row.get<std::string>(0), row.get<std::string>(1) },
+                            static_cast<uint16_t>(row.get<int>(3)),
+                            row.get<std::string>(7),
+                            tupal::from_duration_string(row.get<std::string>(4)),
+                            tupal::from_date_string(row.get<std::string>(5)),
+                            tupal::to_competitor_status(static_cast<uint8_t>(row.get<int>(6))),
+                            row.get<std::string>(2)
                         });
                     });
                 }
@@ -742,7 +733,7 @@ namespace {
                 }
 
                 trx.commit();
-                return { ok, tupal::to_json( tupal::key { .id = id, .comp_id = competition_id } ) };
+                return { ok, tupal::to_json( tupal::key { id, competition_id } ) };
             }
 
             catch (const soci::soci_error & e) {
@@ -928,7 +919,7 @@ namespace {
                 }
 
                 trx.commit();
-                return { ok, tupal::to_json(tupal::key { .id = id, .comp_id = competition_id }) };
+                return { ok, tupal::to_json(tupal::key { id, competition_id }) };
             }
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
@@ -1183,7 +1174,7 @@ namespace {
                 }
 
                 trx.commit();
-                return { ok, tupal::to_json(tupal::key { .id = id, .comp_id = competition_id }) };
+                return { ok, tupal::to_json(tupal::key { id, competition_id }) };
             }
             catch (const soci::soci_error & e) {
                 TUPAL_MESSAGE(std::cerr) << e.what() << std::endl;
@@ -1257,9 +1248,9 @@ namespace {
                 boost::json::array objects;
                 for (auto it = rows.begin(); it != rows.end(); it++) {
                     objects.push_back(tupal::to_json( tupal::competition {
-                        .id = it->get<std::string>(0),
-                        .date = tupal::from_date_string(it->get<std::string>(1)),
-                        .title = it->get<std::string>(2)
+                        it->get<std::string>(0),
+                        tupal::from_date_string(it->get<std::string>(1)),
+                        it->get<std::string>(2)
                     }) );
                 }
 

@@ -3,6 +3,20 @@
 #include "doctest/doctest.h"
 #include "model.hh"
 
+namespace {
+    std::tm make_tm(int second, int minute, int hour, int day, int month, int year) {
+        std::tm value{};
+        value.tm_sec = second;
+        value.tm_min = minute;
+        value.tm_hour = hour;
+        value.tm_mday = day;
+        value.tm_mon = month;
+        value.tm_year = year;
+        value.tm_isdst = -1;
+        return value;
+    }
+}
+
 TEST_CASE("competitor model generates an id when none is provided") {
     const auto competitor = tupal::to_competitor(boost::json::object {
         { "id", nullptr },
@@ -19,15 +33,7 @@ TEST_CASE("competitor model generates an id when none is provided") {
 
 TEST_CASE("iso8601 date --> date_time") {
     const std::string date_str = "2026-02-27";
-    const std::tm tm = {
-        .tm_sec = 0,
-        .tm_min = 0,
-        .tm_hour = 0,
-        .tm_mday = 27,
-        .tm_mon = 02 - 1,
-        .tm_year = 2026 - 1900,
-        .tm_isdst = -1
-    };
+    std::tm tm = make_tm(0, 0, 0, 27, 02 - 1, 2026 - 1900);
 
     const auto dt = tupal::from_date_string(date_str);
     CHECK(dt.seconds_since_epoch == std::mktime(const_cast<std::tm*>(&tm)));
@@ -39,15 +45,7 @@ TEST_CASE("iso8601 date --> date_time") {
 
 TEST_CASE("iso8601 --> date_time") {
     const std::string date_str = "2025-12-31T23:59:59.123Z";
-    const std::tm tm = {
-        .tm_sec = 59,
-        .tm_min = 59,
-        .tm_hour = 23,
-        .tm_mday = 31,
-        .tm_mon = 12 - 1,        
-        .tm_year = 2025 - 1900,
-        .tm_isdst = -1
-    };
+    std::tm tm = make_tm(59, 59, 23, 31, 12 - 1, 2025 - 1900);
 
     const auto dt = tupal::from_date_string(date_str);
     CHECK(dt.seconds_since_epoch == std::mktime(const_cast<std::tm*>(&tm)));
@@ -56,20 +54,9 @@ TEST_CASE("iso8601 --> date_time") {
 
 TEST_CASE("date_time --> iso8601") {
     const std::string date_str = "2025-12-31T23:59:59.123Z";
-    const std::tm tm = {
-        .tm_sec = 59,
-        .tm_min = 59,
-        .tm_hour = 23,
-        .tm_mday = 31,
-        .tm_mon = 12 - 1,        
-        .tm_year = 2025 - 1900,
-        .tm_isdst = -1
-    };
+    std::tm tm = make_tm(59, 59, 23, 31, 12 - 1, 2025 - 1900);
 
-    const tupal::date_time dt = {
-        .seconds_since_epoch = std::mktime(const_cast<std::tm*>(&tm)),
-        .milliseconds = 123
-    };
+    const tupal::date_time dt { std::mktime(&tm), 123 };
 
     const auto str = tupal::to_date_string(dt);
     CHECK(str == date_str);
@@ -86,18 +73,15 @@ TEST_CASE("iso8601 duration --> duration") {
 TEST_CASE("duration --> iso8601 duration") {
     const std::string duration_str = "PT3661.456S";
 
-    const tupal::duration dur = {
-        .seconds = 3661,
-        .milliseconds = 456
-    };
+    const tupal::duration dur { 3661, 456 };
 
     const auto str = tupal::to_duration_string(dur);
     CHECK(str == duration_str);
 }
 
 TEST_CASE("duration addition and subtraction") {
-    const tupal::duration dur1 = { .seconds = 10, .milliseconds = 500 };
-    const tupal::duration dur2 = { .seconds = 5, .milliseconds = 750 };
+    const tupal::duration dur1 { 10, 500 };
+    const tupal::duration dur2 { 5, 750 };
 
     const auto dur_sum = dur1 + dur2;
     CHECK(dur_sum.seconds == 16);
@@ -109,8 +93,8 @@ TEST_CASE("duration addition and subtraction") {
 }
 
 TEST_CASE("duration operator+= and operator-=") {
-    tupal::duration dur1 = { .seconds = 10, .milliseconds = 500 };
-    const tupal::duration dur2 = { .seconds = 5, .milliseconds = 750 };
+    tupal::duration dur1 { 10, 500 };
+    const tupal::duration dur2 { 5, 750 };
 
     dur1 += dur2;
     CHECK(dur1.seconds == 16);
@@ -122,9 +106,9 @@ TEST_CASE("duration operator+= and operator-=") {
 }
 
 TEST_CASE("duration comparison operators") {
-    const tupal::duration dur1 = { .seconds = 10, .milliseconds = 500 };
-    const tupal::duration dur2 = { .seconds = 10, .milliseconds = 600 };
-    const tupal::duration dur3 = { .seconds = 11, .milliseconds = 400 };
+    const tupal::duration dur1 { 10, 500 };
+    const tupal::duration dur2 { 10, 600 };
+    const tupal::duration dur3 { 11, 400 };
 
     CHECK(dur1 < dur2);
     CHECK(dur2 < dur3);
@@ -149,8 +133,8 @@ TEST_CASE("duration comparison operators") {
 }
 
 TEST_CASE("date_time addition and subtraction") {
-    const tupal::date_time dt = { .seconds_since_epoch = 1000000, .milliseconds = 500 };
-    const tupal::duration dur = { .seconds = 500, .milliseconds = 750 };
+    const tupal::date_time dt { 1000000, 500 };
+    const tupal::duration dur { 500, 750 };
 
     const auto dt_sum = dt + dur;
     CHECK(dt_sum.seconds_since_epoch == 1000501);
@@ -162,8 +146,8 @@ TEST_CASE("date_time addition and subtraction") {
 }
 
 TEST_CASE("date_time operator+= and operator-=") {
-    tupal::date_time dt = { .seconds_since_epoch = 1000000, .milliseconds = 500 };
-    const tupal::duration dur = { .seconds = 500, .milliseconds = 750 };
+    tupal::date_time dt { 1000000, 500 };
+    const tupal::duration dur { 500, 750 };
 
     dt += dur;
     CHECK(dt.seconds_since_epoch == 1000501);
@@ -176,18 +160,10 @@ TEST_CASE("date_time operator+= and operator-=") {
 
 TEST_CASE("date_time comparison operators") {
 
-    std::tm tm = {
-        .tm_sec = 30,
-        .tm_min = 29,
-        .tm_hour = 13,
-        .tm_mday = 1,
-        .tm_mon = 11,        
-        .tm_year = 1970 - 1900,
-        .tm_isdst = -1
-    };
-    const tupal::date_time dt1 = { .seconds_since_epoch = std::mktime(&tm), .milliseconds = 500 };
-    const tupal::date_time dt2 = { .seconds_since_epoch = std::mktime(&tm), .milliseconds = 600 };
-    const tupal::date_time dt3 = { .seconds_since_epoch = std::mktime(&tm)+1, .milliseconds = 400 };
+    std::tm tm = make_tm(30, 29, 13, 1, 11, 1970 - 1900);
+    const tupal::date_time dt1 { std::mktime(&tm), 500 };
+    const tupal::date_time dt2 { std::mktime(&tm), 600 };
+    const tupal::date_time dt3 { std::mktime(&tm) + 1, 400 };
 
     MESSAGE("dt1: ", tupal::to_date_string(dt1));
     MESSAGE("dt2: ", tupal::to_date_string(dt2));
@@ -217,9 +193,7 @@ TEST_CASE("date_time comparison operators") {
 
 TEST_CASE("competition JSON serialization/deserialization") {
     tupal::competition comp {
-        .id = "comp1",
-        .date = tupal::from_date_string("2025-12-31T00:00:00.000Z"),
-        .title = "New Year Competition"
+        "comp1", tupal::from_date_string("2025-12-31T00:00:00.000Z"), "New Year Competition"
     };
 
     const auto json_val = tupal::to_json(comp);
@@ -232,11 +206,11 @@ TEST_CASE("competition JSON serialization/deserialization") {
 
 TEST_CASE("start_group JSON serialization/deserialization") {
     tupal::start_group sg {
-        .id = { .id = "sg1", .comp_id = "comp1" },
-        .title = "Morning Group",
-        .first_start_time = tupal::from_date_string("2025-12-31T09:00:00.000Z"),
-        .first_bib = 101,
-        .start_interval = tupal::from_duration_string("PT30S")
+        { "sg1", "comp1" },
+        "Morning Group",
+        tupal::from_date_string("2025-12-31T09:00:00.000Z"),
+        101,
+        tupal::from_duration_string("PT30S")
     };
 
     const auto json_val = tupal::to_json(sg);
@@ -252,9 +226,9 @@ TEST_CASE("start_group JSON serialization/deserialization") {
 
 TEST_CASE("competition_class JSON serialization/deserialization") {
     tupal::competition_class cc {
-        .id = { .id = "cc1", .comp_id = "comp1" },
-        .title = "Elite Class",
-        .start_group_id = "sg1"
+        { "cc1", "comp1" },
+        "Elite Class",
+        "sg1"
     };
 
     const auto json_val = tupal::to_json(cc);
@@ -268,13 +242,13 @@ TEST_CASE("competition_class JSON serialization/deserialization") {
 
 TEST_CASE("competitor JSON serialization/deserialization") {
     tupal::competitor comp {
-        .id = { .id = "comp1", .comp_id = "comp1" },
-        .bib = 42,
-        .name = "John Doe",
-        .start_time_offset = tupal::from_duration_string("PT3600.500S"),
-        .finish_time = tupal::from_date_string("2025-12-31T10:00:00.500Z"),
-        .status = tupal::competitor_status::NA,
-        .comp_class_id = "cc1"
+        { "comp1", "comp1" },
+        42,
+        "John Doe",
+        tupal::from_duration_string("PT3600.500S"),
+        tupal::from_date_string("2025-12-31T10:00:00.500Z"),
+        tupal::competitor_status::NA,
+        "cc1"
     };
 
     const auto json_val = tupal::to_json(comp);
@@ -301,9 +275,9 @@ TEST_CASE("competitor_status JSON serialization/deserialization") {
 
 TEST_CASE("finish_time_entry JSON serialization/deserialization") {
     const tupal::finish_time_entry entry {
-        .id = { .id = "time-1", .comp_id = "comp-1" },
-        .finish_time = tupal::from_date_string("2025-12-31T10:00:00.500Z"),
-        .status = tupal::finish_entry_status::uncertain
+        { "time-1", "comp-1" },
+        tupal::from_date_string("2025-12-31T10:00:00.500Z"),
+        tupal::finish_entry_status::uncertain
     };
 
     const auto json_val = tupal::to_json(entry);
@@ -317,11 +291,11 @@ TEST_CASE("finish_time_entry JSON serialization/deserialization") {
 
 TEST_CASE("finish_bib_entry JSON serialization/deserialization preserves nullable fields") {
     const tupal::finish_bib_entry entry {
-        .id = { .id = "bib-1", .comp_id = "comp-1" },
-        .sequence_no = 3,
-        .bib = 42,
-        .status = tupal::finish_entry_status::confirmed,
-        .confirmed_time_entry_id = "time-1"
+        { "bib-1", "comp-1" },
+        3,
+        42,
+        tupal::finish_entry_status::confirmed,
+        "time-1"
     };
 
     const auto json_val = tupal::to_json(entry);
@@ -337,11 +311,11 @@ TEST_CASE("finish_bib_entry JSON serialization/deserialization preserves nullabl
     CHECK(*entry.confirmed_time_entry_id == *deserialized.confirmed_time_entry_id);
 
     const tupal::finish_bib_entry empty_entry {
-        .id = { .id = "bib-2", .comp_id = "comp-1" },
-        .sequence_no = 4,
-        .bib = std::nullopt,
-        .status = tupal::finish_entry_status::missing,
-        .confirmed_time_entry_id = std::nullopt
+        { "bib-2", "comp-1" },
+        4,
+        std::nullopt,
+        tupal::finish_entry_status::missing,
+        std::nullopt
     };
     const auto empty_json = tupal::to_json(empty_entry);
     CHECK(empty_json.at("bib").is_null());
@@ -363,8 +337,8 @@ TEST_CASE("finish entry status rejects values outside its defined range") {
 
 TEST_CASE("key JSON serialization/deserialization") {
     tupal::key k {
-        .id = "comp1",
-        .comp_id = "root_comp"
+        "comp1",
+        "root_comp"
     };
 
     const auto json_val = tupal::to_json(k);

@@ -7,7 +7,14 @@ set(CORE_HEADERS
     manager.hh)
 
 add_library(tupal_core STATIC ${CORE_SOURCES} ${CORE_HEADERS})
-set_target_properties(tupal_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(tupal_core PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+    POSITION_INDEPENDENT_CODE ON)
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(tupal_core PRIVATE -pedantic-errors)
+endif()
 
 target_include_directories(tupal_core 
     PUBLIC
@@ -24,6 +31,13 @@ target_link_libraries(tupal_core
 
 add_executable(tupald tupald.cc)
 target_link_libraries(tupald PRIVATE tupal_core beauty::beauty)
+set_target_properties(tupald PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF)
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(tupald PRIVATE -pedantic-errors)
+endif()
 add_dependencies(tupald web_frontend)
 
 if(WIN32)
