@@ -122,13 +122,20 @@ The frontend functionality can be briefly divided into the following categories:
 
 1. Automatically create a DNS suggestion when a competitor's start time has passed and DNS has not been confirmed.
 1. A DNS suggestion is not a confirmed DNS and is not shown outside the Start app.
-1. Keep the suggestion visible in Start until DNS is confirmed.
+1. Keep the suggestion visible in Start until DNS is confirmed or competitor is marked as "on-route"
 
 ### START-5 — Handle DNS suggestions
 1. Show DNS suggestions in a compact list or separate view so they do not obscure upcoming starters.
 1. Show at least the competitor’s bib number; the start time is not required.
 1. Let the official confirm a suggestion as DNS; a confirmed DNS disappears on the start list.
 1. A confirmed DNS updates the DNS and Open totals in Management.
+
+### START-6 - Handle on-route competitors
+1. "On-route" is concept that is visible only within the Start App. 
+1. Competitor's with on-route status can be listed separately by the start official
+1. Competitor may be marked as DNS, by the start official
+1. When a competitor is marked as DNS, it will be removed from the on-route list
+1. When a competitor is having a result, or when it gets confirmed bib in finish bib list, the competitor will be removed from the on-route list
 
 ## Epic: Times
 
