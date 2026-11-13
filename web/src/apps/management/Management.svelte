@@ -11,7 +11,10 @@
     getStartGroups,
     subscribeToCompetition
   } from "../../shared/api";
-  import { durationToSeconds } from "../../shared/competitors";
+  import {
+    durationToSeconds,
+    wallClockToTimestamp
+  } from "../../shared/competitors";
   import type {
     Competition,
     CompetitionClass,
@@ -156,7 +159,7 @@
       let startTimestamp = Number.POSITIVE_INFINITY;
       if (startGroup) {
         try {
-          const firstStart = Date.parse(startGroup.first_start_time);
+          const firstStart = wallClockToTimestamp(startGroup.first_start_time);
           const offset = durationToSeconds(competitor.start_time_offset);
           if (Number.isFinite(firstStart)) {
             startTimestamp = firstStart + offset * 1000;

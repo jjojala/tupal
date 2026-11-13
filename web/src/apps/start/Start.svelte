@@ -8,7 +8,10 @@
     subscribeToCompetition,
     updateCompetitor
   } from "../../shared/api";
-  import { durationToSeconds } from "../../shared/competitors";
+  import {
+    durationToSeconds,
+    wallClockToTimestamp
+  } from "../../shared/competitors";
   import type {
     Competition,
     CompetitionClass,
@@ -49,7 +52,7 @@
     if (!classInfo || !startGroup) return [];
 
     try {
-      const firstStart = Date.parse(startGroup.first_start_time);
+      const firstStart = wallClockToTimestamp(startGroup.first_start_time);
       const offset = durationToSeconds(competitor.start_time_offset);
       if (!Number.isFinite(firstStart)) return [];
       return [{
