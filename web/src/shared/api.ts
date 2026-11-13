@@ -59,6 +59,19 @@ export function getCompetition(competitionId: string) {
   return request<Competition>(competitionUrl(competitionId));
 }
 
+/** Fetches all competitions available to the management app. */
+export function getCompetitions() {
+  return request<Competition[]>("/rest/competition/");
+}
+
+/** Creates a competition with an API-generated identifier. */
+export function createCompetition(title: string, date: string) {
+  return request<Competition>("/rest/competition/", {
+    method: "POST",
+    body: JSON.stringify({ id: null, title, date })
+  });
+}
+
 /** Fetches the classes configured for a competition. */
 export function getClasses(competitionId: string) {
   return request<CompetitionClass[]>(
