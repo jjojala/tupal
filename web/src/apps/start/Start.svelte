@@ -4,6 +4,7 @@
     getClasses,
     getCompetition,
     getCompetitors,
+    getFinishBibEntries,
     getStartGroups,
     subscribeToCompetition,
     updateCompetitor
@@ -16,6 +17,7 @@
     Competition,
     CompetitionClass,
     Competitor,
+    FinishBibEntry,
     StartGroup
   } from "../../shared/types";
 
@@ -31,6 +33,8 @@
   let classes: CompetitionClass[] = [];
   let competitors: Competitor[] = [];
   let startGroups: StartGroup[] = [];
+  let bibEntries: FinishBibEntry[] = [];
+  let onRouteIds: string[] = [];
   let loading = true;
   let connected = false;
   let pageError = "";
@@ -65,9 +69,48 @@
     }
   }).sort((a, b) => a.timestamp - b.timestamp || a.competitor.bib - b.competitor.bib);
   $: startList = rows.filter((row) => row.timestamp > now);
-  $: dnsSuggestions = rows.filter((row) => row.timestamp <= now);
+  $: confirmedBibs = new Set(
+    bibEntries
+      .filter((entry) => entry.status === 0 && entry.bib !== null)
+      .map((entry) => entry.bib)
+  );
+  // A confirmed finish bib means the competitor is already past the start.
+  $: overdue = rows.filter(
+    (row) => row.timestamp <= now && !confirmedBibs.has(row.competitor.bib)
+  );
+  $: onRoute = overdue.filter(
+    (row) => onRouteIds.includes(row.competitor.id)
+  );
+  $: dnsSuggestions = overdue.filter(
+    (row) => !onRoute.some((item) => item.competitor.id === row.competitor.id)
+  );
+
+  const onRouteKey = () => `tupal.start.on-route.${competitionId}`;
+
+  function loadOnRoute() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(onRouteKey()) ?? "[]");
+      onRouteIds = Array.isArray(stored)
+        ? stored.filter((id): id is string => typeof id === "string")
+        : [];
+    } catch {
+      onRouteIds = [];
+    }
+  }
+
+  function markOnRoute(competitor: Competitor) {
+    if (onRouteIds.includes(competitor.id)) return;
+    onRouteIds = [...onRouteIds, competitor.id];
+    localStorage.setItem(onRouteKey(), JSON.stringify(onRouteIds));
+  }
+
+  function forgetOnRoute(competitorId: string) {
+    onRouteIds = onRouteIds.filter((id) => id !== competitorId);
+    localStorage.setItem(onRouteKey(), JSON.stringify(onRouteIds));
+  }
 
   onMount(() => {
+    loadOnRoute();
     void reload();
     const unsubscribe = subscribeToCompetition(
       competitionId,
@@ -84,17 +127,19 @@
   async function reload() {
     pageError = "";
     try {
-      const [competitionData, classData, competitorData, startGroupData] =
+      const [competitionData, classData, competitorData, startGroupData, bibData] =
         await Promise.all([
           getCompetition(competitionId),
           getClasses(competitionId),
           getCompetitors(competitionId),
-          getStartGroups(competitionId)
+          getStartGroups(competitionId),
+          getFinishBibEntries(competitionId)
         ]);
       competition = competitionData;
       classes = classData;
       competitors = competitorData;
       startGroups = startGroupData;
+      bibEntries = bibData;
     } catch (error) {
       pageError = errorMessage(error);
     } finally {
@@ -121,6 +166,7 @@
         finish_time: competitor.finish_time,
         status: 1
       });
+      forgetOnRoute(competitor.id);
       await reload();
       notice = `Bib ${competitor.bib} confirmed as DNS.`;
     } catch (error) {
@@ -216,6 +262,47 @@
                 <strong class="bib">#{row.competitor.bib}</strong>
                 <span>{row.competitor.name}</span>
               </div>
+              <div class="actions">
+                <button
+                  type="button"
+                  class="secondary"
+                  on:click={() => markOnRoute(row.competitor)}
+                >
+                  On route
+                </button>
+                <button
+                  type="button"
+                  disabled={savingIds.includes(row.competitor.id)}
+                  on:click={() => confirmDns(row.competitor)}
+                >
+                  Confirm DNS
+                </button>
+              </div>
+            </li>
+          {/each}
+        </ul>
+      {:else}
+        <p class="empty-message">No overdue starters to check.</p>
+      {/if}
+    </section>
+
+    <section class="on-route-section" aria-labelledby="on-route-heading">
+      <div class="section-heading">
+        <div>
+          <h2 id="on-route-heading">On route</h2>
+          <p>Competitors marked as on route until they finish.</p>
+        </div>
+        <span class="count">{onRoute.length}</span>
+      </div>
+
+      {#if onRoute.length}
+        <ul class="dns-list">
+          {#each onRoute as row (row.competitor.id)}
+            <li data-bib={row.competitor.bib}>
+              <div class="competitor-details">
+                <strong class="bib">#{row.competitor.bib}</strong>
+                <span>{row.competitor.name}</span>
+              </div>
               <button
                 type="button"
                 disabled={savingIds.includes(row.competitor.id)}
@@ -227,7 +314,7 @@
           {/each}
         </ul>
       {:else}
-        <p class="empty-message">No overdue starters to check.</p>
+        <p class="empty-message">No competitors on route.</p>
       {/if}
     </section>
   {:else}
@@ -399,12 +486,31 @@
     font-weight: 750;
   }
 
+  button.secondary {
+    background: #e4ecf4;
+    color: #1f4468;
+  }
+
   button:disabled {
     opacity: 0.55;
   }
 
   .dns-section {
     border-color: #eadfc7;
+  }
+
+  .on-route-section {
+    margin-top: 18px;
+    padding: 18px 14px;
+    border: 1px solid #d3e2ee;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 5px 18px #223a2a0a;
+  }
+
+  .actions {
+    display: flex;
+    gap: 8px;
   }
 
   .empty-message,
@@ -440,9 +546,14 @@
       flex-direction: column;
     }
 
-    .dns-list li button {
+    .dns-list li button,
+    .dns-list li .actions {
       align-self: stretch;
       width: 100%;
+    }
+
+    .actions button {
+      flex: 1;
     }
   }
 </style>
