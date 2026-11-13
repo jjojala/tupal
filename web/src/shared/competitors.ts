@@ -64,7 +64,7 @@ export function startOffsetForBib(
   return (bib - startGroup.first_bib) * durationToSeconds(startGroup.start_interval);
 }
 
-/** Calculates the local clock time for a competitor offset, to whole seconds. */
+/** Calculates the start clock time (as entered in setup) for a competitor offset, to whole seconds. */
 export function startClockForOffset(
   classes: CompetitionClass[],
   startGroups: StartGroup[],
@@ -85,10 +85,10 @@ export function startClockForOffset(
     (firstStartTime + durationToSeconds(offset) * 1000) / 1000
   ) * 1000;
   const date = new Date(timestamp);
-  return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  return `${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(date.getUTCSeconds())}`;
 }
 
-/** Calculates the stored start offset from a local clock time. */
+/** Calculates the stored start offset from a setup-style clock time. */
 export function startOffsetForStartClock(
   classes: CompetitionClass[],
   startGroups: StartGroup[],
@@ -107,18 +107,38 @@ export function startOffsetForStartClock(
     throw new Error("Enter a valid start time.");
   }
   const firstStart = new Date(firstStartTime);
-  const absoluteStart = new Date(
-    firstStart.getFullYear(),
-    firstStart.getMonth(),
-    firstStart.getDate(),
+  let absoluteStart = Date.UTC(
+    firstStart.getUTCFullYear(),
+    firstStart.getUTCMonth(),
+    firstStart.getUTCDate(),
     Number(clockMatch[1]),
     Number(clockMatch[2]),
     Number(clockMatch[3])
   );
-  if (absoluteStart.getTime() < firstStartTime) {
-    absoluteStart.setDate(absoluteStart.getDate() + 1);
+  if (absoluteStart < firstStartTime) {
+    absoluteStart += 24 * 60 * 60 * 1000;
   }
-  return (absoluteStart.getTime() - firstStartTime) / 1000;
+  return (absoluteStart - firstStartTime) / 1000;
+}
+
+/**
+ * Converts a stored wall-clock timestamp (local time written with a "Z"
+ * suffix) to a real epoch time in the browser's timezone, so that it can be
+ * compared with `Date.now()`. Returns NaN for invalid input.
+ */
+export function wallClockToTimestamp(value: string) {
+  const utc = Date.parse(value);
+  if (!Number.isFinite(utc)) return Number.NaN;
+  const d = new Date(utc);
+  return new Date(
+    d.getUTCFullYear(),
+    d.getUTCMonth(),
+    d.getUTCDate(),
+    d.getUTCHours(),
+    d.getUTCMinutes(),
+    d.getUTCSeconds(),
+    d.getUTCMilliseconds()
+  ).getTime();
 }
 
 function pad(value: number) {

@@ -12,7 +12,10 @@
     subscribeToCompetition,
     updateCompetitor
   } from "../../shared/api";
-  import { durationToSeconds } from "../../shared/competitors";
+  import {
+    durationToSeconds,
+    wallClockToTimestamp
+  } from "../../shared/competitors";
   import type {
     Competition,
     CompetitionClass,
@@ -152,7 +155,7 @@
       (item) => item.id === classInfo?.start_group_id
     );
     if (!startGroup) return Number.POSITIVE_INFINITY;
-    const firstStart = Date.parse(startGroup.first_start_time);
+    const firstStart = wallClockToTimestamp(startGroup.first_start_time);
     if (!Number.isFinite(firstStart)) return Number.POSITIVE_INFINITY;
     try {
       return firstStart + durationToSeconds(competitor.start_time_offset) * 1000;
