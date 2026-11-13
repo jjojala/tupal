@@ -171,7 +171,7 @@ The frontend functionality can be briefly divided into the following categories:
 
 ## Epic: Finishline
 
-### FINISH-1 — Open a Times mobile app from a link
+### FINISH-1 — Open Finishline from a link
 1. Open the competition-specific Times directly from a link.
 1. Do not require competition selection in the app.
 
@@ -181,11 +181,10 @@ The frontend functionality can be briefly divided into the following categories:
 1. The combined view must create time and number entries compatible with the same event queues used by the separate apps.
 1. Support uncertain, incorrect, and missing entries.
 
-### FINISH-2 — Record a DSQ
+### FINISH-3 — Record a DSQ
 
 1. Let the official assign a DSQ to an identified competitor directly in Finishline.
 1. A DSQ is a final decision; there is no separate proposal stage.
-1. An optional short, single-line text reason for the DSQ is provided.
 1. Preserve the competitor’s time after the DSQ is recorded.
 1. DSQ status is possible to remove, in which case the original finish time becomes active.
 1. Show the DSQ as a result in Management’s totals and results.
