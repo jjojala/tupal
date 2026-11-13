@@ -80,6 +80,29 @@ test("start app lists upcoming competitors and confirms overdue DNS", async ({
     ])
   );
 
+  // Mark 702 as on route, then a confirmed bib entry removes it again.
+  await page
+    .locator('.dns-list li[data-bib="702"]')
+    .getByRole("button", { name: "On route" })
+    .click();
+  await expect(page.locator(".dns-section .dns-list li")).toHaveCount(0);
+  await expect(page.locator(".on-route-section .dns-list li")).toHaveCount(1);
+  await expect(
+    page.locator('.on-route-section li[data-bib="702"]')
+  ).toContainText("Overdue starter");
+  await page.reload();
+  await expect(page.locator(".on-route-section .dns-list li")).toHaveCount(1);
+
+  await create(`${competitionUrl}/finish_bib_entry/`, {
+    id: "start-bib-entry-702",
+    sequence_no: 1,
+    bib: 702,
+    status: 0,
+    confirmed_time_entry_id: null
+  });
+  await expect(page.locator(".on-route-section .dns-list li")).toHaveCount(0);
+  await expect(page.locator(".dns-section .dns-list li")).toHaveCount(0);
+
   await page.goto(`/management/${encodeURIComponent(competitionId)}/results`);
   await expect(page.getByTestId("total-not-started")).toHaveText("1");
   await expect(page.getByTestId("total-started")).toHaveText("1");
