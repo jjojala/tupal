@@ -4,6 +4,7 @@
   import Numbers from "./apps/numbers/Numbers.svelte";
   import Start from "./apps/start/Start.svelte";
   import Finishline from "./apps/finishline/Finishline.svelte";
+  import CompetitionList from "./apps/management/CompetitionList.svelte";
   import Management from "./apps/management/Management.svelte";
 
   type ManagementView =
@@ -29,6 +30,7 @@
   const numbersMatch = window.location.pathname.match(/^\/numbers\/([^/]+)\/?$/);
   const startMatch = window.location.pathname.match(/^\/start\/([^/]+)\/?$/);
   const finishlineMatch = window.location.pathname.match(/^\/finishline\/([^/]+)\/?$/);
+  const managementHomeMatch = window.location.pathname.match(/^\/management\/?$/);
   const managementMatch = window.location.pathname.match(
     /^\/management\/([^/]+)(?:\/(setup|competitors|finish|results))?\/?$/
   );
@@ -65,6 +67,8 @@
   <Start competitionId={startCompetitionId} />
 {:else if finishlineCompetitionId}
   <Finishline competitionId={finishlineCompetitionId} />
+{:else if managementHomeMatch}
+  <CompetitionList />
 {:else if managementCompetitionId}
   <Management
     competitionId={managementCompetitionId}

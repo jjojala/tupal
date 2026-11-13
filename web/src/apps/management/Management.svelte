@@ -79,22 +79,22 @@
   async function reload() {
     pageError = "";
     try {
+      const competitionData = await getCompetition(competitionId);
+      competition = competitionData;
+
       const [
-        competitionData,
         classData,
         competitorData,
         startGroupData,
         bibData,
         timeData
       ] = await Promise.all([
-        getCompetition(competitionId),
         getClasses(competitionId),
         getCompetitors(competitionId),
         getStartGroups(competitionId),
         getFinishBibEntries(competitionId),
         getFinishTimeEntries(competitionId)
       ]);
-      competition = competitionData;
       classes = classData;
       competitors = competitorData;
       startGroups = startGroupData;
