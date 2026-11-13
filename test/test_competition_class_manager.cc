@@ -22,8 +22,9 @@ TEST_CASE("competition class manager list (no start groups)") {
     CHECK(!comp_create_ec);
 
     auto [ec, competition_classes]  = competition_class_manager->list("comp-001");
-    CHECK(ec == tupal::make_error_condition(tupal::error_code::unknown_key));
-    CHECK(competition_classes != boost::json::value {});
+    CHECK(!ec);
+    CHECK(competition_classes.is_array());
+    CHECK(competition_classes.as_array().empty());
 }
 
 TEST_CASE("competition class manager list (empty)") {

@@ -359,6 +359,8 @@ TEST_CASE_FIXTURE(ws_daemon_fixture, "Create, read, update and delete a competit
 
 
     const auto cc_url = base_url + "/rest/competition/comp-1/competition_class/";
+    TUPAL_CHECK_STATUS([&]() { return client.get(base_url + "/rest/competition/comp-unknown/competition_class/"); },
+            boost::beast::http::status::not_found);
     TUPAL_TEST_GET([&]() { return client.get(cc_url); }, "[]");
 
     TUPAL_CHECK_STATUS([&]() { return client.get(cc_url + "cc-not_found"); }, boost::beast::http::status::not_found);
