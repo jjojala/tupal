@@ -3,6 +3,7 @@
   import Times from "./apps/times/Times.svelte";
   import Numbers from "./apps/numbers/Numbers.svelte";
   import Start from "./apps/start/Start.svelte";
+  import Finishline from "./apps/finishline/Finishline.svelte";
   import Management from "./apps/management/Management.svelte";
 
   type ManagementView =
@@ -27,6 +28,7 @@
   const timesMatch = window.location.pathname.match(/^\/times\/([^/]+)\/?$/);
   const numbersMatch = window.location.pathname.match(/^\/numbers\/([^/]+)\/?$/);
   const startMatch = window.location.pathname.match(/^\/start\/([^/]+)\/?$/);
+  const finishlineMatch = window.location.pathname.match(/^\/finishline\/([^/]+)\/?$/);
   const managementMatch = window.location.pathname.match(
     /^\/management\/([^/]+)(?:\/(setup|competitors|finish|results))?\/?$/
   );
@@ -41,6 +43,9 @@
     : null;
   const startCompetitionId = startMatch
     ? decodeURIComponent(startMatch[1])
+    : null;
+  const finishlineCompetitionId = finishlineMatch
+    ? decodeURIComponent(finishlineMatch[1])
     : null;
   const managementCompetitionId = managementMatch
     ? decodeURIComponent(managementMatch[1])
@@ -58,6 +63,8 @@
   <Numbers competitionId={numbersCompetitionId} />
 {:else if startCompetitionId}
   <Start competitionId={startCompetitionId} />
+{:else if finishlineCompetitionId}
+  <Finishline competitionId={finishlineCompetitionId} />
 {:else if managementCompetitionId}
   <Management
     competitionId={managementCompetitionId}
