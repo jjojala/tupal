@@ -398,22 +398,18 @@ namespace {
 
         virtual tupal::result_type list(const std::string & competition_id) const {
             try {
-                soci::rowset<> rows = (soci_session->prepare << 
-                        "select     sg.comp_id, cc.id, cc.start_group_id, cc.title "
-                        "from       start_group sg "
-                        "left join  competition_class cc on cc.start_group_id = sg.id and cc.comp_id = sg.comp_id "
-                        "where      sg.comp_id = :comp_id ",
-                    soci::use(competition_id));
-
-                auto begin = rows.begin();
-                if (begin == rows.end()) { // no competition found
+                if (!competition_exists(*soci_session, competition_id)) {
                     return { tupal::make_error_code(tupal::error_code::unknown_key),
                         to_json(str(boost::format("Competition '%1%' not found!") % competition_id)) };
                 }
 
+                soci::rowset<> rows = (soci_session->prepare <<
+                        "select comp_id, id, start_group_id, title from competition_class where comp_id = :comp_id",
+                    soci::use(competition_id));
+
                 boost::json::array objects;
-                if (begin->get_indicator(1) != soci::i_null) {
-                    std::transform(begin, rows.end(), std::back_insert_iterator(objects), [](const soci::row & row) -> boost::json::value { 
+                {
+                    std::transform(rows.begin(), rows.end(), std::back_insert_iterator(objects), [](const soci::row & row) -> boost::json::value {
                         return tupal::to_json( tupal::competition_class {
                             { row.get<std::string>(1), row.get<std::string>(0) },
                             row.get<std::string>(3),
@@ -566,23 +562,22 @@ namespace {
 
         virtual tupal::result_type list(const std::string & competition_id) const {
             try {
-                soci::rowset<> rows = (soci_session->prepare << 
-                        "select "
-                        "   ct.id, cc.comp_id, cc.id, ct.bib, ct.start_time_offset, ct.finish_time, ct.status, ct.name "
-                        "from competition_class cc "
-                        "left join competitor ct on ct.comp_class_id = cc.id "
-                        "where cc.comp_id = :comp_id",
-                    soci::use(competition_id));
-
-                auto begin = rows.begin();
-                if (begin == rows.end()) { // no competition found
+                if (!competition_exists(*soci_session, competition_id)) {
                     return { tupal::make_error_code(tupal::error_code::unknown_key),
                         to_json(str(boost::format("Competition '%1%' not found!") % competition_id)) };
                 }
 
+                soci::rowset<> rows = (soci_session->prepare <<
+                        "select "
+                        "   ct.id, cc.comp_id, cc.id, ct.bib, ct.start_time_offset, ct.finish_time, ct.status, ct.name "
+                        "from competition_class cc "
+                        "join competitor ct on ct.comp_class_id = cc.id "
+                        "where cc.comp_id = :comp_id",
+                    soci::use(competition_id));
+
                 boost::json::array objects;
-                if (begin->get_indicator(0) != soci::i_null) {
-                    std::transform(begin, rows.end(), std::back_insert_iterator(objects), [&](const soci::row & row) {
+                {
+                    std::transform(rows.begin(), rows.end(), std::back_insert_iterator(objects), [&](const soci::row & row) {
                         return tupal::to_json( tupal::competitor {
                             { row.get<std::string>(0), row.get<std::string>(1) },
                             static_cast<uint16_t>(row.get<int>(3)),

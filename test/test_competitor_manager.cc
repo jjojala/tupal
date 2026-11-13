@@ -23,8 +23,9 @@ TEST_CASE("competitor manager list (no comp class)") {
     CHECK(!comp_create_ec);
 
     auto [ec, competitions]  = competitor_manager->list("comp-001");
-    CHECK(ec == tupal::make_error_code(tupal::error_code::unknown_key));
-    CHECK(competitions != boost::json::value {});
+    CHECK(!ec);
+    CHECK(competitions.is_array());
+    CHECK(competitions.as_array().empty());
 }
 
 TEST_CASE("competitor manager list (no data)") {
