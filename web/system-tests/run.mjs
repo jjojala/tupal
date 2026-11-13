@@ -44,6 +44,7 @@ const port = await findAvailablePort();
 const baseUrl = `http://127.0.0.1:${port}`;
 const competitionId = "system-smoke-comp";
 const numbersCompetitionId = "system-numbers-comp";
+const finishlineCompetitionId = "system-finishline-comp";
 let daemonOutput = "";
 const daemon = spawn(
   daemonPath,
@@ -222,6 +223,59 @@ try {
     );
   }
 
+  const finishlineStartTime = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  await requestJson(baseUrl, "/rest/competition/", {
+    id: finishlineCompetitionId,
+    title: "Finishline System Competition",
+    date: finishlineStartTime
+  });
+  await requestJson(
+    baseUrl,
+    `/rest/competition/${finishlineCompetitionId}/start_group/`,
+    {
+      id: "system-finishline-start",
+      title: "Finishline Test Start",
+      first_start_time: finishlineStartTime,
+      first_bib: 801,
+      start_interval: "PT30S"
+    }
+  );
+  await requestJson(
+    baseUrl,
+    `/rest/competition/${finishlineCompetitionId}/competition_class/`,
+    {
+      id: "system-finishline-class",
+      title: "Open",
+      start_group_id: "system-finishline-start"
+    }
+  );
+  await requestJson(
+    baseUrl,
+    `/rest/competition/${finishlineCompetitionId}/competitor/`,
+    {
+      id: "finishline-competitor-801",
+      comp_class_id: "system-finishline-class",
+      bib: 801,
+      name: "DSQ Candidate",
+      start_time_offset: "PT0.000S",
+      finish_time: "2026-11-13T10:00:00.000Z",
+      status: 0
+    }
+  );
+  await requestJson(
+    baseUrl,
+    `/rest/competition/${finishlineCompetitionId}/competitor/`,
+    {
+      id: "finishline-competitor-802",
+      comp_class_id: "system-finishline-class",
+      bib: 802,
+      name: "Likely Finishline Competitor",
+      start_time_offset: "PT30.000S",
+      finish_time: "",
+      status: 0
+    }
+  );
+
   const initialCompetition = await requestJson(
     baseUrl,
     `/rest/competition/${competitionId}`
@@ -245,7 +299,8 @@ try {
         ...process.env,
         TUPAL_BASE_URL: baseUrl,
         TUPAL_COMPETITION_ID: competitionId,
-        TUPAL_NUMBERS_COMPETITION_ID: numbersCompetitionId
+        TUPAL_NUMBERS_COMPETITION_ID: numbersCompetitionId,
+        TUPAL_FINISHLINE_COMPETITION_ID: finishlineCompetitionId
       }
     }
   );
