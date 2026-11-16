@@ -571,7 +571,7 @@ namespace {
                         "select "
                         "   ct.id, cc.comp_id, cc.id, ct.bib, ct.start_time_offset, ct.finish_time, ct.status, ct.name "
                         "from competition_class cc "
-                        "join competitor ct on ct.comp_class_id = cc.id "
+                        "join competitor ct on ct.comp_class_id = cc.id and ct.comp_id = cc.comp_id "
                         "where cc.comp_id = :comp_id",
                     soci::use(competition_id));
 
