@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import FinishAssignments from "../../shared/FinishAssignments.svelte";
   import ManagementPageHeading from "./ManagementPageHeading.svelte";
   import Setup from "./Setup.svelte";
   import {
@@ -361,15 +362,9 @@
               </span>
             </section>
           </div>
-          <section class="management-panel view-placeholder">
-            <div class="placeholder-mark" aria-hidden="true">◷</div>
-            <h2>Finish record review</h2>
-            <p>
-              Time and bib queues will be shown in order here, with status,
-              unmatched entries, and tools to correct records while preserving
-              the original observations.
-            </p>
-            <span class="planned-tag">Detailed review not available yet</span>
+          <FinishAssignments {competitors} {bibEntries} {timeEntries} />
+          <section class="management-panel">
+            <p>Tools to review and correct finish records are not available yet.</p>
           </section>
         {:else}
           <ManagementPageHeading
