@@ -57,6 +57,7 @@ The frontend functionality can be briefly divided into the following categories:
 ### MAN-6 — Generate results
 
 1. Generate results from timing records, number entries, and competitor data.
+1. Finished competitors with equal times share a rank, with subsequent ranks skipped. Show DNF, DSQ and DNS after timed competitors, in that order.
 1. Flag missing or conflicting data for review
 1. Flag class status (result, open) for review
 1. Indicate, when a competion class is ready; indicate the best possible position
