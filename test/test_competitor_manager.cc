@@ -65,6 +65,32 @@ TEST_CASE("competitor manager list (no data)") {
     CHECK(competitors.as_array().size() == 0);
 }
 
+TEST_CASE("competitor manager list isolates competitions with shared class ids") {
+    auto manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
+    auto groups = manager->getStartGroupManager();
+    auto classes = manager->getCompetitionClassManager();
+    auto competitors = manager->getCompetitorManager();
+
+    for (const std::string id : {"first", "second"}) {
+        REQUIRE(!std::get<0>(manager->create({{"id", id}, {"date", "2024-01-01"}, {"title", id}})));
+        REQUIRE(!std::get<0>(groups->create(id, {{"id", "group"}, {"title", "Group"},
+            {"first_start_time", "2024-01-01T10:00:00Z"}, {"first_bib", 1}})));
+        REQUIRE(!std::get<0>(classes->create(id, {{"id", "class"}, {"title", "Class"},
+            {"start_group_id", "group"}})));
+        REQUIRE(!std::get<0>(competitors->create(id, {{"id", "competitor"}, {"comp_class_id", "class"},
+            {"bib", 1}, {"start_time_offset", "PT0S"}, {"finish_time", ""},
+            {"status", 0}, {"name", id}})));
+    }
+
+    for (const std::string id : {"first", "second"}) {
+        auto [ec, result] = competitors->list(id);
+        REQUIRE(!ec);
+        REQUIRE(result.is_array());
+        REQUIRE(result.as_array().size() == 1);
+        CHECK(std::string(result.as_array()[0].as_object().at("name").as_string()) == id);
+    }
+}
+
 TEST_CASE("competitor manager list (with data)") {
     auto competition_manager = tupal::CompetitionManager::new_competition_manager("sqlite3://:memory:");
     auto start_group_manager = competition_manager->getStartGroupManager();
