@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import FinishAssignments from "../../shared/FinishAssignments.svelte";
   import {
     createFinishBibEntry,
     getClasses,
@@ -344,6 +345,8 @@
       {#if notice}
         <p class="success-message" role="status">{notice}</p>
       {/if}
+
+      <FinishAssignments {competitors} {bibEntries} {timeEntries} />
 
       <section class="panel queue-panel">
         <div class="queue-summary" aria-live="polite">

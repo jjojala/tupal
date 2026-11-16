@@ -1,14 +1,17 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import FinishAssignments from "../../shared/FinishAssignments.svelte";
   import {
     createFinishTimeEntry,
     getFinishBibEntries,
     getCompetition,
+    getCompetitors,
     getFinishTimeEntries,
     subscribeToCompetition
   } from "../../shared/api";
   import type {
     Competition,
+    Competitor,
     FinishBibEntry,
     FinishTimeEntry,
     FinishTimeEntryInput
@@ -17,6 +20,7 @@
   export let competitionId: string;
 
   let competition: Competition | undefined;
+  let competitors: Competitor[] = [];
   let timeEntries: FinishTimeEntry[] = [];
   let bibEntries: FinishBibEntry[] = [];
   let loading = true;
@@ -48,12 +52,14 @@
   async function reload() {
     pageError = "";
     try {
-      const [competitionData, times, bibs] = await Promise.all([
+      const [competitionData, times, bibs, competitorData] = await Promise.all([
         getCompetition(competitionId),
         getFinishTimeEntries(competitionId),
-        getFinishBibEntries(competitionId)
+        getFinishBibEntries(competitionId),
+        getCompetitors(competitionId)
       ]);
       competition = competitionData;
+      competitors = competitorData;
       timeEntries = times;
       bibEntries = bibs;
     } catch (error) {
@@ -200,6 +206,8 @@
           </p>
         </div>
       </section>
+
+      <FinishAssignments {competitors} {bibEntries} {timeEntries} />
 
       <section class="panel recent-panel" aria-labelledby="recent-heading">
         <div class="panel-heading">

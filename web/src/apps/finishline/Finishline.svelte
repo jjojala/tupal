@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import FinishAssignments from "../../shared/FinishAssignments.svelte";
   import {
     createFinishBibEntry,
     createFinishTimeEntry,
@@ -498,6 +499,8 @@
           {/if}
         </section>
       </section>
+
+      <FinishAssignments {competitors} {bibEntries} {timeEntries} />
 
       <section class="queue-layout" aria-label="Recent finish queue entries">
         <section class="panel recent-panel" aria-labelledby="recent-times-heading">
