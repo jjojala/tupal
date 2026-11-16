@@ -2,7 +2,9 @@
   import { onMount } from "svelte";
   import FinishAssignments from "../../shared/FinishAssignments.svelte";
   import ManagementPageHeading from "./ManagementPageHeading.svelte";
+  import { classResults, formatElapsed } from "./results";
   import Setup from "./Setup.svelte";
+  import { deriveFinishAssignments } from "../../shared/finishAssignments";
   import {
     getClasses,
     getCompetition,
@@ -52,7 +54,22 @@
   let pageError = "";
   let connected = false;
   let now = Date.now();
+  let selectedClassId = "";
 
+  $: if (!classes.some((item) => item.id === selectedClassId)) {
+    selectedClassId = classes[0]?.id ?? "";
+  }
+  $: selectedClass = classes.find((item) => item.id === selectedClassId);
+  $: finishAssignments = deriveFinishAssignments(competitors, bibEntries, timeEntries);
+  $: derivedResultIds = classes.flatMap((item) =>
+    classResults(item, competitors, startGroups, finishAssignments.pairs, now)
+      .filter((row) => row.kind === "finished")
+      .map((row) => row.competitor.id)
+  );
+  $: resultRows = selectedClass
+    ? classResults(selectedClass, competitors, startGroups, finishAssignments.pairs, now)
+    : [];
+  $: reviewRows = resultRows.filter((row) => row.kind === "review");
   $: currentNavigation = navigation.find((item) => item.id === view)!;
   $: viewUrl = (target: ManagementView) =>
     target === "overview"
@@ -63,6 +80,7 @@
     competitors,
     classes,
     startGroups,
+    derivedResultIds,
     now
   );
 
@@ -126,6 +144,7 @@
     allCompetitors: Competitor[],
     allClasses: CompetitionClass[],
     allStartGroups: StartGroup[],
+    derivedCompetitorIds: string[],
     currentTime: number
   ) {
     let notStarted = 0;
@@ -140,7 +159,8 @@
       }
 
       const finishTime = Date.parse(competitor.finish_time);
-      const hasFinish = Number.isFinite(finishTime) && finishTime > 0;
+      const hasFinish = derivedCompetitorIds.includes(competitor.id) ||
+        (Number.isFinite(finishTime) && finishTime > 0);
       if (competitor.status === 3 || (hasFinish && competitor.status !== 2)) {
         finished += 1;
         continue;
@@ -378,19 +398,49 @@
                 <div class="section-title-row">
                   <div>
                     <h2>Class results</h2>
-                    <p>Readiness and best possible position by class.</p>
+                    <p>Open competitors show their running time without a rank.</p>
                   </div>
-                  <span class="planned-tag">Coming next</span>
                 </div>
                 {#if classes.length}
-                  <ul class="compact-list">
+                  <label class="class-label" for="results-class">Class</label>
+                  <select id="results-class" bind:value={selectedClassId}>
                     {#each classes as classItem (classItem.id)}
-                      <li>
-                        <strong>{classItem.title}</strong>
-                        <span>Result readiness will appear here</span>
-                      </li>
+                      <option value={classItem.id}>{classItem.title}</option>
                     {/each}
-                  </ul>
+                  </select>
+                  {#if resultRows.length}
+                    <div class="result-table-wrap">
+                      <table class="result-table">
+                        <thead>
+                          <tr><th scope="col">Rank</th><th scope="col">Bib</th><th scope="col">Competitor</th><th scope="col">Result</th></tr>
+                        </thead>
+                        <tbody>
+                          {#each resultRows as row (row.competitor.id)}
+                            <tr data-bib={row.competitor.bib}>
+                              <td>{row.rank ?? "—"}</td>
+                              <td>{row.competitor.bib || "—"}</td>
+                              <td>{row.competitor.name}</td>
+                              <td>
+                                {#if (row.kind === "finished" || row.kind === "open") && row.elapsedMs !== undefined}
+                                  {formatElapsed(row.elapsedMs)}
+                                  {#if row.kind === "open"}<small>Open</small>{/if}
+                                {:else if row.kind === "review"}
+                                  <span>Review required</span>
+                                {:else}
+                                  {row.kind.toUpperCase()}
+                                  {#if row.finishTime}
+                                    <small>Finish: {row.finishTime}</small>
+                                  {/if}
+                                {/if}
+                              </td>
+                            </tr>
+                          {/each}
+                        </tbody>
+                      </table>
+                    </div>
+                  {:else}
+                    <p class="empty-note">No competitors in this class.</p>
+                  {/if}
                 {:else}
                   <p class="empty-note">Set up classes to prepare results.</p>
                 {/if}
@@ -402,9 +452,15 @@
                     <p>Uncertain, missing, or conflicting data to resolve.</p>
                   </div>
                 </div>
-                <p class="empty-note">
-                  Review flags will be collected here when result generation is implemented.
-                </p>
+                {#if finishAssignments.blocker}
+                  <p class="review-message">Automatic pairing paused: {finishAssignments.blocker}</p>
+                {/if}
+                {#each reviewRows as row (row.competitor.id)}
+                  <p class="review-message">Bib {row.competitor.bib}: {row.error}</p>
+                {/each}
+                {#if !finishAssignments.blocker && !reviewRows.length}
+                  <p class="empty-note">No issues requiring review.</p>
+                {/if}
               </section>
             </div>
             <aside class="results-side-column">
@@ -819,32 +875,6 @@
     font-weight: 700;
   }
 
-  .compact-list {
-    display: grid;
-    gap: 0;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .compact-list li {
-    display: flex;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 11px 0;
-    border-top: 1px solid #edf0ed;
-    font-size: 12px;
-  }
-
-  .compact-list li strong {
-    color: #35473c;
-  }
-
-  .compact-list li span {
-    color: #77837a;
-    text-align: right;
-  }
-
   .empty-note {
     margin: 0;
     padding: 12px 0 2px;
@@ -933,6 +963,63 @@
 
   .result-section .section-title-row {
     margin-bottom: 10px;
+  }
+
+  .class-label {
+    display: block;
+    margin: 18px 0 6px;
+    color: #35473c;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  #results-class {
+    width: min(100%, 360px);
+    padding: 9px;
+    border: 1px solid #c9d4ca;
+    border-radius: 6px;
+    background: white;
+    font: inherit;
+  }
+
+  .result-table-wrap {
+    overflow-x: auto;
+    margin-top: 16px;
+  }
+
+  .result-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .result-table th,
+  .result-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #edf0ed;
+    text-align: left;
+  }
+
+  .result-table th {
+    color: #65736b;
+    font-size: 11px;
+  }
+
+  .result-table td:last-child {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .result-table small {
+    display: block;
+    color: #77837a;
+    font-size: 11px;
+  }
+
+  .review-message {
+    margin: 8px 0;
+    color: #8b3831;
+    font-size: 12px;
   }
 
   .status-placeholder {
