@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: ["main"]
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -93,6 +96,16 @@ jobs:
           path: web/test-results/**/*.png
           if-no-files-found: warn
 
+      - name: Build screenshot site
+        if: ${{ github.event_name == 'push' && runner.os == 'Linux' && matrix.c_compiler == 'gcc' }}
+        run: script/make-screenshot-site.sh web/test-results screenshot-site
+
+      - name: Upload Pages artifact
+        if: ${{ github.event_name == 'push' && runner.os == 'Linux' && matrix.c_compiler == 'gcc' }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: screenshot-site
+
       - name: Test portable C++ suites (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -100,3 +113,21 @@ jobs:
           $env:PATH = "$env:GITHUB_WORKSPACE\build\bin\${{ matrix.build_type }};$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows\bin;$env:PATH"
           ctest --test-dir build --build-config ${{ matrix.build_type }} `
             --output-on-failure --tests-regex "^(manager_tests|model_tests)$"
+
+  deploy-pages:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

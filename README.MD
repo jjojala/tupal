@@ -165,6 +165,10 @@ The system tests save screenshots of the application views under
 artifact from the completed workflow run's **Summary → Artifacts** section.
 Artifacts expire according to the repository's retention settings.
 
+On every push to `main`, the screenshots from the Ubuntu/gcc build are also
+published to GitHub Pages (`https://jjojala.github.io/tupal/`). Pages must be
+enabled once under **Settings → Pages → Source: GitHub Actions**.
+
 CTest labels are regular expressions. The `tupal` label selects all four
 Tupal test groups, including the browser smoke test. List discovered tests with:
 
