@@ -51,7 +51,7 @@ test("derives only clear ordered pairs and resumes when blockers are corrected",
   expect(result.pairs).toHaveLength(1);
 });
 
-test("finish views show live derived pairs and resume after correction", async ({ page, request }) => {
+test("finish views show live derived pairs and resume after correction", async ({ page, request }, testInfo) => {
   const competition = "derived-finish-test";
   const base = `/rest/competition/${competition}`;
   const post = async (url: string, data: object) => {
@@ -92,6 +92,9 @@ test("finish views show live derived pairs and resume after correction", async (
     await page.goto(`/${route}/${competition}${route === "management" ? "/finish" : ""}`);
     await expect(page.getByRole("region", { name: "Derived finish assignments" }))
       .toContainText("#3 Runner 3");
+    if (route === "management") {
+      await page.screenshot({ path: testInfo.outputPath("management-finish.png"), fullPage: true });
+    }
   }
   const stored = await request.get(`${base}/competitor/c2`);
   expect((await stored.json()).finish_time).toBe(originalFinishTime);

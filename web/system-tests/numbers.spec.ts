@@ -6,7 +6,7 @@ const competitionId =
 test("numbers app records bibs and filters quick suggestions", async ({
   page,
   request
-}) => {
+}, testInfo) => {
   await page.goto(`/numbers/${encodeURIComponent(competitionId)}`);
 
   await expect(
@@ -56,4 +56,5 @@ test("numbers app records bibs and filters quick suggestions", async ({
     [5, 999]
   ]);
   await expect(page.locator(".bib-list li")).toHaveCount(5);
+  await page.screenshot({ path: testInfo.outputPath("numbers.png"), fullPage: true });
 });

@@ -5,7 +5,7 @@ const competitionId = "system-start-comp";
 test("start app lists upcoming competitors and confirms overdue DNS", async ({
   page,
   request
-}) => {
+}, testInfo) => {
   const competitionUrl =
     `/rest/competition/${encodeURIComponent(competitionId)}`;
   const firstStart = Date.now() - 60_000;
@@ -61,6 +61,7 @@ test("start app lists upcoming competitors and confirms overdue DNS", async ({
   await expect(page.locator('.dns-list li[data-bib="701"]')).toContainText(
     "Overdue DNS"
   );
+  await page.screenshot({ path: testInfo.outputPath("start.png"), fullPage: true });
 
   await page
     .locator('.dns-list li[data-bib="701"]')

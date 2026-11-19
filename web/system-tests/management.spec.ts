@@ -47,10 +47,11 @@ test("management initial view creates a competition and lists its workspace link
 
 test("management routes open the competition workspace directly", async ({
   page
-}) => {
+}, testInfo) => {
   await page.goto("/management/");
 
   await expect(page.getByRole("heading", { name: "Your competitions" })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("management-competitions.png"), fullPage: true });
   const competitionCard = page
     .getByRole("link", { name: /System Smoke Competition/ })
     .first();
@@ -80,6 +81,7 @@ test("management routes open the competition workspace directly", async ({
   ).toBeVisible();
   await expect(page.getByRole("link", { name: "Finish", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Results", exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("management-overview.png"), fullPage: true });
 
   await page.goto(`/management/${encodeURIComponent(competitionId)}/results`);
   await expect(
@@ -98,6 +100,7 @@ test("management routes open the competition workspace directly", async ({
   await expect(
     page.getByRole("heading", { name: "Competition setup" })
   ).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("management-setup.png"), fullPage: true });
 });
 
 test("management setup creates, updates, and safely deletes start groups and classes", async ({

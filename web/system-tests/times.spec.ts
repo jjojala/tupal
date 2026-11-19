@@ -5,7 +5,7 @@ const competitionId = process.env.TUPAL_COMPETITION_ID ?? "system-smoke-comp";
 test("times app records finish times and shows the queue difference", async ({
   page,
   request
-}) => {
+}, testInfo) => {
   await page.goto(`/times/${encodeURIComponent(competitionId)}`);
 
   await expect(
@@ -41,4 +41,5 @@ test("times app records finish times and shows the queue difference", async ({
     ])
   );
   await expect(page.locator(".time-list li")).toHaveCount(3);
+  await page.screenshot({ path: testInfo.outputPath("times.png"), fullPage: true });
 });

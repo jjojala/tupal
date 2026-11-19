@@ -8,7 +8,7 @@ const competitionUrl =
 test("finishline records both queues with statuses and toggles DSQ without losing finish time", async ({
   page,
   request
-}) => {
+}, testInfo) => {
   await page.goto(`/finishline/${encodeURIComponent(competitionId)}`);
   await expect(
     page.getByRole("heading", { name: "Finishline System Competition" })
@@ -19,6 +19,7 @@ test("finishline records both queues with statuses and toggles DSQ without losin
       page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
     )
     .toBe(true);
+  await page.screenshot({ path: testInfo.outputPath("finishline-mobile.png"), fullPage: true });
   await page.setViewportSize({ width: 1024, height: 768 });
   const captureColumnCount = await page
     .locator(".capture-layout")
@@ -68,6 +69,7 @@ test("finishline records both queues with statuses and toggles DSQ without losin
     [null, 3]
   ]);
   await expect(page.getByText("1 bib number ahead of times")).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("finishline.png"), fullPage: true });
 
   await page.locator(".dsq-panel summary").click();
   await page.locator("#dsq-search").fill("DSQ Candidate");

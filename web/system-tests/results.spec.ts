@@ -43,7 +43,7 @@ test("class results order open and finished competitors, ties, statuses and inva
   expect(formatElapsed(3723456)).toBe("1:02:03.456");
 });
 
-test("management displays live results for one class, preserving status and reacting to updates", async ({ page, request }) => {
+test("management displays live results for one class, preserving status and reacting to updates", async ({ page, request }, testInfo) => {
   const id = "results-test";
   const base = `/rest/competition/${id}`;
   const post = async (url: string, data: object) => {
@@ -77,6 +77,7 @@ test("management displays live results for one class, preserving status and reac
   await expect(table.locator('tr[data-bib="2"]')).toContainText("0:01:30.000");
   await expect(table.locator('tr[data-bib="5"]')).toContainText("DSQ");
   await expect(table.locator('tr[data-bib="5"]')).toContainText("10:03:00");
+  await page.screenshot({ path: testInfo.outputPath("management-results.png"), fullPage: true });
   const before = await table.locator('tr[data-bib="3"] td:last-child').innerText();
   await page.clock.fastForward(5000);
   await expect.poll(() => table.locator('tr[data-bib="3"] td:last-child').innerText())

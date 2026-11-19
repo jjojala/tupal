@@ -85,6 +85,14 @@ jobs:
         if: runner.os == 'Linux'
         run: ctest --test-dir build --build-config ${{ matrix.build_type }} --verbose
 
+      - name: Upload system test screenshots
+        if: ${{ !cancelled() && runner.os == 'Linux' && matrix.c_compiler == 'gcc' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: system-test-screenshots
+          path: web/test-results/**/*.png
+          if-no-files-found: warn
+
       - name: Test portable C++ suites (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
