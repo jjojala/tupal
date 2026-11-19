@@ -42,7 +42,9 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libboost-all-dev
+          sudo apt-get install -y --no-install-recommends \
+            libboost-dev libboost-date-time-dev libboost-json-dev \
+            libboost-url-dev libboost-filesystem-dev
 
       - name: Install Boost dependencies (Windows)
         if: runner.os == 'Windows'
