@@ -5,7 +5,7 @@ const competitionId = process.env.TUPAL_COMPETITION_ID ?? "system-smoke-comp";
 test("registration UI creates and updates a competitor through the real API", async ({
   page,
   request
-}) => {
+}, testInfo) => {
   await page.goto(`/registration/${encodeURIComponent(competitionId)}`);
 
   await expect(
@@ -21,6 +21,7 @@ test("registration UI creates and updates a competitor through the real API", as
 
   await expect(page.getByRole("status")).toContainText("Casey Smoke registered.");
   await expect(page.getByText("Casey Smoke", { exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("registration.png"), fullPage: true });
   await expect(page.locator("#competitor-bib")).toHaveValue("501");
   await expect(page.locator("#competitor-start-time")).toHaveValue("10:00:30");
 
@@ -69,4 +70,8 @@ test("registration UI creates and updates a competitor through the real API", as
       })
     ])
   );
+
+  await page.goto(`/management/${encodeURIComponent(competitionId)}/competitors`);
+  await expect(page.getByRole("heading", { name: "Competitor workspace" })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("management-competitors.png"), fullPage: true });
 });

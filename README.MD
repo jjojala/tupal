@@ -160,6 +160,11 @@ ctest --test-dir build -L rest --output-on-failure
 ctest --test-dir build -L system --output-on-failure
 ```
 
+The system tests save screenshots of the application views under
+`web/test-results/`. In GitHub Actions, download the `system-test-screenshots`
+artifact from the completed workflow run's **Summary → Artifacts** section.
+Artifacts expire according to the repository's retention settings.
+
 CTest labels are regular expressions. The `tupal` label selects all four
 Tupal test groups, including the browser smoke test. List discovered tests with:
 
