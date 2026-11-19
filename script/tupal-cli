@@ -35,17 +35,17 @@ have_confirmed_time_entry_id=false
 usage() {
     cat <<'EOF'
 Usage:
-  tupal [--url URL] create competition [--id ID] --title TITLE --date DATE
-  tupal [--url URL] create start-group [--id ID] --competition ID --title TITLE
+  tupal-cli [--url URL] create competition [--id ID] --title TITLE --date DATE
+  tupal-cli [--url URL] create start-group [--id ID] --competition ID --title TITLE
       --first-start-time TIME [--first-bib NUMBER] [--start-interval DURATION]
-  tupal [--url URL] create class [--id ID] --competition ID --title TITLE
+  tupal-cli [--url URL] create class [--id ID] --competition ID --title TITLE
       --start-group ID
-  tupal [--url URL] create competitor [--id ID] --competition ID --class ID
+  tupal-cli [--url URL] create competitor [--id ID] --competition ID --class ID
       --name NAME [--bib NUMBER] [--start-time-offset DURATION]
       [--finish-time TIME] [--status NUMBER]
-  tupal [--url URL] create finish-time-entry [--id ID] --competition ID
+  tupal-cli [--url URL] create finish-time-entry [--id ID] --competition ID
       --finish-time TIME [--status NUMBER]
-  tupal [--url URL] create finish-bib-entry [--id ID] --competition ID
+  tupal-cli [--url URL] create finish-bib-entry [--id ID] --competition ID
       --sequence-no NUMBER [--bib NUMBER] [--status NUMBER]
       [--confirmed-time-entry-id ID]
 
@@ -56,7 +56,7 @@ EOF
 }
 
 fail() {
-    printf 'tupal: %s\n' "$*" >&2
+    printf 'tupal-cli: %s\n' "$*" >&2
     exit 1
 }
 

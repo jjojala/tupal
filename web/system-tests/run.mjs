@@ -125,7 +125,7 @@ try {
     }
   );
 
-  const tupalCliPath = path.resolve(webDirectory, "../script/tupal");
+  const tupalCliPath = path.resolve(webDirectory, "../script/tupal-cli");
   for (const [sequenceNo, bib] of [
     [1, 500],
     [2, 501]
